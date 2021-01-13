@@ -3,4 +3,5 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing floating 
 
 ## required software
  - Visual Studio
+ - Intel oneAPI Base toolkit (for fortran compiler needed for OpenFAST) 
  - Intel oneAPI HPC toolkit (for fortran compiler needed for OpenFAST) 

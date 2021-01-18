@@ -9,10 +9,6 @@ setup(
     install_requires=[
         'ray[rllib]',
         'gym',
-        'matplotlib',
-        'fowt-force-gen',
-        'beautifulsoup4',   # For fowt-force-gen
-        'windrose',         # For fowt-force-gen
-        'lxml'              # For fowt-force-gen
+        'matplotlib'
     ]  # And any other dependencies it needs
 )

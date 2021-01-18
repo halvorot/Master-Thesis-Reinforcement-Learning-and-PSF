@@ -1,8 +1,11 @@
 from gym.envs.registration import register
+import numpy as np
 
 DEFAULT_CONFIG = {
     "min_reward": -2000,
-    "reward_collision": -1000
+    "max_t_steps": 10000,
+    "crash_angle_condition": 30*(np.pi/180),
+    "reward_crash": -1000
 }
 
 SCENARIOS = {

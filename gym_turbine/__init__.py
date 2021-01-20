@@ -5,7 +5,8 @@ DEFAULT_CONFIG = {
     "min_reward": -2000,
     "max_t_steps": 10000,
     "crash_angle_condition": 30*(np.pi/180),
-    "reward_crash": -1000
+    "reward_crash": -1000,
+    "n_actuators": 4
 }
 
 SCENARIOS = {

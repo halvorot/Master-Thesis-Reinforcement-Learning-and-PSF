@@ -25,10 +25,10 @@ def odesolver45(f, y, h, wind_dir):
 
 
 class Turbine():
-    def __init__(self, step_size):
+    def __init__(self, init_state, step_size):
         self.state = np.zeros(22)                       # Initialize states
-        self.state[3] = 20*(np.pi/180)                  # Roll initial angle
-        self.state[4] = 20*(np.pi/180)                  # Pitch initial angle
+        self.state[3] = init_state[0]                  # Roll initial angle
+        self.state[4] = init_state[1]                  # Pitch initial angle
         self.state[5] = ss.H*np.sin(self.state[4])      # x_tf = H*sin(theta_p)
         self.state[6] = -ss.H*np.sin(self.state[3])     # x_ts = -H*sin(theta_r)
         self.input = np.zeros(4)                        # Initialize control input
@@ -88,13 +88,6 @@ class Turbine():
         Returns array holding the surge, sway, heave positions of the turbine
         """
         return self.state[0:3]
-
-    @property
-    def attitude(self):
-        """
-        Returns an array holding the roll and pitch angles of the turbine
-        """
-        return self.state[3:5]
 
 def _un_normalize_dva_input(dva_input):
     dva_input = np.clip(dva_input, -1, 1)

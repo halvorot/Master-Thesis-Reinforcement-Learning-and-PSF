@@ -79,16 +79,18 @@ def animate(frame):
     # Plot base
     plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
     plt.tight_layout()
-    print('Sim time', time.time() - start_time)
+    # print('Sim time', time.time() - start_time)
 
 
 if __name__ == "__main__":
 
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111, projection='3d')
-
+    ax_ani.view_init(elev=18, azim=45)
     step_size = 0.01
-    turbine = turbine.Turbine(step_size)
+    init_roll = 10*(np.pi/180)
+    init_pitch = 10*(np.pi/180)
+    turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
     # plot_figs(turbine)
 

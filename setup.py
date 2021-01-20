@@ -9,6 +9,6 @@ setup(
     install_requires=[
         'ray[rllib]',
         'gym',
-        'matplotlib'
+        'matplotlib',
     ]  # And any other dependencies it needs
 )

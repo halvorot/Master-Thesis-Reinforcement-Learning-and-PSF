@@ -1,6 +1,6 @@
 import numpy as np
-import gym_auv.utils.state_space as ss
-import gym_auv.utils.geomutils as geom
+import gym_turbine.utils.state_space as ss
+import gym_turbine.utils.geomutils as geom
 
 def odesolver45(f, y, h, wind_dir):
     """Calculate the next step of an IVP of a time-invariant ODE with a RHS
@@ -24,8 +24,14 @@ def odesolver45(f, y, h, wind_dir):
     return w, q
 
 
-class Turbine3D():
+class Turbine():
     def __init__(self, step_size):
+        self.state = np.zeros(22)
+        self.state[3] = 10*(np.pi/180)                  # Roll initial angle
+        self.state[4] = 10*(np.pi/180)                  # Pitch initial angle
+        self.state[5] = ss.H*np.sin(self.state[4])      # x_tf = H*sin(theta_p)
+        self.state[6] = -ss.H*np.sin(self.state[3])     # x_ts = -H*sin(theta_r)
+        self.input = np.zeros(4)
         self.step_size = step_size
 
     def step(self, action, wind_dir):
@@ -34,6 +40,7 @@ class Turbine3D():
         DVA3 = _un_normalize_dva_input(action[2])
         DVA4 = _un_normalize_dva_input(action[3])
         self.input = np.array([DVA1, DVA2, DVA3, DVA4])
+
         self._sim(wind_dir)
 
     def _sim(self, wind_dir):
@@ -46,28 +53,49 @@ class Turbine3D():
 
     def state_dot(self, state, wind_dir):
         """
-        The right hand side of the 11 ODEs governing the Trubine dyanmics. X_dot = A*X + B*F_a
-        X = [q, q_dot]^T
-        q = [x_sg, x_sw, x_hv, theta_r, theta_p, x_tf, x_ts, x_1, x_2, x_3, x_4]^T
+        The right hand side of the 11 ODEs governing the Trubine dyanmics. state_dot = A*state + B*F_a
+        state = [q, q_dot]
+        q = [x_sg, x_sw, x_hv, theta_r, theta_p, x_tf, x_ts, x_1, x_2, x_3, x_4]
         """
-        state_dot = ss.A(wind_dir).dot(state) + ss.B(wind_dir).dot(self.input)
+        state_dot = ss.A(wind_dir).dot(state) + ss.B(wind_dir).dot(self.input) + ss.W().dot(ss.F_d)
 
         return state_dot
 
     @property
     def pitch(self):
         """
-        Returns the pitch of the AUV wrt NED.
+        Returns the pitch angle of the turbine
         """
         return geom.ssa(self.state[4])
 
     @property
     def roll(self):
         """
-        Returns the roll of the AUV wrt NED.
+        Returns the roll angle of the turbine
         """
         return geom.ssa(self.state[3])
 
+    @property
+    def dva_input(self):
+        """
+        Returns the input array to the turbine
+        """
+        return self.input
+
+    @property
+    def position(self):
+        """
+        Returns array holding the surge, sway, heave positions of the turbine
+        """
+        return self.state[0:3]
+
+    @property
+    def attitude(self):
+        """
+        Returns an array holding the roll and pitch angles of the turbine
+        """
+        return self.state[3:5]
+
 def _un_normalize_dva_input(dva_input):
-    dva_input = np.clip(dva_input, 0, 1)
+    dva_input = np.clip(dva_input, -1, 1)
     return dva_input*ss.dva_max

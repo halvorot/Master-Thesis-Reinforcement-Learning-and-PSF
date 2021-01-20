@@ -6,7 +6,7 @@ class TurbineStab3D(gym.Env):
     def __init__(self, env_config):
         self.n_observations = 2     # theta_pitch and theta_roll
 
-        self.action_space = gym.spaces.Box(low=np.array([0]*self.n_actuators),
+        self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
                                            high=np.array([1]*self.n_actuators),
                                            dtype=np.float32)
 
@@ -47,7 +47,7 @@ class TurbineStab3D(gym.Env):
 
     def calculate_reward(self, obs, action):
         """
-        Calculates the reward function for one time step. Also checks if the episode should end. 
+        Calculates the reward function for one time step. Also checks if the episode should end.
         """
         done = False
 

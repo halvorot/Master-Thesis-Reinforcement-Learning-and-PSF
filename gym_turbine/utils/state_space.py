@@ -38,9 +38,17 @@ k_sh = -0.0124                      # Couple parameter between surge and heave
 l = 27                              # Platform spoke length [m]
 l_s = 47.89                         # Vertical distance from mean sea level to platform bottom
 
-dva_min = 0                         # DVA minimum force input [N]
-dva_max = 14                        # TODO: made up number!! change!! DVA maximum force input [N]
+dva_max = 2e10                      # TODO: made up number!! change!! DVA maximum force input [N]
 
+F_Wsg = 0                           # Wave force to platform surge [N]
+F_Wsw = 0                           # Wave force to platform sway [N]
+F_Whv = 0                           # Wave force to platform heave [N]
+T_Wr = 0                            # Wave force to platform roll [N*m]
+T_Wp = 0                            # Wave force to platform roll [N*m]
+F_thr = 0                           # Thrust force [N]
+F_ts = 0                            # Force in side-side direction [N]
+
+F_d = [F_Wsg, F_Wsw, F_Whv, T_Wr, T_Wp, F_thr, F_ts]     # Disturbance forces
 
 def M():
     M = np.diag([m_s, m_s, m_hv, J_p + m_s*l_c**2, J_p + m_s*l_c**2, m_tf, m_ts, m_d, m_d, m_d, m_d])
@@ -115,6 +123,9 @@ def B_Fa(gamma):
 
     return B_Fa
 
+def B_Fd():
+    return np.vstack((np.identity(7), np.zeros((4, 7))))
+
 
 def A(gamma):
     top = np.hstack((np.zeros((DoFs, DoFs)), np.identity(DoFs)))
@@ -129,3 +140,10 @@ def B(gamma):
     B = left.dot(B_Fa(gamma))
 
     return B
+
+def W():
+    left = np.vstack((np.zeros((DoFs, DoFs)), M_inv()))
+
+    W = left.dot(B_Fd())
+
+    return W

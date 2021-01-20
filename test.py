@@ -2,6 +2,7 @@ import numpy as np
 from gym_turbine.objects import turbine
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import time
 
 def plot_figs(turbine):
     sim_time = 60
@@ -34,13 +35,24 @@ def plot_figs(turbine):
     plt.show()
 
 def animate(frame):
+    start_time = time.time()
     height = 10
     wind_dir = 0
-    action = np.array([0, 0, 0, 0])
+    if frame in [30,31,32,33,34,35,36,37,38,39,40]:
+        action = np.array([0, 0, 0, 0])
+    else:
+        action = np.array([0, 0, 0, 0])
+
     turbine.step(action, wind_dir)
-    x = [0, height*np.sin(turbine.pitch)*np.cos(turbine.roll)]
-    y = [0, height*np.sin(turbine.roll)*np.cos(turbine.pitch)]
-    z = [0, height*np.cos(turbine.pitch)]
+    x_val = height*np.sin(turbine.pitch)*np.cos(turbine.roll)
+    y_val = -height*np.sin(turbine.roll)*np.cos(turbine.pitch)
+    z_val = height*np.cos(turbine.pitch)
+    x = [0, x_val]
+    y = [0, y_val]
+    z = [0, z_val]
+    x_base = [-0.15*x_val, 0]
+    y_base = [-0.15*y_val, 0]
+    z_base = [-0.15*z_val, 0]
     plt.cla()
     # ax_ani.set_aspect('equal', adjustable='datalim')
     ax_ani.set(xlim=(-5, 5), ylim=(-5, 5), zlim=(0, 11))
@@ -48,8 +60,11 @@ def animate(frame):
     ax_ani.set_ylabel('$Y$')
     ax_ani.set_zlabel('$Z$')
 
-    plt.plot(x, y, z, color='r', linewidth=5)
+    plt.plot(x, y, z, color='b', linewidth=5)
     plt.plot(x, y, [z[1], z[1]], color='k', linewidth=1)
+    plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
+    plt.tight_layout()
+    # print('Sim time', time.time() - start_time)
 
 
 if __name__ == "__main__":
@@ -63,6 +78,6 @@ if __name__ == "__main__":
 
     # plot_figs(turbine)
 
-    ani = FuncAnimation(fig_ani, animate, frames=200, interval=20, blit=False)
+    ani = FuncAnimation(fig_ani, animate, interval=(1/30)*1000, blit=False)
     plt.tight_layout()
     plt.show()

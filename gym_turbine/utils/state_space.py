@@ -7,6 +7,7 @@ from numpy.linalg import inv
 # Are C_d (eq 15) and C (in eq 22) the same matrix?
 # Is M_d (in eq 2) supposed to be m_d?
 # Is k_d = 1.91e5 or 6.18e4
+# How do we control wind speed and disturbances? Have to calculate F_d somehow?
 
 DoFs = 11
 zero_4_2 = np.zeros((4, 2))
@@ -38,13 +39,13 @@ k_sh = -0.0124                      # Couple parameter between surge and heave
 l = 27                              # Platform spoke length [m]
 l_s = 47.89                         # Vertical distance from mean sea level to platform bottom
 
-dva_max = 2e10                      # TODO: made up number!! change!! DVA maximum force input [N]
+dva_max = 5e9                      # TODO: made up number!! change!! DVA maximum force input [N]
 
 F_Wsg = 0                           # Wave force to platform surge [N]
 F_Wsw = 0                           # Wave force to platform sway [N]
 F_Whv = 0                           # Wave force to platform heave [N]
 T_Wr = 0                            # Wave force to platform roll [N*m]
-T_Wp = 0                            # Wave force to platform roll [N*m]
+T_Wp = 0                            # Wave force to platform pitch [N*m]
 F_thr = 0                           # Thrust force [N]
 F_ts = 0                            # Force in side-side direction [N]
 

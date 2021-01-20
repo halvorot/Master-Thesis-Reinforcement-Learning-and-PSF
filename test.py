@@ -1,6 +1,7 @@
 import numpy as np
 from gym_turbine.objects import turbine
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 import time
 
@@ -36,7 +37,7 @@ def plot_figs(turbine):
 
 def animate(frame):
     start_time = time.time()
-    height = 10
+    height = 90
     wind_dir = 0
     if frame in [30,31,32,33,34,35,36,37,38,39,40]:
         action = np.array([0, 0, 0, 0])
@@ -44,27 +45,41 @@ def animate(frame):
         action = np.array([0, 0, 0, 0])
 
     turbine.step(action, wind_dir)
-    x_val = height*np.sin(turbine.pitch)*np.cos(turbine.roll)
-    y_val = -height*np.sin(turbine.roll)*np.cos(turbine.pitch)
-    z_val = height*np.cos(turbine.pitch)
-    x = [0, x_val]
-    y = [0, y_val]
-    z = [0, z_val]
-    x_base = [-0.15*x_val, 0]
-    y_base = [-0.15*y_val, 0]
-    z_base = [-0.15*z_val, 0]
+    x_surface = turbine.position[0]
+    y_surface = turbine.position[1]
+    z_surface = turbine.position[2]
+    x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
+    y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
+    z_top = z_surface + height*np.cos(turbine.pitch)
+    
+    x = [x_surface, x_top]
+    y = [y_surface, y_top]
+    z = [z_surface, z_top]
+    x_base = [-0.2*(x_top-x_surface) + x_surface, x_surface]
+    y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
+    z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
     plt.cla()
     # ax_ani.set_aspect('equal', adjustable='datalim')
-    ax_ani.set(xlim=(-5, 5), ylim=(-5, 5), zlim=(0, 11))
+    ax_ani.set(xlim=(-2*height, 2*height), ylim=(-2*height, 2*height), zlim=(-height, 2*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
     ax_ani.set_zlabel('$Z$')
 
+    # Plot surface (water)
+    surface_X = np.arange(-2*height, 2*height+1, height)
+    surface_Y = np.arange(-2*height, 2*height+1, height)
+    surface_X, surface_Y = np.meshgrid(surface_X, surface_Y)
+    surface_Z = 0*surface_X
+    ax_ani.plot_surface(surface_X, surface_Y, surface_Z, alpha=0.1, linewidth=0, antialiased=False)
+
+    # Plot pole
     plt.plot(x, y, z, color='b', linewidth=5)
-    plt.plot(x, y, [z[1], z[1]], color='k', linewidth=1)
+    # Plot line from neutral top position to current top position
+    plt.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
+    # Plot base
     plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
     plt.tight_layout()
-    # print('Sim time', time.time() - start_time)
+    print('Sim time', time.time() - start_time)
 
 
 if __name__ == "__main__":
@@ -72,12 +87,11 @@ if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111, projection='3d')
 
-
     step_size = 0.01
     turbine = turbine.Turbine(step_size)
 
     # plot_figs(turbine)
 
-    ani = FuncAnimation(fig_ani, animate, interval=(1/30)*1000, blit=False)
+    ani = FuncAnimation(fig_ani, animate, interval=(1/24)*1000, blit=False)
     plt.tight_layout()
     plt.show()

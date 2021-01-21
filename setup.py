@@ -10,5 +10,7 @@ setup(
         'ray[rllib]',
         'gym',
         'matplotlib',
+        'tensorflow',
+        'termcolor'
     ]  # And any other dependencies it needs
 )

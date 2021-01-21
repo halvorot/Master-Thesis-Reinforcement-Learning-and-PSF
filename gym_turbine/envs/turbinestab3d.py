@@ -77,19 +77,14 @@ class TurbineStab3D(gym.Env):
 
         self.t_step += 1
 
-        if done:
-            print(colored('Debug: Environment DONE...', 'green'))
-        else:
-            print(colored('Debug: Environment NOT DONE...', 'red'))
-
         return self.observation, reward, done, info
 
     def generate_environment(self):
         """
         Generates environment with a turbine, and a random initial condition
         """
-        init_roll = (2*self.rand_num_gen.rand()-1)*20*(np.pi/180)
-        init_pitch = (2*self.rand_num_gen.rand()-1)*20*(np.pi/180)
+        init_roll = (2*self.rand_num_gen.rand()-1)*self.max_init_angle
+        init_pitch = (2*self.rand_num_gen.rand()-1)*self.max_init_angle
         init_state = np.array([init_roll, init_pitch])
         self.turbine = Turbine(init_state, self.step_size)
 
@@ -103,7 +98,7 @@ class TurbineStab3D(gym.Env):
         r_r = 1/(self.sigma_r*np.sqrt(2*np.pi)) * np.exp(-self.turbine.roll**2 / (2*self.sigma_r**2))
         reward_stab = r_p * r_r
 
-        reward_power_use = 0    # -(action**2)
+        reward_power_use = 0    # -(action/self.max_input)**2
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 

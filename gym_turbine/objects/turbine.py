@@ -89,6 +89,10 @@ class Turbine():
         """
         return self.state[0:3]
 
+    @property
+    def max_input(self):
+        return ss.max_input
+
 def _un_normalize_dva_input(dva_input):
     dva_input = np.clip(dva_input, -1, 1)
-    return dva_input*ss.dva_max
+    return dva_input*ss.max_input

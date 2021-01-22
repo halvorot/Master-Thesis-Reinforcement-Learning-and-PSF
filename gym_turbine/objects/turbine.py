@@ -29,8 +29,8 @@ class Turbine():
         self.state = np.zeros(22)                       # Initialize states
         self.state[3] = init_state[0]                  # Roll initial angle
         self.state[4] = init_state[1]                  # Pitch initial angle
-        self.state[5] = ss.H*np.sin(self.state[4])      # x_tf = H*sin(theta_p)
-        self.state[6] = -ss.H*np.sin(self.state[3])     # x_ts = -H*sin(theta_r)
+        self.state[5] = ss.H*np.sin(self.pitch)*np.cos(self.roll)
+        self.state[6] = -ss.H*np.sin(self.roll)*np.cos(self.pitch)
         self.input = np.zeros(4)                        # Initialize control input
         self.step_size = step_size
 

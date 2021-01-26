@@ -76,6 +76,8 @@ def animate(frame):
     plt.plot(x, y, z, color='b', linewidth=5)
     # Plot line from neutral top position to current top position
     plt.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
+    # Plot line from neutral base position to current base position
+    plt.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
     # Plot base
     plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
     plt.tight_layout()

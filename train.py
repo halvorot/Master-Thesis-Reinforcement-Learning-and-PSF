@@ -38,7 +38,7 @@ if __name__ == '__main__':
     env = gym.make('TurbineStab-v0')
 
     agent = PPO('MlpPolicy', env, verbose=1)
-    agent.learn(total_timesteps=10000, tb_log_name="PPO", callback=callback)
+    agent.learn(total_timesteps=100000, tb_log_name="PPO", callback=callback)
 
     save_path = os.path.join(agents_dir, "last_model.pkl")
     agent.save(save_path)

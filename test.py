@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 import time
+import pandas as pd
 
 def plot_figs(turbine):
     sim_time = 60
@@ -19,7 +20,7 @@ def plot_figs(turbine):
         turbine.step(action, wind_dir)
         pitch = np.append(pitch, turbine.pitch)
         roll = np.append(roll, turbine.roll)
-        dva_input.append(turbine.dva_input)
+        dva_input.append(turbine.input)
 
     dva_input = np.asarray(dva_input)
 
@@ -44,13 +45,24 @@ def animate(frame):
     else:
         action = np.array([0, 0, 0, 0])
 
-    turbine.step(action, wind_dir)
-    x_surface = turbine.position[0]
-    y_surface = turbine.position[1]
-    z_surface = turbine.position[2]
-    x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
-    y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
-    z_top = z_surface + height*np.cos(turbine.pitch)
+    ## Simulate turbine step by step ##
+    # turbine.step(action, wind_dir)
+    # x_surface = turbine.position[0]
+    # y_surface = turbine.position[1]
+    # z_surface = turbine.position[2]
+    # x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
+    # y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
+    # z_top = z_surface + height*np.cos(turbine.pitch)
+    ## End ##
+
+    ## When reading from file ##
+    x_surface = data_position[0][frame]
+    y_surface = data_position[1][frame]
+    z_surface = data_position[2][frame]
+    x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
+    y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
+    z_top = z_surface + height*np.cos(data_pitch[frame])
+    ## End ##
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]
@@ -94,7 +106,11 @@ if __name__ == "__main__":
     init_pitch = 10*(np.pi/180)
     turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
-    # plot_figs(turbine)
+    # Read data from file and animate
+    data = pd.read_csv("simdata.csv")
+    data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
+    data_roll = data['theta_r']
+    data_pitch = data['theta_p']
 
     ani = FuncAnimation(fig_ani, animate, interval=(1/24)*1000, blit=False)
     plt.tight_layout()

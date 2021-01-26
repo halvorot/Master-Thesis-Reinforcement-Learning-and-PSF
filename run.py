@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import gym
 import gym_turbine
 import os
+from time import time
 import argparse
 
 import utils
@@ -20,4 +21,10 @@ if __name__ == "__main__":
     env = gym.make("TurbineStab-v0")
     agent = PPO.load(agent_path)
     sim_df = utils.simulate_environment(env, agent)
-    sim_df.to_csv(r'simdata.csv')
+
+    agent_path_list = agent_path.split("\\")
+    simdata_dir = os.path.join("logs", "sim_data", agent_path_list[-2])
+    os.makedirs(simdata_dir, exist_ok=True)
+
+    # Save file to logs\sim_data\<EXPERIMENT_ID>ppo\<agent_file_name>_simdata.csv
+    sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + "_simdata.csv"))

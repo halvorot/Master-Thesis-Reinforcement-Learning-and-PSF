@@ -5,8 +5,8 @@ DEFAULT_CONFIG = {
     "step_size": 0.01,
     "min_reward": -2000,
     "max_t_steps": 100000,
-    "crash_angle_condition": 45*(np.pi/180),
-    "max_init_angle": 45*(np.pi/180),
+    "crash_angle_condition": 30*(np.pi/180),
+    "max_init_angle": 20*(np.pi/180),
     "reward_crash": -1000,
     "n_actuators": 4,
     "n_observations": 2,                        # Pitch and roll angle

@@ -5,6 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 import time
 import pandas as pd
+import argparse
 
 def plot_figs(turbine):
     sim_time = 60
@@ -107,7 +108,13 @@ if __name__ == "__main__":
     turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
     # Read data from file and animate
-    data = pd.read_csv("simdata.csv")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--data',
+        help='Path to data .csv file.',
+    )
+    args = parser.parse_args()
+    data = pd.read_csv(args.data)
     data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
     data_roll = data['theta_r']
     data_pitch = data['theta_p']

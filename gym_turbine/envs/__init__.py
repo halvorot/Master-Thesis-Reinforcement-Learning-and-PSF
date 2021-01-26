@@ -1,1 +1,1 @@
-from gym_turbine.envs.turbinestab3d import TurbineStab3D
+from gym_turbine.envs.turbine_env import TurbineEnv

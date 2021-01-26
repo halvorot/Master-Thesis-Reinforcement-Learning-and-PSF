@@ -7,8 +7,8 @@ setup(
     python_requires='>=3.7, <3.9',
     url='https://github.com/halvorot/gym-turbine',
     install_requires=[
-        'ray[rllib]',
         'gym',
+        'stable-baselines3[extra]',
         'matplotlib',
         'tensorflow',
         'termcolor'

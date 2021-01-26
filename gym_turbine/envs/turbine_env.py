@@ -2,10 +2,12 @@ import gym
 import numpy as np
 from gym.utils import seeding
 from termcolor import colored
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 from gym_turbine.objects.turbine import Turbine
 
-class TurbineStab3D(gym.Env):
+class TurbineEnv(gym.Env):
     """
     Creates an environment with a turbine.
     """
@@ -54,6 +56,11 @@ class TurbineStab3D(gym.Env):
         self.t_step = 0
         self.crashed = False
 
+        self.past_states = []
+        self.past_actions = []
+        self.past_obs = []
+        self.time = []
+
 
         self.generate_environment()
         self.observation = self.observe()
@@ -69,6 +76,10 @@ class TurbineStab3D(gym.Env):
         self.turbine.step(action, self.wind_dir)
         self.observation = self.observe()
 
+        self.past_states.append(np.copy(self.turbine.state[0:11]))
+        self.past_actions.append(self.turbine.input)
+        self.past_obs.append(self.observation)
+
         done, reward = self.calculate_reward(self.observation, action)
         info = {}
         info['crashed'] = self.crashed
@@ -76,6 +87,7 @@ class TurbineStab3D(gym.Env):
         self.last_reward = reward
 
         self.t_step += 1
+        self.time.append(self.t_step*self.step_size)
 
         return self.observation, reward, done, info
 
@@ -130,3 +142,26 @@ class TurbineStab3D(gym.Env):
         """Reseeds the random number generator used in the environment"""
         self.rand_num_gen, seed = seeding.np_random(seed)
         return [seed]
+
+    def render(self):
+        screen_width = 600
+        screen_height = 400
+
+        x_surface = self.turbine.position[0]
+        y_surface = self.turbine.position[1]
+        z_surface = self.turbine.position[2]
+        x_top = x_surface + self.turbine.height*np.sin(self.turbine.pitch)*np.cos(self.turbine.roll)
+        y_top = -(y_surface + self.turbine.height*np.sin(self.turbine.roll)*np.cos(self.turbine.pitch))
+        z_top = z_surface + self.turbine.height*np.cos(self.turbine.pitch)
+
+        x = [x_surface, x_top]
+        y = [y_surface, y_top]
+        z = [z_surface, z_top]
+        x_base = [-0.2*(x_top-x_surface) + x_surface, x_surface]
+        y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
+        z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
+
+        ax = plt.axes(projection='3d')
+        ax.plot(x, y, z)
+        ax.plot(x_base, y_base, z_base, color='r', linewidth=10)
+        return ax

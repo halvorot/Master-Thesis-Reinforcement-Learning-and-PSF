@@ -27,12 +27,13 @@ def odesolver45(f, y, h, wind_dir):
 class Turbine():
     def __init__(self, init_state, step_size):
         self.state = np.zeros(22)                       # Initialize states
-        self.state[3] = init_state[0]                  # Roll initial angle
-        self.state[4] = init_state[1]                  # Pitch initial angle
+        self.state[3] = init_state[0]                   # Roll initial angle
+        self.state[4] = init_state[1]                   # Pitch initial angle
         self.state[5] = ss.H*np.sin(self.pitch)*np.cos(self.roll)
         self.state[6] = -ss.H*np.sin(self.roll)*np.cos(self.pitch)
         self.input = np.zeros(4)                        # Initialize control input
         self.step_size = step_size
+        self.height = 90                                # TODO: add to config instead of hardcode
 
     def step(self, action, wind_dir):
         DVA1 = _un_normalize_dva_input(action[0])

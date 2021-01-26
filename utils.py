@@ -11,7 +11,7 @@ def simulate_environment(env, agent):
 
     done = False
     env.reset()
-    while not done and env.t_step != 3000:
+    while not done:
         action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
     time = np.array(env.time).reshape((env.t_step, 1))

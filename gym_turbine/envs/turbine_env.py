@@ -133,8 +133,8 @@ class TurbineEnv(gym.Env):
         obs : np.ndarray
             The observation of the environment.
         """
-        roll = np.clip(self.turbine.roll / np.pi, -1, 1)
-        pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)
+        roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
+        pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees
         obs = np.array([roll, pitch])
         return obs
 

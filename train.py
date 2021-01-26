@@ -3,8 +3,10 @@ import gym_turbine
 import numpy as np
 import os
 from time import time
+import multiprocessing
 
 from stable_baselines3 import PPO
+from stable_baselines3.common.cmd_util import make_vec_env
 
 hyperparams = {
     'n_steps': 1024,
@@ -27,18 +29,20 @@ def callback(_locals, _globals):
 
 
 if __name__ == '__main__':
+    NUM_CPUs = multiprocessing.cpu_count()
+
     EXPERIMENT_ID = str(int(time())) + 'ppo'
     agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
     os.makedirs(agents_dir, exist_ok=True)
-    tensorboard_dir = os.path.join('logs', 'tensorboard', 'TurbineEnv', EXPERIMENT_ID)
-    tensorboard_port = 6006
-    hyperparams["tensorboard_log"] = tensorboard_dir
+    tensorboard_log = os.path.join('logs', 'tensorboard', EXPERIMENT_ID)
+    hyperparams["tensorboard_log"] = tensorboard_log
     n_steps = 0
 
-    env = gym.make('TurbineStab-v0')
+    #env = gym.make('TurbineStab-v0')
+    env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
-    agent = PPO('MlpPolicy', env, verbose=1)
-    agent.learn(total_timesteps=100000, tb_log_name="PPO", callback=callback)
+    agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
+    agent.learn(total_timesteps=100000, callback=callback)
 
     save_path = os.path.join(agents_dir, "last_model.pkl")
     agent.save(save_path)

@@ -102,7 +102,7 @@ class TurbineEnv(gym.Env):
 
     def calculate_reward(self, obs, action):
         """
-        Calculates the reward function for one time step. Also checks if the episode should end.
+        Calculates the reward function for one time step. Also checks if the episode is done.
         """
         done = False
 
@@ -110,7 +110,7 @@ class TurbineEnv(gym.Env):
         r_r = 1/(self.sigma_r*np.sqrt(2*np.pi)) * np.exp(-self.turbine.roll**2 / (2*self.sigma_r**2))
         reward_stab = r_p * r_r
 
-        reward_power_use = 0    # -(action/self.max_input)**2
+        reward_power_use = -np.sum(action)
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 
@@ -122,7 +122,7 @@ class TurbineEnv(gym.Env):
         if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
             done = True
         if crash_cond_1 or crash_cond_2:
-            step_reward = -1000
+            step_reward = self.reward_crash
 
         return done, step_reward
 

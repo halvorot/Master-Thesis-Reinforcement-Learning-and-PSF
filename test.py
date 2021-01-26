@@ -39,7 +39,7 @@ def animate(frame):
     start_time = time.time()
     height = 90
     wind_dir = 0
-    if frame in [30,31,32,33,34,35,36,37,38,39,40]:
+    if frame in [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]:
         action = np.array([0, 0, 0, 0])
     else:
         action = np.array([0, 0, 0, 0])
@@ -51,7 +51,7 @@ def animate(frame):
     x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
     y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
     z_top = z_surface + height*np.cos(turbine.pitch)
-    
+
     x = [x_surface, x_top]
     y = [y_surface, y_top]
     z = [z_surface, z_top]

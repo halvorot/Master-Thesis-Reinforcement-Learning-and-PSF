@@ -14,6 +14,7 @@ DEFAULT_CONFIG = {
     "lambda_reward": 0.8,                       # Parameter for how much focus on stabilization vs power usage
     "gamma_p": 15,                              # Exponential coefficient for pitch angle reward
     "gamma_r": 15,                              # Exponential coefficient for roll angle reward
+    "gamma_F": 1/4,                             # Coefficient for normalization of energy use reward
 }
 
 

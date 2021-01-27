@@ -112,7 +112,7 @@ class TurbineEnv(gym.Env):
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
 
-        reward_power_use = -np.sum(np.abs(action))
+        reward_power_use = -self.gamma_F*np.sum(np.abs(action))
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 

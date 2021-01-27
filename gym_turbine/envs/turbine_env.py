@@ -106,11 +106,13 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        r_p = 1/(self.sigma_p*np.sqrt(2*np.pi)) * np.exp(-self.turbine.pitch**2 / (2*self.sigma_p**2))
-        r_r = 1/(self.sigma_r*np.sqrt(2*np.pi)) * np.exp(-self.turbine.roll**2 / (2*self.sigma_r**2))
+        # r_p = 1/(self.sigma_p*np.sqrt(2*np.pi)) * np.exp(-self.turbine.pitch**2 / (2*self.sigma_p**2))
+        # r_r = 1/(self.sigma_r*np.sqrt(2*np.pi)) * np.exp(-self.turbine.roll**2 / (2*self.sigma_r**2))
+        r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
+        r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
 
-        reward_power_use = -np.sum(action)
+        reward_power_use = -np.sum(np.abs(action))
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 

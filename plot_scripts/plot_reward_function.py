@@ -4,17 +4,16 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 
-def plot_r_stab_3d(sigma_p, sigma_r, save=False):
+def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-
     # Make data.
     X = np.arange(-0.5, 0.5, 0.01)
     Y = np.arange(-0.5, 0.5, 0.01)
     X, Y = np.meshgrid(X, Y)
-    r_p = 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
-    r_r = 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
+    r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
+    r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
     Z = r_p * r_r
 
     # Plot the surface.
@@ -33,10 +32,11 @@ def plot_r_stab_3d(sigma_p, sigma_r, save=False):
     ax.set_xlabel(r'$\theta_p$ [rad]')
     ax.set_ylabel(r'$\theta_r$ [rad]')
     ax.set_zlabel('Reward')
+    ax.view_init(elev=30, azim=-71)
     if save:
-        plt.savefig('../plot_results/r_stab_plot_3d.pdf', bbox_inches='tight')
+        plt.savefig('../plot_results/r_stab_alternative_plot_3d.pdf', bbox_inches='tight')
 
-def plot_r_stab_contour(sigma_p, sigma_r, save=False):
+def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -45,8 +45,8 @@ def plot_r_stab_contour(sigma_p, sigma_r, save=False):
     X = np.arange(-0.5, 0.5, 0.01)
     Y = np.arange(-0.5, 0.5, 0.01)
     X, Y = np.meshgrid(X, Y)
-    r_p = 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
-    r_r = 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
+    r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
+    r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
     Z = r_p * r_r
 
     # Plot the surface.
@@ -59,10 +59,11 @@ def plot_r_stab_contour(sigma_p, sigma_r, save=False):
     ax.set_xlabel(r'$\theta_p$ [rad]')
     ax.set_ylabel(r'$\theta_r$ [rad]')
     if save:
-        plt.savefig('../plot_results/r_stab_plot_contour.pdf', bbox_inches='tight')
+        plt.savefig('../plot_results/r_stab_plot_alternative_contour.pdf', bbox_inches='tight')
 
 sigma_p = 0.2
 sigma_r = 0.2
-plot_r_stab_3d(sigma_p, sigma_r, False)
-plot_r_stab_contour(sigma_p, sigma_r, False)
+gamma = 15
+plot_r_stab_3d(gamma, sigma_p, sigma_r, save=True)
+plot_r_stab_contour(gamma, sigma_p, sigma_r, save=True)
 plt.show()

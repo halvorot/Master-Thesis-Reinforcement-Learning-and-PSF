@@ -12,8 +12,8 @@ DEFAULT_CONFIG = {
     "n_observations": 2,                        # Pitch and roll angle
     "wind_dir": 0,
     "lambda_reward": 0.8,                       # Parameter for how much focus on stabilization vs power usage
-    "sigma_p": 0.2,                             # stddev for pitch reward
-    "sigma_r": 0.2,                             # stddev for roll reward
+    "gamma_p": 15,                              # Exponential coefficient for pitch angle reward
+    "gamma_r": 15,                              # Exponential coefficient for roll angle reward
 }
 
 

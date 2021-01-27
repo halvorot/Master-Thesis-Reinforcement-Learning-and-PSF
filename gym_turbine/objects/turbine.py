@@ -77,11 +77,18 @@ class Turbine():
         return geom.ssa(self.state[3])
 
     @property
-    def dva_input(self):
+    def dva_displacement(self):
         """
-        Returns the input array to the turbine
+        Returns array of displacements of DVAs [x_1, x_2, x_3, x_4]
         """
-        return self.input
+        return self.state[7:12]
+
+    @property
+    def dva_displacement_dot(self):
+        """
+        Returns array of time derivative of displacements of DVAs [x_1_dot, x_2_dot, x_3_dot, x_4_dot]
+        """
+        return self.state[18:22]
 
     @property
     def position(self):

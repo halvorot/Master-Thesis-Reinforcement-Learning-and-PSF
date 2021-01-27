@@ -37,9 +37,11 @@ def plot_states(turbine, sim_time):
     plt.show()
 
 def animate(frame):
+    plt.cla()
     start_time = time.time()
     height = 90
     wind_dir = 0
+    spoke_length = 27
 
     if args.data:
         # If reading from file:
@@ -49,6 +51,15 @@ def animate(frame):
         x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
+
+        # Plot line proportional to DVA_1 input
+        ax_ani.plot([x_surface + spoke_length, x_surface + spoke_length], [y_surface, y_surface], [z_surface, data_input[0][frame]/10000], color='k', linewidth=1)
+        # Plot line proportional to DVA_2 input
+        ax_ani.plot([x_surface, x_surface], [y_surface + spoke_length, y_surface + spoke_length], [z_surface, data_input[1][frame]/10000], color='k', linewidth=1)
+        # Plot line proportional to DVA_3 input
+        ax_ani.plot([x_surface - spoke_length, x_surface - spoke_length], [y_surface, y_surface], [z_surface, data_input[2][frame]/10000], color='k', linewidth=1)
+        # Plot line proportional to DVA_4 input
+        ax_ani.plot([x_surface, x_surface], [y_surface - spoke_length, y_surface - spoke_length], [z_surface, data_input[3][frame]/10000], color='k', linewidth=1)
     else:
         ## Simulate turbine step by step ##
         action = np.array([0, 0, 0, 0])
@@ -60,13 +71,13 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
         z_top = z_surface + height*np.cos(turbine.pitch)
 
+
     x = [x_surface, x_top]
     y = [y_surface, y_top]
     z = [z_surface, z_top]
     x_base = [-0.2*(x_top-x_surface) + x_surface, x_surface]
     y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
     z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
-    plt.cla()
     # ax_ani.set_aspect('equal', adjustable='datalim')
     ax_ani.set(xlim=(-2*height, 2*height), ylim=(-2*height, 2*height), zlim=(-height, 2*height))
     ax_ani.set_xlabel('$X$')
@@ -88,6 +99,7 @@ def animate(frame):
     ax_ani.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
     # Plot line from neutral base position to current base position
     ax_ani.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
+    
     # print('Sim time', time.time() - start_time)
 
 
@@ -109,6 +121,7 @@ if __name__ == "__main__":
         data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
+        data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
     else:
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01

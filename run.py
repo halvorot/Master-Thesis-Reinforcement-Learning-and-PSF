@@ -17,6 +17,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--time',
+        type=int,
         help='Max simulation time (seconds).',
     )
     args = parser.parse_args()

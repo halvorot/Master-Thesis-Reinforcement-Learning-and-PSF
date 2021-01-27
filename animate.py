@@ -7,8 +7,7 @@ import time
 import pandas as pd
 import argparse
 
-def plot_figs(turbine):
-    sim_time = 60
+def plot_states(turbine, sim_time):
     step_size = 0.01
     N = int(sim_time/step_size)
     pitch = np.array([])
@@ -17,7 +16,7 @@ def plot_figs(turbine):
 
     for i in range(N):
         wind_dir = 0
-        action = np.array([0.9*np.sin(0.001*i), 0, -np.sin(0.001*i), 0])
+        action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
         pitch = np.append(pitch, turbine.pitch)
         roll = np.append(roll, turbine.roll)
@@ -28,7 +27,7 @@ def plot_figs(turbine):
     fig, (ax1, ax2) = plt.subplots(nrows=2)
     time = np.linspace(0, N*step_size, pitch.size)
     ax1.plot(time, pitch*(180/np.pi), label='Pitch')
-    ax1.plot(time, roll*(180/np.pi), label='Pitch')
+    ax1.plot(time, roll*(180/np.pi), label='Roll')
     ax2.plot(time, dva_input[:, 0], label='DVA#1')
     ax2.plot(time, dva_input[:, 1], label='DVA#2')
     ax2.plot(time, dva_input[:, 2], label='DVA#3')
@@ -82,14 +81,13 @@ def animate(frame):
     ax_ani.plot_surface(surface_X, surface_Y, surface_Z, alpha=0.1, linewidth=0, antialiased=False)
 
     # Plot pole
-    plt.plot(x, y, z, color='b', linewidth=5)
+    ax_ani.plot(x, y, z, color='b', linewidth=5)
     # Plot base
-    plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
+    ax_ani.plot(x_base, y_base, z_base, color='r', linewidth=10)
     # Plot line from neutral top position to current top position
-    plt.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
+    ax_ani.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
     # Plot line from neutral base position to current base position
-    plt.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
-    plt.tight_layout()
+    ax_ani.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
     # print('Sim time', time.time() - start_time)
 
 

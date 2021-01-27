@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
+
+RAD2DEG = 180/np.pi
 
 def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
 
@@ -17,7 +17,7 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     Z = r_p * r_r
 
     # Plot the surface.
-    surf = ax.plot_surface(X, Y, Z, cmap='magma',
+    surf = ax.plot_surface(X*RAD2DEG, Y*RAD2DEG, Z, cmap='magma',
                            linewidth=0, antialiased=False)
 
     # Customize the z axis.
@@ -29,12 +29,12 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     fig.colorbar(surf, shrink=0.5, aspect=10)
 
     # Add axis labels
-    ax.set_xlabel(r'$\theta_p$ [rad]')
-    ax.set_ylabel(r'$\theta_r$ [rad]')
+    ax.set_xlabel(r'$\theta_p$ [deg]')
+    ax.set_ylabel(r'$\theta_r$ [deg]')
     ax.set_zlabel('Reward')
     ax.view_init(elev=30, azim=-71)
     if save:
-        plt.savefig('../plot_results/r_stab_alternative_plot_3d.pdf', bbox_inches='tight')
+        plt.savefig('plot_results/r_stab_alternative_plot_3d.pdf', bbox_inches='tight')
 
 def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
 
@@ -50,16 +50,17 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
     Z = r_p * r_r
 
     # Plot the surface.
-    reward_plot = ax.contourf(X, Y, Z, levels=20, cmap='magma')
+    reward_plot = ax.contourf(X*RAD2DEG, Y*RAD2DEG, Z, levels=20, cmap='magma')
 
     cbar = fig.colorbar(reward_plot)
     cbar.set_label(r'Reward')
 
     # Add axis labels
-    ax.set_xlabel(r'$\theta_p$ [rad]')
-    ax.set_ylabel(r'$\theta_r$ [rad]')
+    ax.set_xlabel(r'$\theta_p$ [deg]')
+    ax.set_ylabel(r'$\theta_r$ [deg]')
     if save:
-        plt.savefig('../plot_results/r_stab_plot_alternative_contour.pdf', bbox_inches='tight')
+        plt.savefig('plot_results/r_stab_plot_alternative_contour.pdf', bbox_inches='tight')
+
 
 sigma_p = 0.2
 sigma_r = 0.2

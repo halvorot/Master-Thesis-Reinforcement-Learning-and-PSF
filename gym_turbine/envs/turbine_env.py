@@ -3,7 +3,6 @@ import numpy as np
 from gym.utils import seeding
 from termcolor import colored
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 from gym_turbine.objects.turbine import Turbine
 
@@ -146,8 +145,6 @@ class TurbineEnv(gym.Env):
         return [seed]
 
     def render(self):
-        screen_width = 600
-        screen_height = 400
 
         x_surface = self.turbine.position[0]
         y_surface = self.turbine.position[1]

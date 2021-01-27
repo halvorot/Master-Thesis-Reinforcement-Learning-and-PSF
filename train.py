@@ -1,6 +1,5 @@
 import gym
 import gym_turbine
-import numpy as np
 import os
 from time import time
 import multiprocessing
@@ -35,10 +34,10 @@ if __name__ == '__main__':
     agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
     os.makedirs(agents_dir, exist_ok=True)
     tensorboard_log = os.path.join('logs', 'tensorboard', EXPERIMENT_ID)
-    hyperparams["tensorboard_log"] = tensorboard_log
+    # hyperparams["tensorboard_log"] = tensorboard_log
     n_steps = 0
 
-    #env = gym.make('TurbineStab-v0')
+    # env = gym.make('TurbineStab-v0')
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)

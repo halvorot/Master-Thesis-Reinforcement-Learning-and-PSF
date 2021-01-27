@@ -15,12 +15,16 @@ if __name__ == "__main__":
         '--agent',
         help='Path to agent .pkl file.',
     )
+    parser.add_argument(
+        '--time',
+        help='Max simulation time (seconds).',
+    )
     args = parser.parse_args()
 
     agent_path = args.agent
     env = gym.make("TurbineStab-v0")
     agent = PPO.load(agent_path)
-    sim_df = utils.simulate_environment(env, agent)
+    sim_df = utils.simulate_environment(env, agent, args.time)
 
     agent_path_list = agent_path.split("\\")
     simdata_dir = os.path.join("logs", "sim_data", agent_path_list[-2])

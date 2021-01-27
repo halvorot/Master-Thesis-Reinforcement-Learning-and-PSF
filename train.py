@@ -37,8 +37,8 @@ if __name__ == '__main__':
     # hyperparams["tensorboard_log"] = tensorboard_log
     n_steps = 0
 
-    # env = gym.make('TurbineStab-v0')
-    env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
+    env = gym.make('TurbineStab-v0')
+    # env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=100000, callback=callback)

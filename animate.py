@@ -41,29 +41,25 @@ def animate(frame):
     start_time = time.time()
     height = 90
     wind_dir = 0
-    if frame in [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]:
-        action = np.array([0, 0, 0, 0])
+
+    if args.data:
+        # If reading from file:
+        x_surface = data_position[0][frame]
+        y_surface = data_position[1][frame]
+        z_surface = data_position[2][frame]
+        x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
+        y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
+        z_top = z_surface + height*np.cos(data_pitch[frame])
     else:
+        ## Simulate turbine step by step ##
         action = np.array([0, 0, 0, 0])
-
-    ## Simulate turbine step by step ##
-    # turbine.step(action, wind_dir)
-    # x_surface = turbine.position[0]
-    # y_surface = turbine.position[1]
-    # z_surface = turbine.position[2]
-    # x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
-    # y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
-    # z_top = z_surface + height*np.cos(turbine.pitch)
-    ## End ##
-
-    ## When reading from file ##
-    x_surface = data_position[0][frame]
-    y_surface = data_position[1][frame]
-    z_surface = data_position[2][frame]
-    x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
-    y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
-    z_top = z_surface + height*np.cos(data_pitch[frame])
-    ## End ##
+        turbine.step(action, wind_dir)
+        x_surface = turbine.position[0]
+        y_surface = turbine.position[1]
+        z_surface = turbine.position[2]
+        x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
+        y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
+        z_top = z_surface + height*np.cos(turbine.pitch)
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]
@@ -87,12 +83,12 @@ def animate(frame):
 
     # Plot pole
     plt.plot(x, y, z, color='b', linewidth=5)
+    # Plot base
+    plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
     # Plot line from neutral top position to current top position
     plt.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
     # Plot line from neutral base position to current base position
     plt.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
-    # Plot base
-    plt.plot(x_base, y_base, z_base, color='r', linewidth=10)
     plt.tight_layout()
     # print('Sim time', time.time() - start_time)
 
@@ -102,23 +98,26 @@ if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111, projection='3d')
     ax_ani.view_init(elev=18, azim=45)
-    step_size = 0.01
-    init_roll = 10*(np.pi/180)
-    init_pitch = 10*(np.pi/180)
-    turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
-    # Read data from file and animate
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data',
         help='Path to data .csv file.',
     )
     args = parser.parse_args()
-    data = pd.read_csv(args.data)
-    data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
-    data_roll = data['theta_r']
-    data_pitch = data['theta_p']
+    if args.data:
+        # If file specified, read data from file and animate
+        data = pd.read_csv(args.data)
+        data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
+        data_roll = data['theta_r']
+        data_pitch = data['theta_p']
+    else:
+        # If not file specified, simulate turbine step by step and animate
+        step_size = 0.01
+        init_roll = 0   # 10*(np.pi/180)
+        init_pitch = 10*(np.pi/180)
+        turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
-    ani = FuncAnimation(fig_ani, animate, interval=(1/24)*1000, blit=False)
+    ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
     plt.tight_layout()
     plt.show()

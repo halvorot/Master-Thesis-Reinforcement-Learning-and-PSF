@@ -2,10 +2,34 @@ import numpy as np
 from gym_turbine.objects import turbine
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d.proj3d import proj_transform
 from matplotlib.animation import FuncAnimation
 import time
 import pandas as pd
 import argparse
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
+        super().__init__((0, 0), (0, 0), *args, **kwargs)
+        self._xyz = (x, y, z)
+        self._dxdydz = (dx, dy, dz)
+
+    def draw(self, renderer):
+        x1, y1, z1 = self._xyz
+        dx, dy, dz = self._dxdydz
+        x2, y2, z2 = (x1+dx, y1+dy, z1+dz)
+
+        xs, ys, zs = proj_transform((x1, x2), (y1, y2), (z1, z2), renderer.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        super().draw(renderer)
+
+def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
+    '''Add an 3d arrow to an `Axes3D` instance.'''
+
+    arrow = Arrow3D(x, y, z, dx, dy, dz, *args, **kwargs)
+    ax.add_artist(arrow)
+
 
 def plot_states(turbine, sim_time):
     step_size = 0.01
@@ -38,7 +62,6 @@ def plot_states(turbine, sim_time):
 
 def animate(frame):
     plt.cla()
-    start_time = time.time()
     height = 90
     wind_dir = 0
     spoke_length = 27
@@ -52,14 +75,27 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
 
+        # # Plot line proportional to DVA_1 input
+        # ax_ani.plot([x_surface + spoke_length, x_surface + spoke_length], [y_surface, y_surface], [z_surface, 100*data_input[0][frame]/6e5], color='k', linewidth=1)
+        # # Plot line proportional to DVA_2 input
+        # ax_ani.plot([x_surface, x_surface], [y_surface + spoke_length, y_surface + spoke_length], [z_surface, 100*data_input[1][frame]/6e5], color='k', linewidth=1)
+        # # Plot line proportional to DVA_3 input
+        # ax_ani.plot([x_surface - spoke_length, x_surface - spoke_length], [y_surface, y_surface], [z_surface, 100*data_input[2][frame]/6e5], color='k', linewidth=1)
+        # # Plot line proportional to DVA_4 input
+        # ax_ani.plot([x_surface, x_surface], [y_surface - spoke_length, y_surface - spoke_length], [z_surface, 100*data_input[3][frame]/6e5], color='k', linewidth=1)
+
         # Plot line proportional to DVA_1 input
-        ax_ani.plot([x_surface + spoke_length, x_surface + spoke_length], [y_surface, y_surface], [z_surface, data_input[0][frame]/10000], color='k', linewidth=1)
+        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[0][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
         # Plot line proportional to DVA_2 input
-        ax_ani.plot([x_surface, x_surface], [y_surface + spoke_length, y_surface + spoke_length], [z_surface, data_input[1][frame]/10000], color='k', linewidth=1)
+        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[1][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
         # Plot line proportional to DVA_3 input
-        ax_ani.plot([x_surface - spoke_length, x_surface - spoke_length], [y_surface, y_surface], [z_surface, data_input[2][frame]/10000], color='k', linewidth=1)
+        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[2][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
         # Plot line proportional to DVA_4 input
-        ax_ani.plot([x_surface, x_surface], [y_surface - spoke_length, y_surface - spoke_length], [z_surface, data_input[3][frame]/10000], color='k', linewidth=1)
+        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[3][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
+
+        if frame % 100 == 0:
+            info = f"Reward: {data_reward[0][frame]} \nReward Stab: {data_reward[1][frame]} \nReward Power: {data_reward[2][frame]}"
+            print(info)
     else:
         ## Simulate turbine step by step ##
         action = np.array([0, 0, 0, 0])
@@ -99,12 +135,11 @@ def animate(frame):
     ax_ani.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
     # Plot line from neutral base position to current base position
     ax_ani.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
-    
-    # print('Sim time', time.time() - start_time)
+
 
 
 if __name__ == "__main__":
-
+    setattr(Axes3D, 'arrow3D', _arrow3D)
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111, projection='3d')
     ax_ani.view_init(elev=18, azim=45)
@@ -122,6 +157,7 @@ if __name__ == "__main__":
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
         data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
+        data_reward = np.array([data['reward'], data['reward_stab'], data['reward_power_use']])
     else:
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01

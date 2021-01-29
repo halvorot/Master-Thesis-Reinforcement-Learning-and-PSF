@@ -1,9 +1,6 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import gym
 import gym_turbine
 import os
-from time import time
 import argparse
 
 import utils
@@ -18,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--time',
         type=int,
+        default=100,
         help='Max simulation time (seconds).',
     )
     args = parser.parse_args()

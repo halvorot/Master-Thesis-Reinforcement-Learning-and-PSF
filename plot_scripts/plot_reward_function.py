@@ -64,7 +64,7 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
 
 sigma_p = 0.2
 sigma_r = 0.2
-gamma = 15
+gamma = 80
 plot_r_stab_3d(gamma, sigma_p, sigma_r, save=True)
 plot_r_stab_contour(gamma, sigma_p, sigma_r, save=True)
 plt.show()

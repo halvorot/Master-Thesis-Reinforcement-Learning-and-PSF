@@ -59,6 +59,7 @@ class TurbineEnv(gym.Env):
         self.past_actions = []
         self.past_obs = []
         self.time = []
+        self.past_rewards = []
 
 
         self.generate_environment()
@@ -75,10 +76,6 @@ class TurbineEnv(gym.Env):
         self.turbine.step(action, self.wind_dir)
         self.observation = self.observe()
 
-        self.past_states.append(np.copy(self.turbine.state[0:11]))
-        self.past_actions.append(self.turbine.input)
-        self.past_obs.append(self.observation)
-
         done, reward = self.calculate_reward(self.observation, action)
         info = {}
         info['crashed'] = self.crashed
@@ -86,7 +83,12 @@ class TurbineEnv(gym.Env):
         self.last_reward = reward
 
         self.t_step += 1
+
         self.time.append(self.t_step*self.step_size)
+        self.past_states.append(np.copy(self.turbine.state[0:11]))
+        self.past_actions.append(self.turbine.input)
+        self.past_obs.append(self.observation)
+        self.past_rewards.append(np.array([self.last_reward, self.reward_stab, self.reward_power_use]))
 
         return self.observation, reward, done, info
 
@@ -110,9 +112,11 @@ class TurbineEnv(gym.Env):
         r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
+        self.reward_stab = reward_stab
 
         # reward_power_use = -self.gamma_F*np.sum(np.abs(action))
         reward_power_use = -self.gamma_power*np.sum(np.abs(action*self.turbine.dva_displacement_dot))
+        self.reward_power_use = reward_power_use
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 

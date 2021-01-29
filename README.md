@@ -7,10 +7,26 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing floating 
   - Intel oneAPI Base toolkit (for fortran compiler needed for OpenFAST) 
   - Intel oneAPI HPC toolkit (for fortran compiler needed for OpenFAST)
   - Follow the guide at https://openfast.readthedocs.io/en/master/source/install/install_vs_windows.html
-  - Follow the guide at https://pypi.org/project/fowt-force-gen/
 
-## Getting started
+## Installation
 Install the package by running
 ```
 pip install -e ./gym-turbine/
+```
+
+## Running the program
+
+To train an agent run:
+```
+python train.py
+```
+
+To simulate the system with an agent run:
+```
+python run.py --agent <path to agent .pkl file>
+```
+
+To show an animation of the simulation run:
+```
+python animate.py --data <path to .csv data file>
 ```

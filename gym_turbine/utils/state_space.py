@@ -39,7 +39,7 @@ k_sh = -0.0124                      # Couple parameter between surge and heave
 l = 27                              # Platform spoke length [m]
 l_s = 47.89                         # Vertical distance from mean sea level to platform bottom
 
-max_input = 7e6                     # TODO: made up number!! change!! DVA maximum force input [N]
+max_input = 6e5                     # DVA maximum force input [N]
 
 F_Wsg = 0                           # Wave force to platform surge [N]
 F_Wsw = 0                           # Wave force to platform sway [N]

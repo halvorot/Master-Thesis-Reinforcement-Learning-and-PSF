@@ -41,7 +41,7 @@ if __name__ == '__main__':
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
-    agent.learn(total_timesteps=100000, callback=callback)
+    agent.learn(total_timesteps=500000, callback=callback)
 
     save_path = os.path.join(agents_dir, "last_model.pkl")
     agent.save(save_path)

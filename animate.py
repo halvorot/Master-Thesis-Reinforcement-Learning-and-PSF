@@ -1,11 +1,11 @@
 import numpy as np
 from gym_turbine.objects import turbine
+from gym_turbine.utils import state_space as ss
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d.proj3d import proj_transform
 from matplotlib.animation import FuncAnimation
-import time
 import pandas as pd
 import argparse
 
@@ -75,30 +75,24 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
 
-        # # Plot line proportional to DVA_1 input
-        # ax_ani.plot([x_surface + spoke_length, x_surface + spoke_length], [y_surface, y_surface], [z_surface, 100*data_input[0][frame]/6e5], color='k', linewidth=1)
-        # # Plot line proportional to DVA_2 input
-        # ax_ani.plot([x_surface, x_surface], [y_surface + spoke_length, y_surface + spoke_length], [z_surface, 100*data_input[1][frame]/6e5], color='k', linewidth=1)
-        # # Plot line proportional to DVA_3 input
-        # ax_ani.plot([x_surface - spoke_length, x_surface - spoke_length], [y_surface, y_surface], [z_surface, 100*data_input[2][frame]/6e5], color='k', linewidth=1)
-        # # Plot line proportional to DVA_4 input
-        # ax_ani.plot([x_surface, x_surface], [y_surface - spoke_length, y_surface - spoke_length], [z_surface, 100*data_input[3][frame]/6e5], color='k', linewidth=1)
-
-        # Plot line proportional to DVA_1 input
-        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[0][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
-        # Plot line proportional to DVA_2 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[1][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
-        # Plot line proportional to DVA_3 input
-        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[2][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
-        # Plot line proportional to DVA_4 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[3][frame]/6e5, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_1 input
+        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_2 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_3 input
+        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_4 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
 
         if frame % 100 == 0:
             info = f"Reward: {data_reward[0][frame]} \nReward Stab: {data_reward[1][frame]} \nReward Power: {data_reward[2][frame]}"
             print(info)
     else:
         ## Simulate turbine step by step ##
-        action = np.array([0, 0, 0, 0])
+        if frame in range(50, 70):
+            action = np.array([0, 0, 0, 0])
+        else:
+            action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
         x_surface = turbine.position[0]
         y_surface = turbine.position[1]
@@ -106,6 +100,7 @@ def animate(frame):
         x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
         y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
         z_top = z_surface + height*np.cos(turbine.pitch)
+        recorded_states.append(turbine.state[0:11])
 
 
     x = [x_surface, x_top]
@@ -115,7 +110,7 @@ def animate(frame):
     y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
     z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
     # ax_ani.set_aspect('equal', adjustable='datalim')
-    ax_ani.set(xlim=(-2*height, 2*height), ylim=(-2*height, 2*height), zlim=(-height, 2*height))
+    ax_ani.set(xlim=(-height, height), ylim=(-height, height), zlim=(-0.5*height, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
     ax_ani.set_zlabel('$Z$')
@@ -128,9 +123,9 @@ def animate(frame):
     ax_ani.plot_surface(surface_X, surface_Y, surface_Z, alpha=0.1, linewidth=0, antialiased=False)
 
     # Plot pole
-    ax_ani.plot(x, y, z, color='b', linewidth=5)
+    ax_ani.plot(x, y, z, color='b', linewidth=2)
     # Plot base
-    ax_ani.plot(x_base, y_base, z_base, color='r', linewidth=10)
+    ax_ani.plot(x_base, y_base, z_base, color='r', linewidth=8)
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [0, y_top], [height, z_top], color='k', linewidth=1)
     # Plot line from neutral base position to current base position
@@ -143,6 +138,9 @@ if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111, projection='3d')
     ax_ani.view_init(elev=18, azim=45)
+
+    state_labels = np.array([r"x_sg", r"x_sw", r"x_hv", r"theta_r", r"theta_p", r"x_tf", r"x_ts", r"x_1", r"x_2", r"x_3", r"x_4"])
+    recorded_states = []
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -162,9 +160,16 @@ if __name__ == "__main__":
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01
         init_roll = 0   # 10*(np.pi/180)
-        init_pitch = 10*(np.pi/180)
+        init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
     ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
+
     plt.tight_layout()
     plt.show()
+    if not args.data:
+        rec_data = pd.DataFrame(recorded_states, columns=state_labels)
+        plt.plot(rec_data['x_tf'])
+        plt.plot(rec_data['x_ts'])
+        plt.ylabel('Meters')
+        plt.show()

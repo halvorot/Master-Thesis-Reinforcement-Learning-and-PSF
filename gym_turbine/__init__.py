@@ -5,8 +5,8 @@ DEFAULT_CONFIG = {
     "step_size": 0.01,
     "min_reward": -2000,
     "max_t_steps": 50000,
-    "crash_angle_condition": 30*(np.pi/180),
-    "max_init_angle": 15*(np.pi/180),
+    "crash_angle_condition": 20*(np.pi/180),    # Linearization sin(x)=x is a poor approximation outside +-20 deg
+    "max_init_angle": 10*(np.pi/180),
     "reward_crash": -1000,
     "n_actuators": 4,
     "n_observations": 2,                        # Pitch and roll angle

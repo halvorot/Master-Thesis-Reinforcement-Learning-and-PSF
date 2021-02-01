@@ -42,7 +42,7 @@ def main(args):
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=args.timesteps, callback=callback)
 
-    save_path = os.path.join(agents_dir, "last_model.pkl")
+    save_path = os.path.join(agents_dir, "last_model_" + args.timesteps + ".pkl")
     agent.save(save_path)
 
     env.close()

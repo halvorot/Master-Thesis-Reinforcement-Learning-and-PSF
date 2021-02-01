@@ -23,7 +23,7 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     # Customize the z axis.
     # ax.set_zlim(0, 1.5)
     ax.zaxis.set_major_locator(LinearLocator(10))   # Number or ticks on Z-axis
-    ax.zaxis.set_major_formatter(FormatStrFormatter('%.01f'))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.01f'))  # Format of numbers on Z-axis
 
     # Add a color bar which maps values to colors.
     fig.colorbar(surf, shrink=0.5, aspect=10)

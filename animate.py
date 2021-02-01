@@ -76,13 +76,13 @@ def animate(frame):
         z_top = z_surface + height*np.cos(data_pitch[frame])
 
         # Plot arrow proportional to DVA_1 input
-        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
         # Plot arrow proportional to DVA_2 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
         # Plot arrow proportional to DVA_3 input
-        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=1000*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
         # Plot arrow proportional to DVA_4 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=1000*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
 
         if frame % 100 == 0:
             info = f"Reward: {data_reward[0][frame]} \nReward Stab: {data_reward[1][frame]} \nReward Power: {data_reward[2][frame]}"
@@ -106,18 +106,18 @@ def animate(frame):
     x = [x_surface, x_top]
     y = [y_surface, y_top]
     z = [z_surface, z_top]
-    x_base = [-0.2*(x_top-x_surface) + x_surface, x_surface]
-    y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
-    z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
+    x_base = [-0.5*(x_top-x_surface) + x_surface, x_surface]
+    y_base = [-0.5*(y_top-y_surface) + y_surface, y_surface]
+    z_base = [-0.5*(z_top-z_surface) + z_surface, z_surface]
     # ax_ani.set_aspect('equal', adjustable='datalim')
-    ax_ani.set(xlim=(-height, height), ylim=(-height, height), zlim=(-0.5*height, 1.1*height))
+    ax_ani.set(xlim=(-0.6*height, 0.6*height), ylim=(-0.6*height, 0.6*height), zlim=(-0.7*height, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
     ax_ani.set_zlabel('$Z$')
 
     # Plot surface (water)
-    surface_X = np.arange(-2*height, 2*height+1, height)
-    surface_Y = np.arange(-2*height, 2*height+1, height)
+    surface_X = np.arange(-0.6*height, 0.6*height+1, height)
+    surface_Y = np.arange(-0.6*height, 0.6*height+1, height)
     surface_X, surface_Y = np.meshgrid(surface_X, surface_Y)
     surface_Z = 0*surface_X
     ax_ani.plot_surface(surface_X, surface_Y, surface_Z, alpha=0.1, linewidth=0, antialiased=False)

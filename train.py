@@ -4,9 +4,13 @@ import os
 from time import time
 import multiprocessing
 import argparse
+import numpy as np
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.cmd_util import make_vec_env
+
+
+NUM_CPUs = multiprocessing.cpu_count()
 
 hyperparams = {
     'n_steps': 1024,
@@ -21,11 +25,10 @@ hyperparams = {
 }
 
 def callback(_locals, _globals):
-    global n_steps
     _self = _locals['self']
-    if (n_steps + 1) % 1000 == 0:
-        _self.save(os.path.join(agents_dir, "model_" + str(n_steps+1) + ".pkl"))
-    n_steps += 1
+    timesteps = np.sum(_self.get_env().get_attr('total_t_steps')) + _self.get_env().get_attr('t_step')[0]
+    if (timesteps) % 1000 == 0:
+        _self.save(os.path.join(agents_dir, "model_" + str(timesteps) + ".pkl"))
     return True
 
 
@@ -34,25 +37,21 @@ if __name__ == '__main__':
     parser.add_argument(
         '--timesteps',
         type=int,
-        default=500000,
-        help='Path to agent .pkl file.',
+        default=100000,
+        help='Number of timesteps to train the agent.',
     )
     args = parser.parse_args()
-
-    NUM_CPUs = multiprocessing.cpu_count()
-    n_steps = 0
 
     EXPERIMENT_ID = str(int(time())) + 'ppo'
     agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
     os.makedirs(agents_dir, exist_ok=True)
-    tensorboard_log = os.path.join('logs', 'tensorboard', EXPERIMENT_ID)
-    # hyperparams["tensorboard_log"] = tensorboard_log
+    tensorboard_log = os.path.join('logs', 'tensorboard')
 
     # env = gym.make('TurbineStab-v0')
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
-    agent.learn(total_timesteps=args.timesteps, callback=callback)
+    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)
 
     save_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
     agent.save(save_path)

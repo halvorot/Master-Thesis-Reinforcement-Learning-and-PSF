@@ -47,7 +47,6 @@ class TurbineEnv(gym.Env):
         self.cumulative_reward = 0
 
         self.history = []
-        self.episode_history = []
 
         self.crashed = None
         self.last_reward = None
@@ -79,16 +78,7 @@ class TurbineEnv(gym.Env):
         self.t_step = 0
         self.crashed = False
 
-        self.episode_history = {
-            'states': [],
-            'states_dot': [],
-            'input': [],
-            'observations': [],
-            'time': [],
-            'last_reward': [],
-            'last_reward_stab': [],
-            'last_reward_power_use': [],
-        }
+        self.episode_history = {}
 
         self.generate_environment()
         self.observation = self.observe()
@@ -117,7 +107,7 @@ class TurbineEnv(gym.Env):
 
     def generate_environment(self):
         """
-        Generates environment with a turbine, and a random initial condition
+        Generates environment with a turbine at random initial conditions
         """
         init_roll = (2*self.rand_num_gen.rand()-1)*self.max_init_angle      # random number in range (+- max_init_angle)
         init_pitch = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
@@ -193,18 +183,21 @@ class TurbineEnv(gym.Env):
         return ax
 
     def save_latest_step(self):
-        self.episode_history['states'].append(np.copy(self.turbine.state[0:11]))
-        self.episode_history['states_dot'].append(np.copy(self.turbine.state[11:22]))
-        self.episode_history['input'].append(self.turbine.input)
-        self.episode_history['observations'].append(self.observation)
-        self.episode_history['time'].append(self.t_step*self.step_size)
-        self.episode_history['last_reward'].append(self.last_reward)
-        self.episode_history['last_reward_stab'].append(self.reward_stab)
-        self.episode_history['last_reward_power_use'].append(self.reward_power_use)
+        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:11]))
+        self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[11:22]))
+        self.episode_history.setdefault('input', []).append(self.turbine.input)
+        self.episode_history.setdefault('observations', []).append(self.observation)
+        self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
+        self.episode_history.setdefault('last_reward', []).append(self.last_reward)
+        self.episode_history.setdefault('last_reward_stab', []).append(self.reward_stab)
+        self.episode_history.setdefault('last_reward_power_use', []).append(self.reward_power_use)
 
     def save_latest_episode(self, save_history=True):
         if save_history:
             self.history.append({
+                'episode_history': self.episode_history,
+                'avg_x_tf': np.array(self.episode_history['states'][5]).mean(),
+                'avg_x_ts': np.array(self.episode_history['states'][6]).mean(),
                 'crashed': int(self.crashed),
                 'reward': self.cumulative_reward,
                 'timesteps': self.t_step,

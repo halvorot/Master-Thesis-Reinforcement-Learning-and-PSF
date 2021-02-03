@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--agent',
-        help='Path to agent .pkl file.',
+        help='Path to agent .pkl file or model .zip file.',
     )
     parser.add_argument(
         '--time',

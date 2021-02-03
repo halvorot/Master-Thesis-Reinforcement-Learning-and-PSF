@@ -29,6 +29,9 @@ class TurbineEnv(gym.Env):
         self.t_step = 0
         self.cumulative_reward = 0
 
+        self.history = []
+        self.episode_history = []
+
         self.crashed = None
         self.last_reward = None
 
@@ -37,13 +40,17 @@ class TurbineEnv(gym.Env):
 
         self.reset()
 
-    def reset(self):
+    def reset(self, save_history=True):
         """
         Resets environment to initial state.
         """
         # Seeding
         if self.rand_num_gen is None:
             self.seed()
+
+        # Saving information about episode
+        if self.t_step:
+            self.save_latest_episode(save_history=save_history)
 
         # Incrementing counters
         self.episode += 1
@@ -55,12 +62,16 @@ class TurbineEnv(gym.Env):
         self.t_step = 0
         self.crashed = False
 
-        self.past_states = []
-        self.past_actions = []
-        self.past_obs = []
-        self.time = []
-        self.past_rewards = []
-
+        self.episode_history = {
+            'states': [],
+            'states_dot': [],
+            'input': [],
+            'observations': [],
+            'time': [],
+            'last_reward': [],
+            'last_reward_stab': [],
+            'last_reward_power_use': [],
+        }
 
         self.generate_environment()
         self.observation = self.observe()
@@ -77,20 +88,15 @@ class TurbineEnv(gym.Env):
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
-        info = {}
-        info['crashed'] = self.crashed
+
         self.cumulative_reward += reward
         self.last_reward = reward
 
+        self.save_latest_step()
+
         self.t_step += 1
 
-        self.time.append(self.t_step*self.step_size)
-        self.past_states.append(np.copy(self.turbine.state[0:11]))
-        self.past_actions.append(self.turbine.input)
-        self.past_obs.append(self.observation)
-        self.past_rewards.append(np.array([self.last_reward, self.reward_stab, self.reward_power_use]))
-
-        return self.observation, reward, done, info
+        return self.observation, reward, done, {}
 
     def generate_environment(self):
         """
@@ -107,14 +113,11 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        # r_p = 1/(self.sigma_p*np.sqrt(2*np.pi)) * np.exp(-self.turbine.pitch**2 / (2*self.sigma_p**2))
-        # r_r = 1/(self.sigma_r*np.sqrt(2*np.pi)) * np.exp(-self.turbine.roll**2 / (2*self.sigma_r**2))
         r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
         self.reward_stab = reward_stab
 
-        # reward_power_use = -self.gamma_F*np.sum(np.abs(action))
         reward_power_use = -self.gamma_power*np.sum(np.abs(action*self.turbine.dva_displacement_dot))
         self.reward_power_use = reward_power_use
 
@@ -129,6 +132,7 @@ class TurbineEnv(gym.Env):
             done = True
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
+            self.crashed = True
 
         return done, step_reward
 
@@ -169,3 +173,22 @@ class TurbineEnv(gym.Env):
         ax.plot(x, y, z)
         ax.plot(x_base, y_base, z_base, color='r', linewidth=10)
         return ax
+
+    def save_latest_step(self):
+        self.episode_history['states'].append(np.copy(self.turbine.state[0:11]))
+        self.episode_history['states_dot'].append(np.copy(self.turbine.state[11:22]))
+        self.episode_history['input'].append(self.turbine.input)
+        self.episode_history['observations'].append(self.observation)
+        self.episode_history['time'].append(self.t_step*self.step_size)
+        self.episode_history['last_reward'].append(self.last_reward)
+        self.episode_history['last_reward_stab'].append(self.reward_stab)
+        self.episode_history['last_reward_power_use'].append(self.reward_power_use)
+
+    def save_latest_episode(self, save_history=True):
+        if save_history:
+            self.history.append({
+                'crashed': int(self.crashed),
+                'reward': self.cumulative_reward,
+                'timesteps': self.t_step,
+                'duration': self.t_step*self.step_size
+            })

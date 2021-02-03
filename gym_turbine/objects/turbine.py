@@ -33,7 +33,7 @@ class Turbine():
         self.state[6] = -ss.H*np.sin(self.roll)*np.cos(self.pitch)
         self.input = np.zeros(4)                        # Initialize control input
         self.step_size = step_size
-        self.height = 90                                # TODO: add to config instead of hardcode
+        self.height = ss.H - ss.l_c                     # Distance from mean sea level to nacelle center
 
     def step(self, action, wind_dir):
         DVA1 = _un_normalize_dva_input(action[0])

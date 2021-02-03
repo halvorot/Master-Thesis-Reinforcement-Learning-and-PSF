@@ -19,8 +19,25 @@ class TurbineEnv(gym.Env):
                                            high=np.array([1]*self.n_actuators),
                                            dtype=np.float32)
 
-        self.observation_space = gym.spaces.Box(low=np.array([-1]*self.n_observations),
-                                                high=np.array([1]*self.n_observations),
+        # Legal limits for state observations
+        high = np.array([   np.finfo(np.float32).max,           # x_sg
+                            np.finfo(np.float32).max,           # x_sw
+                            np.finfo(np.float32).max,           # x_hv
+                            np.pi,                              # theta_r
+                            np.pi,                              # theta_p
+                            np.finfo(np.float32).max,           # x_tf
+                            np.finfo(np.float32).max,           # x_ts
+                            np.finfo(np.float32).max,           # x_sg_dot
+                            np.finfo(np.float32).max,           # x_sw_dot
+                            np.finfo(np.float32).max,           # x_hv_dot
+                            np.finfo(np.float32).max,           # theta_r_dot
+                            np.finfo(np.float32).max,           # theta_p_dot
+                            np.finfo(np.float32).max,           # x_tf_dot
+                            np.finfo(np.float32).max,           # x_ts_dot
+                        ])
+
+        self.observation_space = gym.spaces.Box(low=-high,
+                                                high=high,
                                                 dtype=np.float32)
 
 
@@ -143,9 +160,10 @@ class TurbineEnv(gym.Env):
         obs : np.ndarray
             The observation of the environment.
         """
-        roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
-        pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees
-        obs = np.array([roll, pitch])
+        # roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
+        # pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees
+
+        obs = np.hstack([self.turbine.state[0:7], self.turbine.state[11:18]])
         return obs
 
     def seed(self, seed=None):

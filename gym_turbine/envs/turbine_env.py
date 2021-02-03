@@ -119,8 +119,8 @@ class TurbineEnv(gym.Env):
         """
         Generates environment with a turbine, and a random initial condition
         """
-        init_roll = (2*self.rand_num_gen.rand()-1)*self.max_init_angle
-        init_pitch = (2*self.rand_num_gen.rand()-1)*self.max_init_angle
+        init_roll = (2*self.rand_num_gen.rand()-1)*self.max_init_angle      # random number in range (+- max_init_angle)
+        init_pitch = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
         init_state = np.array([init_roll, init_pitch])
         self.turbine = Turbine(init_state, self.step_size)
 

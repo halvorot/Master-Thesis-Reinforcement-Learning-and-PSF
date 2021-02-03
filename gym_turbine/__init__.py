@@ -15,7 +15,7 @@ DEFAULT_CONFIG = {
     "gamma_p": 80,                              # Exponential coefficient for pitch angle reward
     "gamma_r": 80,                              # Exponential coefficient for roll angle reward
     "gamma_F": 1/4,                             # Coefficient for normalization of energy use reward
-    "gamma_power": 1,                           # Coefficient for power use reward
+    "gamma_power": 1/4,                         # Coefficient for power use reward
 }
 
 

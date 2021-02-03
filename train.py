@@ -21,14 +21,26 @@ hyperparams = {
 }
 
 def callback(_locals, _globals):
+    global n_steps
     _self = _locals['self']
-    total_t_steps = _self.get_env().get_attr('total_t_steps')[0]*NUM_CPUs
-    if (total_t_steps + 1) % 1000 == 0:
-        _self.save(os.path.join(agents_dir, "model_" + str(total_t_steps+1) + ".pkl"))
+    if (n_steps + 1) % 1000 == 0:
+        _self.save(os.path.join(agents_dir, "model_" + str(n_steps+1) + ".pkl"))
+    n_steps += 1
     return True
 
-def main(args):
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--timesteps',
+        type=int,
+        default=500000,
+        help='Path to agent .pkl file.',
+    )
+    args = parser.parse_args()
+
     NUM_CPUs = multiprocessing.cpu_count()
+    n_steps = 0
 
     EXPERIMENT_ID = str(int(time())) + 'ppo'
     agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
@@ -42,20 +54,7 @@ def main(args):
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=args.timesteps, callback=callback)
 
-    save_path = os.path.join(agents_dir, "last_model_" + args.timesteps + ".pkl")
+    save_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
     agent.save(save_path)
 
     env.close()
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--timesteps',
-        type=int,
-        default=500000,
-        help='Path to agent .pkl file.',
-    )
-    args = parser.parse_args()
-
-    main(args)

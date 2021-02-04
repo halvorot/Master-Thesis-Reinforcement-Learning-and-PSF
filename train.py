@@ -6,9 +6,11 @@ import multiprocessing
 import argparse
 import numpy as np
 
+from gym_turbine import reporting
+
 from stable_baselines3 import PPO
-from stable_baselines3.common.cmd_util import make_vec_env
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.env_util import make_vec_env
+
 
 
 NUM_CPUs = multiprocessing.cpu_count()
@@ -25,33 +27,12 @@ hyperparams = {
     'verbose': 2
 }
 
-class CustomCallback(BaseCallback):
-    """
-    Callback for saving a model every ``save_freq`` steps
-    :param save_freq:
-    :param save_path: Path to the folder where the model will be saved.
-    :param name_prefix: Common prefix to the saved models
-    :param verbose:
-    """
-
-    def __init__(self, save_freq: int, save_path: str, name_prefix: str = "rl_model", verbose: int = 0):
-        super(CustomCallback, self).__init__(verbose)
-        self.save_freq = save_freq
-        self.save_path = save_path
-        self.name_prefix = name_prefix
-
-    def _init_callback(self) -> None:
-        # Create folder if needed
-        if self.save_path is not None:
-            os.makedirs(self.save_path, exist_ok=True)
-
-    def _on_step(self) -> bool:
-        if self.n_calls % self.save_freq == 0:
-            path = os.path.join(self.save_path, f"{self.name_prefix}_{self.num_timesteps}_steps")
-            self.model.save(path)
-            if self.verbose > 1:
-                print(f"Saving model checkpoint to {path}")
-        return True
+def callback(_locals, _globals):
+    _self = _locals['self']
+    timesteps = np.sum(_self.get_env().get_attr('total_t_steps')) + _self.get_env().get_attr('t_step')[0]
+    if (timesteps) % 1000 == 0:
+        _self.save(os.path.join(agents_dir, "model_" + str(timesteps) + ".zip"))
+    return True
 
 
 if __name__ == '__main__':
@@ -72,16 +53,17 @@ if __name__ == '__main__':
 
     EXPERIMENT_ID = str(int(time())) + 'ppo'
     agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
+    os.makedirs(agents_dir, exist_ok=True)
+    report_dir = os.path.join('logs', 'reports', EXPERIMENT_ID)
     tensorboard_log = os.path.join('logs', 'tensorboard')
-    custom_callback = CustomCallback(save_freq=args.save_freq, save_path=agents_dir)
 
     # env = gym.make('TurbineStab-v0')
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
-    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=custom_callback)
+    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)
 
-    save_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
-    agent.save(save_path)
+    agents_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
+    agent.save(agents_path)
 
     env.close()

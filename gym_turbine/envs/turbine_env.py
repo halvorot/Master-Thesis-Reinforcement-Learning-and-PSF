@@ -14,6 +14,8 @@ class TurbineEnv(gym.Env):
         print(colored('Debug: Initializing environment...', 'green'))
         for key in env_config:
             setattr(self, key, env_config[key])
+        
+        self.config = env_config
 
         self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
                                            high=np.array([1]*self.n_actuators),
@@ -195,6 +197,7 @@ class TurbineEnv(gym.Env):
     def save_latest_episode(self, save_history=True):
         if save_history:
             self.history.append({
+                'episode_num': self.episode,
                 'episode_history': self.episode_history,
                 'avg_x_tf': np.array(self.episode_history['states'][5]).mean(),
                 'avg_x_ts': np.array(self.episode_history['states'][6]).mean(),

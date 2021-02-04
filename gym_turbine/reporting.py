@@ -17,6 +17,8 @@ def report(env, report_dir, lastn=100):
         no_crashes = crashes == 0
         avg_x_tf = np.array([obj['avg_x_tf'] for obj in relevant_history])
         avg_x_ts = np.array([obj['avg_x_ts'] for obj in relevant_history])
+        avg_theta_r = np.array([obj['avg_theta_r'] for obj in relevant_history])
+        avg_theta_p = np.array([obj['avg_theta_p'] for obj in relevant_history])
         rewards = np.array([obj['reward'] for obj in relevant_history])
         timesteps = np.array([obj['timesteps'] for obj in relevant_history])
         durations = np.array([obj['duration'] for obj in relevant_history])
@@ -30,10 +32,12 @@ def report(env, report_dir, lastn=100):
             f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
             f.write('{:<30}{:<30.2f}\n'.format('Avg. x_tf', avg_x_tf.mean()))
             f.write('{:<30}{:<30.2f}\n'.format('Avg. x_ts', avg_x_ts.mean()))
+            f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_r', avg_theta_r.mean()))
+            f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_p', avg_theta_p.mean()))
             f.write('{:<30}{:<30.2f}\n'.format('Avg. Timesteps', timesteps.mean()))
             f.write('{:<30}{:<30.2f}\n'.format('Avg. Duration', durations.mean()))
 
-        labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"x_tf", r"x_ts", r"timesteps", r"duration"])
+        labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"x_tf", r"x_ts", r"theta_r", r"theta_p", r"timesteps", r"duration"])
 
         episode_nums = episode_nums.reshape((len(relevant_history), 1))
         rewards = rewards.reshape((len(relevant_history), 1))
@@ -41,6 +45,8 @@ def report(env, report_dir, lastn=100):
         no_crashes = no_crashes.reshape((len(relevant_history), 1))
         avg_x_tf = avg_x_tf.reshape((len(relevant_history), 1))
         avg_x_ts = avg_x_ts.reshape((len(relevant_history), 1))
+        avg_theta_r = avg_theta_r.reshape((len(relevant_history), 1))
+        avg_theta_p = avg_theta_p.reshape((len(relevant_history), 1))
         timesteps = timesteps.reshape((len(relevant_history), 1))
         durations = durations.reshape((len(relevant_history), 1))
 
@@ -50,6 +56,8 @@ def report(env, report_dir, lastn=100):
                                     no_crashes,
                                     avg_x_tf,
                                     avg_x_ts,
+                                    avg_theta_r,
+                                    avg_theta_p,
                                     timesteps,
                                     durations
                                 ])

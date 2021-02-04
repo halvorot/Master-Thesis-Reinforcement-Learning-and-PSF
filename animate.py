@@ -90,7 +90,7 @@ def animate(frame):
     else:
         ## Simulate turbine step by step ##
         if frame in range(50, 70):
-            action = np.array([0, 0, 0, 0])
+            action = np.array([1, 0, 0, 0])
         else:
             action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
@@ -101,6 +101,15 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
         z_top = z_surface + height*np.cos(turbine.pitch)
         recorded_states.append(turbine.state[0:11])
+
+        # Plot arrow proportional to DVA_1 input
+        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_2 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[1], mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_3 input
+        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[2], mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_4 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
 
 
     x = [x_surface, x_top]

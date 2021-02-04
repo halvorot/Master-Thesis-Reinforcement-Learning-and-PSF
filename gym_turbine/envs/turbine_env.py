@@ -125,10 +125,10 @@ class TurbineEnv(gym.Env):
         r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
-        self.reward_stab = reward_stab
+        self.reward_stab = self.lambda_reward*reward_stab
 
         reward_power_use = -self.gamma_power*np.sum(np.abs(action*self.turbine.dva_displacement_dot))
-        self.reward_power_use = reward_power_use
+        self.reward_power_use = (1-self.lambda_reward)*reward_power_use
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 
@@ -151,6 +151,7 @@ class TurbineEnv(gym.Env):
         -------
         obs : np.ndarray
             The observation of the environment.
+            Includes x and x_dot, where x = [x_sg, x_sw, x_hv, theta_r, theta_p, x_tf, x_ts]
         """
         # roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
         # pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees

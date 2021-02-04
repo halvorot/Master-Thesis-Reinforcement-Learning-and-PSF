@@ -10,7 +10,7 @@ from gym_turbine import reporting
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
 
 NUM_CPUs = multiprocessing.cpu_count()
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     tensorboard_log = os.path.join('logs', 'tensorboard')
 
     # env = gym.make('TurbineStab-v0')
-    env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs)
+    env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)

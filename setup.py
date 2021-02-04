@@ -10,7 +10,6 @@ setup(
         'gym',
         'stable-baselines3[extra]',
         'matplotlib',
-        'tensorflow',
         'termcolor'
     ]  # And any other dependencies it needs
 )

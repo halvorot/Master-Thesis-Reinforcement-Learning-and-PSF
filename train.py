@@ -32,6 +32,22 @@ def callback(_locals, _globals):
     timesteps = np.sum(_self.get_env().get_attr('total_t_steps')) + _self.get_env().get_attr('t_step')[0]
     if (timesteps) % 1000 == 0:
         _self.save(os.path.join(agents_dir, "model_" + str(timesteps) + ".zip"))
+
+        vec_env = _self.get_env()
+
+        class Struct(object): pass
+        report_env = Struct()
+        report_env.history = []
+        report_env.config = vec_env.get_attr('config')[0]
+
+        env_histories = vec_env.get_attr('history')
+        for episode in range(max(map(len, env_histories))):
+            for env_idx in range(len(env_histories)):
+                if (episode < len(env_histories[env_idx])):
+                    report_env.history.append(env_histories[env_idx][episode])
+        if len(report_env.history) > 0:
+            reporting.report(env=report_env, report_dir=report_dir)
+            print("reporting...")
     return True
 
 

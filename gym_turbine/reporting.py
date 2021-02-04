@@ -33,8 +33,16 @@ def report(env, report_dir, lastn=100):
             f.write('{:<30}{:<30.2f}\n'.format('Avg. Timesteps', timesteps.mean()))
             f.write('{:<30}{:<30.2f}\n'.format('Avg. Duration', durations.mean()))
 
-        data_labels = [r"reward", r"crash", r"no_crash", r"x_tf", r"x_ts", r"timesteps", r"duration"]
-        labels = np.hstack(["episode", data_labels])
+        labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"x_tf", r"x_ts", r"timesteps", r"duration"])
+
+        episode_nums = episode_nums.reshape((len(relevant_history), 1))
+        rewards = rewards.reshape((len(relevant_history), 1))
+        crashes = crashes.reshape((len(relevant_history), 1))
+        no_crashes = no_crashes.reshape((len(relevant_history), 1))
+        avg_x_tf = avg_x_tf.reshape((len(relevant_history), 1))
+        avg_x_ts = avg_x_ts.reshape((len(relevant_history), 1))
+        timesteps = timesteps.reshape((len(relevant_history), 1))
+        durations = durations.reshape((len(relevant_history), 1))
 
         report_data = np.hstack([   episode_nums,
                                     rewards,

@@ -132,7 +132,7 @@ class TurbineEnv(gym.Env):
 
         step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
 
-        end_cond_1 = self.last_reward < self.min_reward
+        end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.total_t_steps >= self.max_t_steps
         crash_cond_1 = self.turbine.pitch > self.crash_angle_condition
         crash_cond_2 = self.turbine.roll > self.crash_angle_condition
@@ -199,8 +199,8 @@ class TurbineEnv(gym.Env):
             self.history.append({
                 'episode_num': self.episode,
                 'episode_history': self.episode_history,
-                'avg_x_tf': np.array(self.episode_history['states'][5]).mean(),
-                'avg_x_ts': np.array(self.episode_history['states'][6]).mean(),
+                'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),
+                'avg_x_ts': np.array(self.episode_history['states'])[:, 6].mean(),
                 'crashed': int(self.crashed),
                 'reward': self.cumulative_reward,
                 'timesteps': self.t_step,

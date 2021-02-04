@@ -9,8 +9,8 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     # Make data.
-    X = np.arange(-0.5, 0.5, 0.01)
-    Y = np.arange(-0.5, 0.5, 0.01)
+    X = np.arange(-0.2, 0.2, 0.01)
+    Y = np.arange(-0.2, 0.2, 0.01)
     X, Y = np.meshgrid(X, Y)
     r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
     r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
@@ -42,8 +42,8 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
     ax = fig.add_subplot(111)
 
     # Make data.
-    X = np.arange(-0.5, 0.5, 0.01)
-    Y = np.arange(-0.5, 0.5, 0.01)
+    X = np.arange(-0.2, 0.2, 0.01)
+    Y = np.arange(-0.2, 0.2, 0.01)
     X, Y = np.meshgrid(X, Y)
     r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
     r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
@@ -64,7 +64,7 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
 
 sigma_p = 0.2
 sigma_r = 0.2
-gamma = 80
+gamma = 250
 plot_r_stab_3d(gamma, sigma_p, sigma_r, save=True)
 plot_r_stab_contour(gamma, sigma_p, sigma_r, save=True)
 plt.show()

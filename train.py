@@ -28,6 +28,39 @@ hyperparams = {
     'verbose': 2
 }
 
+class ReportingCallback(BaseCallback):
+    """
+    Callback for reporting training
+    :param save_freq:
+    :param report_dir: Path to the folder where the report will be saved.
+    :param verbose:
+    """
+
+    def __init__(self, save_freq: str, report_dir: str, verbose: int = 0):
+        super(ReportingCallback, self).__init__(verbose)
+        self.report_dir = report_dir
+        self.save_freq = save_freq
+        self.verbose = verbose
+
+    def _on_step(self) -> bool:
+        vec_env = self.training_env
+
+        class Struct(object): pass
+        report_env = Struct()
+        report_env.history = []
+        report_env.config = vec_env.get_attr('config')[0]
+
+        env_histories = vec_env.get_attr('history')
+        for episode in range(max(map(len, env_histories))):
+            for env_idx in range(len(env_histories)):
+                if (episode < len(env_histories[env_idx])):
+                    report_env.history.append(env_histories[env_idx][episode])
+        if len(report_env.history) > 0 and self.n_calls % self.save_freq == 0:
+            reporting.report(env=report_env, report_dir=self.report_dir)
+            if self.verbose:
+                print("reporting...")
+        return True
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -57,9 +90,13 @@ if __name__ == '__main__':
 
     # Callback to save model at checkpoint
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
+    # Callback to report training to file
+    reporting_callback = ReportingCallback(save_freq=100, report_dir=report_dir, verbose=1)
+    # Create the callback list
+    callback = CallbackList([checkpoint_callback, reporting_callback])
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
-    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=checkpoint_callback)
+    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)
 
     agents_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
     agent.save(agents_path)

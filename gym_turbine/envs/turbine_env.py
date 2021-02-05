@@ -142,6 +142,7 @@ class TurbineEnv(gym.Env):
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
+            print("crashed")
 
         return done, step_reward
 

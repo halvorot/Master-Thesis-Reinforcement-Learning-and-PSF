@@ -125,7 +125,6 @@ class TurbineEnv(gym.Env):
         r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
         reward_stab = r_p * r_r
-        self.reward_stab = self.lambda_reward*reward_stab
 
         step_reward = reward_stab
 
@@ -191,7 +190,6 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('observations', []).append(self.observation)
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
-        self.episode_history.setdefault('last_reward_stab', []).append(self.reward_stab)
 
     def save_latest_episode(self, save_history=True):
         if save_history:

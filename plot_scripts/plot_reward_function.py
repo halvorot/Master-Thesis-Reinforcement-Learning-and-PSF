@@ -1,10 +1,14 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
+import argparse
 
 RAD2DEG = 180/np.pi
 
-def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
+def rew_func(x, y, gamma):
+    return np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
+
+def plot_r_stab_3d(gamma, save=False):
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
@@ -12,9 +16,7 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     X = np.arange(-0.2, 0.2, 0.01)
     Y = np.arange(-0.2, 0.2, 0.01)
     X, Y = np.meshgrid(X, Y)
-    r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
-    r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
-    Z = r_p * r_r
+    Z = rew_func(X, Y, gamma)
 
     # Plot the surface.
     surf = ax.plot_surface(X*RAD2DEG, Y*RAD2DEG, Z, cmap='magma',
@@ -36,7 +38,7 @@ def plot_r_stab_3d(gamma, sigma_p, sigma_r, save=False):
     if save:
         plt.savefig('plot_results/r_stab_alternative_plot_3d.pdf', bbox_inches='tight')
 
-def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
+def plot_r_stab_contour(gamma, save=False):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -45,9 +47,7 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
     X = np.arange(-0.2, 0.2, 0.01)
     Y = np.arange(-0.2, 0.2, 0.01)
     X, Y = np.meshgrid(X, Y)
-    r_p = np.exp(-gamma*(X**2))  # 1/(sigma_p*np.sqrt(2*np.pi)) * np.exp(-X**2 / (2*sigma_p**2))
-    r_r = np.exp(-gamma*(Y**2))  # 1/(sigma_r*np.sqrt(2*np.pi)) * np.exp(-Y**2 / (2*sigma_r**2))
-    Z = r_p * r_r
+    Z = rew_func(X, Y, gamma)
 
     # Plot the surface.
     reward_plot = ax.contourf(X*RAD2DEG, Y*RAD2DEG, Z, levels=20, cmap='magma')
@@ -62,9 +62,16 @@ def plot_r_stab_contour(gamma, sigma_p, sigma_r, save=False):
         plt.savefig('plot_results/r_stab_plot_alternative_contour.pdf', bbox_inches='tight')
 
 
-sigma_p = 0.2
-sigma_r = 0.2
-gamma = 250
-plot_r_stab_3d(gamma, sigma_p, sigma_r, save=True)
-plot_r_stab_contour(gamma, sigma_p, sigma_r, save=True)
-plt.show()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--save',
+        help='Save plots',
+        action='store_true'
+    )
+    args = parser.parse_args()
+
+    gamma = 250
+    plot_r_stab_3d(gamma, save=args.save)
+    plot_r_stab_contour(gamma, save=args.save)
+    plt.show()

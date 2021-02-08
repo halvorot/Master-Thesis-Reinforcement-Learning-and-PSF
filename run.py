@@ -26,8 +26,11 @@ if __name__ == "__main__":
     sim_df = utils.simulate_environment(env, agent, args.time)
 
     agent_path_list = agent_path.split("\\")
-    simdata_dir = os.path.join("logs", "sim_data", agent_path_list[-2])
+    simdata_dir = os.path.join("logs", agent_path_list[-3], "sim_data")
     os.makedirs(simdata_dir, exist_ok=True)
 
-    # Save file to logs\sim_data\<EXPERIMENT_ID>ppo\<agent_file_name>_simdata.csv
-    sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + "_simdata.csv"))
+    # Save file to logs\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
+    i = 0
+    while os.path.exists(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
+        i += 1
+    sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))

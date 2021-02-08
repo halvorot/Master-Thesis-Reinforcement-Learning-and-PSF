@@ -94,11 +94,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     EXPERIMENT_ID = str(int(time())) + 'ppo'
-    agents_dir = os.path.join('logs', 'agents', EXPERIMENT_ID)
+    agents_dir = os.path.join('logs', EXPERIMENT_ID, 'agents')
     os.makedirs(agents_dir, exist_ok=True)
-    report_dir = os.path.join('logs', 'reports', EXPERIMENT_ID)
-    results_dir = os.path.join('logs', 'results', EXPERIMENT_ID)
-    tensorboard_log = os.path.join('logs', 'tensorboard')
+    report_dir = os.path.join('logs', EXPERIMENT_ID, 'reports')
+    tensorboard_log = os.path.join('logs', EXPERIMENT_ID, 'tensorboard')
 
     # Make environment
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
-    agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)
+    agent.learn(total_timesteps=args.timesteps, callback=callback)
 
     agents_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
     agent.save(agents_path)

@@ -14,7 +14,7 @@ class TurbineEnv(gym.Env):
         print(colored('Debug: Initializing environment...', 'green'))
         for key in env_config:
             setattr(self, key, env_config[key])
-        
+
         self.config = env_config
 
         self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
@@ -135,7 +135,6 @@ class TurbineEnv(gym.Env):
 
         if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
             done = True
-            print(colored('Debug: Episode done...', 'green'))
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
@@ -193,7 +192,6 @@ class TurbineEnv(gym.Env):
 
     def save_latest_episode(self, save_history=True):
         if save_history:
-            print("Saving episode")
             self.history.append({
                 'episode_num': self.episode,
                 'episode_history': self.episode_history,

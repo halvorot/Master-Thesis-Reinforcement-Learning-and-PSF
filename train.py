@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # Callback to save model at checkpoint
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
     # Callback to report training to file
-    reporting_callback = ReportingCallback(save_freq=100, report_dir=report_dir, verbose=1)
+    reporting_callback = ReportingCallback(save_freq=10, report_dir=report_dir, verbose=1)
     # Create the callback list
     callback = CallbackList([checkpoint_callback, reporting_callback])
 

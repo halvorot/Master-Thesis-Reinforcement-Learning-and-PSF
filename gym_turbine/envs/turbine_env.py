@@ -127,22 +127,20 @@ class TurbineEnv(gym.Env):
         reward_stab = r_p * r_r
         self.reward_stab = self.lambda_reward*reward_stab
 
-        reward_power_use = -self.gamma_power*np.sum(np.abs(action*self.turbine.dva_displacement_dot))
-        self.reward_power_use = (1-self.lambda_reward)*reward_power_use
-
-        step_reward = self.lambda_reward*reward_stab + (1-self.lambda_reward)*reward_power_use
+        step_reward = reward_stab
 
         end_cond_1 = self.cumulative_reward < self.min_reward
-        end_cond_2 = self.total_t_steps >= self.max_t_steps
+        end_cond_2 = self.t_step >= self.max_t_steps
         crash_cond_1 = self.turbine.pitch > self.crash_angle_condition
         crash_cond_2 = self.turbine.roll > self.crash_angle_condition
 
         if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
             done = True
+            print(colored('Debug: Episode done...', 'green'))
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
-            print("crashed")
+            print(colored('Trubine crashed', 'green'))
 
         return done, step_reward
 
@@ -194,10 +192,10 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
         self.episode_history.setdefault('last_reward_stab', []).append(self.reward_stab)
-        self.episode_history.setdefault('last_reward_power_use', []).append(self.reward_power_use)
 
     def save_latest_episode(self, save_history=True):
         if save_history:
+            print("Saving episode")
             self.history.append({
                 'episode_num': self.episode,
                 'episode_history': self.episode_history,

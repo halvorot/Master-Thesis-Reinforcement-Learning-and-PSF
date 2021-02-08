@@ -85,7 +85,7 @@ def animate(frame):
         ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
 
         if frame % 100 == 0:
-            info = f"Reward: {data_reward[0][frame]} \nReward Stab: {data_reward[1][frame]} \nReward Power: {data_reward[2][frame]}"
+            info = f"Reward: {data_reward[0][frame]} \nReward Stab: {data_reward[1][frame]}"
             print(info)
     else:
         ## Simulate turbine step by step ##
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
         data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
-        data_reward = np.array([data['reward'], data['reward_stab'], data['reward_power_use']])
+        data_reward = np.array([data['reward'], data['reward_stab']])
     else:
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01

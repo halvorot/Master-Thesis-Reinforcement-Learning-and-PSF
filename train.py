@@ -57,7 +57,7 @@ class ReportingCallback(BaseCallback):
             if len(report_env.history) > 0:
                 reporting.report(env=report_env, report_dir=self.report_dir)
                 if self.verbose:
-                    print("reporting...")
+                    print("reported episode")
 
         self.prev_len_history = max(map(len, env_histories))
         return True
@@ -84,12 +84,6 @@ if __name__ == '__main__':
         type=int,
         default=100000,
         help='Number of timesteps to train the agent.',
-    )
-    parser.add_argument(
-        '--save_freq',
-        type=int,
-        default=1000,
-        help='How often to save a checkpoint of the agent. Every save_freq steps.',
     )
     args = parser.parse_args()
 

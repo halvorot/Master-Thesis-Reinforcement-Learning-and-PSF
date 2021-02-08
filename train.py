@@ -11,7 +11,7 @@ from gym_turbine import reporting
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback
 
 
 NUM_CPUs = multiprocessing.cpu_count()
@@ -31,34 +31,49 @@ hyperparams = {
 class ReportingCallback(BaseCallback):
     """
     Callback for reporting training
-    :param save_freq:
     :param report_dir: Path to the folder where the report will be saved.
     :param verbose:
     """
 
-    def __init__(self, save_freq: str, report_dir: str, verbose: int = 0):
+    def __init__(self, report_dir: str, verbose: int = 0):
         super(ReportingCallback, self).__init__(verbose)
         self.report_dir = report_dir
-        self.save_freq = save_freq
         self.verbose = verbose
+        self.prev_len_history = 0
 
     def _on_step(self) -> bool:
         vec_env = self.training_env
 
-        class Struct(object): pass
-        report_env = Struct()
-        report_env.history = []
-        report_env.config = vec_env.get_attr('config')[0]
-
         env_histories = vec_env.get_attr('history')
-        for episode in range(max(map(len, env_histories))):
-            for env_idx in range(len(env_histories)):
-                if (episode < len(env_histories[env_idx])):
-                    report_env.history.append(env_histories[env_idx][episode])
-        if len(report_env.history) > 0 and self.n_calls % self.save_freq == 0:
-            reporting.report(env=report_env, report_dir=self.report_dir)
-            if self.verbose:
-                print("reporting...")
+        if max(map(len, env_histories)) > self.prev_len_history:
+            class Struct(object): pass
+            report_env = Struct()
+            report_env.history = []
+            for episode in range(max(map(len, env_histories))):
+                for env_idx in range(len(env_histories)):
+                    if (episode < len(env_histories[env_idx])):
+                        report_env.history.append(env_histories[env_idx][episode])
+
+            if len(report_env.history) > 0:
+                reporting.report(env=report_env, report_dir=self.report_dir)
+                if self.verbose:
+                    print("reporting...")
+
+        self.prev_len_history = max(map(len, env_histories))
+        return True
+
+class TensorboardCallback(BaseCallback):
+    """
+    Custom callback for plotting additional values in tensorboard.
+    """
+
+    def __init__(self, verbose=0):
+        super(TensorboardCallback, self).__init__(verbose)
+
+    def _on_step(self) -> bool:
+        # Log scalar value (here a random variable)
+        value = np.random.random()
+        self.logger.record('random_value', value)
         return True
 
 
@@ -91,9 +106,11 @@ if __name__ == '__main__':
     # Callback to save model at checkpoint
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
     # Callback to report training to file
-    reporting_callback = ReportingCallback(save_freq=10, report_dir=report_dir, verbose=1)
+    reporting_callback = ReportingCallback(report_dir=report_dir, verbose=1)
+    # Callback to report additional values to tensorboard
+    tensorboard_callback = TensorboardCallback()
     # Create the callback list
-    callback = CallbackList([checkpoint_callback, reporting_callback])
+    callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
 
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=args.timesteps, tb_log_name=EXPERIMENT_ID, callback=callback)

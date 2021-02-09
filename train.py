@@ -85,13 +85,23 @@ if __name__ == '__main__':
         default=100000,
         help='Number of timesteps to train the agent.',
     )
+    parser.add_argument(
+        '--note',
+        type=str,
+        default=None,
+        help="Note with additional info about training"
+    )
     args = parser.parse_args()
 
     EXPERIMENT_ID = str(int(time())) + 'ppo'
     agents_dir = os.path.join('logs', EXPERIMENT_ID, 'agents')
     os.makedirs(agents_dir, exist_ok=True)
-    report_dir = os.path.join('logs', EXPERIMENT_ID, 'reports')
+    report_dir = os.path.join('logs', EXPERIMENT_ID, 'training_report')
     tensorboard_log = os.path.join('logs', EXPERIMENT_ID, 'tensorboard')
+
+    if args.note:
+        with open(os.path.join('logs', EXPERIMENT_ID, "Note.txt"), "a") as file_object:
+            file_object.write(args.note)
 
     # Make environment
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)

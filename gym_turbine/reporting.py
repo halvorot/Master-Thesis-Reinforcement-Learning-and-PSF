@@ -23,20 +23,6 @@ def report(env, report_dir, lastn=100):
         timesteps = np.array([obj['timesteps'] for obj in relevant_history])
         durations = np.array([obj['duration'] for obj in relevant_history])
 
-
-        with open(os.path.join(report_dir, 'report.txt'), 'w') as f:
-            f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(min(lastn, len(env.history))))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. Reward', rewards.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Std. Reward', rewards.std()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. Crashes', crashes.mean()))
-            f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. x_tf', avg_x_tf.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. x_ts', avg_x_ts.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_r', avg_theta_r.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_p', avg_theta_p.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. Timesteps', timesteps.mean()))
-            f.write('{:<30}{:<30.2f}\n'.format('Avg. Duration', durations.mean()))
-
         labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"x_tf", r"x_ts", r"theta_r", r"theta_p", r"timesteps", r"duration"])
 
         episode_nums = episode_nums.reshape((len(relevant_history), 1))

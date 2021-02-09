@@ -49,6 +49,7 @@ class TurbineEnv(gym.Env):
         self.cumulative_reward = 0
 
         self.total_history = []
+        self.history = {}
 
         self.crashed = None
         self.last_reward = None
@@ -56,9 +57,7 @@ class TurbineEnv(gym.Env):
         self.rand_num_gen = None
         self.seed()
 
-        self.reset()
-
-    def reset(self, save_history=True):
+    def reset(self):
         """
         Resets environment to initial state.
         """
@@ -68,7 +67,7 @@ class TurbineEnv(gym.Env):
 
         # Saving information about episode
         if self.t_step:
-            self.save_latest_episode(save_history=save_history)
+            self.save_latest_episode()
 
         # Incrementing counters
         self.episode += 1
@@ -190,17 +189,19 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
 
-    def save_latest_episode(self, save_history=True):
-        if save_history:
-            self.total_history.append({
-                'episode_num': self.episode,
-                'episode_history': self.episode_history,
-                'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),
-                'avg_x_ts': np.array(self.episode_history['states'])[:, 6].mean(),
-                'avg_theta_r': np.array(self.episode_history['states'])[:, 3].mean(),
-                'avg_theta_p': np.array(self.episode_history['states'])[:, 4].mean(),
-                'crashed': int(self.crashed),
-                'reward': self.cumulative_reward,
-                'timesteps': self.t_step,
-                'duration': self.t_step*self.step_size
-            })
+    def save_latest_episode(self):
+        print("saaved episdoe")
+        self.history = {
+            'episode_num': self.episode,
+            'episode_history': self.episode_history,
+            'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),
+            'avg_x_ts': np.array(self.episode_history['states'])[:, 6].mean(),
+            'avg_theta_r': np.array(self.episode_history['states'])[:, 3].mean(),
+            'avg_theta_p': np.array(self.episode_history['states'])[:, 4].mean(),
+            'crashed': int(self.crashed),
+            'reward': self.cumulative_reward,
+            'timesteps': self.t_step,
+            'duration': self.t_step*self.step_size
+        }
+
+        self.total_history.append(self.history)

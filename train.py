@@ -46,7 +46,7 @@ class ReportingCallback(BaseCallback):
         ## TODO: This callback becomes very slow as history grows. Solve by clearing history after it is reported to file.
         vec_env = self.training_env
 
-        env_histories = vec_env.get_attr('history')
+        env_histories = vec_env.get_attr('total_history')
         if max(map(len, env_histories)) > self.prev_len_history:
             class Struct(object): pass
             report_env = Struct()
@@ -68,10 +68,13 @@ class ReportingCallback(BaseCallback):
         """
         This event is triggered before exiting the `learn()` method.
         """
-        training_data = pd.read_csv(os.path.join(self.report_dir, 'history_data.csv'))
-        reporting.make_summary_file(training_data, self.report_dir)
-        if self.verbose:
-            print("Made summary file of training")
+        try:
+            training_data = pd.read_csv(os.path.join(self.report_dir, 'history_data.csv'))
+            reporting.make_summary_file(training_data, self.report_dir)
+            if self.verbose:
+                print("Made summary file of training")
+        except FileNotFoundError as e:
+            print('Warning: Could not make summary, File not found ' + str(repr(e)))
 
 class TensorboardCallback(BaseCallback):
     """

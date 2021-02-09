@@ -48,7 +48,7 @@ class TurbineEnv(gym.Env):
         self.t_step = 0
         self.cumulative_reward = 0
 
-        self.history = []
+        self.total_history = []
 
         self.crashed = None
         self.last_reward = None
@@ -192,7 +192,7 @@ class TurbineEnv(gym.Env):
 
     def save_latest_episode(self, save_history=True):
         if save_history:
-            self.history.append({
+            self.total_history.append({
                 'episode_num': self.episode,
                 'episode_history': self.episode_history,
                 'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),

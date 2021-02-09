@@ -18,7 +18,7 @@ pip install -e ./gym-turbine/
 
 To train an agent run:
 ```
-python train.py
+python train.py --timesteps <number of timesteps to train>
 ```
 
 To simulate the system with an agent run:

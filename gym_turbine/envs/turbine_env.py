@@ -190,7 +190,6 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
 
     def save_latest_episode(self):
-        print("saaved episdoe")
         self.history = {
             'episode_num': self.episode,
             'episode_history': self.episode_history,

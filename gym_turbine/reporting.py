@@ -64,9 +64,42 @@ def report(env, report_dir, lastn=100):
 
         df = DataFrame(report_data, columns=labels)
 
-        df.to_csv(os.path.join(report_dir, "history_data.csv"))
+        file_path = os.path.join(report_dir, "history_data.csv")
+        if not os.path.isfile(file_path):
+            df.to_csv(file_path)
+        else:
+            df.to_csv(file_path, mode='a', header=False)
 
     except PermissionError as e:
         print('Warning: Report files are open - could not update report: ' + str(repr(e)))
     except OSError as e:
         print('Warning: Ignoring OSError: ' + str(repr(e)))
+
+def make_summary_file(data, report_dir, lastn=100):
+    os.makedirs(report_dir, exist_ok=True)
+
+    relevant_data = data[-min(lastn, data.shape[0]):]
+    print("shape data: " + str(data.shape))
+    episode_nums = np.array(relevant_data['episode'])
+    crashes = np.array(relevant_data['crash'])
+    no_crashes = crashes == 0
+    avg_x_tf = np.array(relevant_data['x_tf'])
+    avg_x_ts = np.array(relevant_data['x_ts'])
+    avg_theta_r = np.array(relevant_data['theta_r'])
+    avg_theta_p = np.array(relevant_data['theta_p'])
+    rewards = np.array(relevant_data['reward'])
+    timesteps = np.array(relevant_data['timesteps'])
+    durations = np.array(relevant_data['duration'])
+
+    with open(os.path.join(report_dir, 'summary.txt'), 'w') as f:
+        f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(min(lastn, data.shape[0])))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. Reward', rewards.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Std. Reward', rewards.std()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. Crashes', crashes.mean()))
+        f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. x_tf', avg_x_tf.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. x_ts', avg_x_ts.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_r', avg_theta_r.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. theta_p', avg_theta_p.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. Timesteps', timesteps.mean()))
+        f.write('{:<30}{:<30.2f}\n'.format('Avg. Duration', durations.mean()))

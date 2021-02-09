@@ -5,6 +5,7 @@ from time import time
 import multiprocessing
 import argparse
 import numpy as np
+import pandas as pd
 
 from gym_turbine import reporting
 
@@ -42,6 +43,7 @@ class ReportingCallback(BaseCallback):
         self.prev_len_history = 0
 
     def _on_step(self) -> bool:
+        ## TODO: This callback becomes very slow as history grows. Solve by clearing history after it is reported to file.
         vec_env = self.training_env
 
         env_histories = vec_env.get_attr('history')
@@ -62,6 +64,15 @@ class ReportingCallback(BaseCallback):
         self.prev_len_history = max(map(len, env_histories))
         return True
 
+    def _on_training_end(self) -> None:
+        """
+        This event is triggered before exiting the `learn()` method.
+        """
+        training_data = pd.read_csv(os.path.join(self.report_dir, 'history_data.csv'))
+        reporting.make_summary_file(training_data, self.report_dir)
+        if self.verbose:
+            print("Made summary file of training")
+
 class TensorboardCallback(BaseCallback):
     """
     Custom callback for plotting additional values in tensorboard.
@@ -72,8 +83,8 @@ class TensorboardCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         # Log scalar value (here a random variable)
-        value = np.random.random()
-        self.logger.record('random_value', value)
+        value = np.array(self.training_env.get_attr('cumulative_reward')).mean()
+        self.logger.record('custom/cumulative_reward', value)
         return True
 
 

@@ -1,10 +1,15 @@
 import numpy as np
+import gym
+import utils
+from stable_baselines3 import PPO
 from gym_turbine.objects import turbine
 from gym_turbine.utils import state_space as ss
 import matplotlib.pyplot as plt
+
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d.proj3d import proj_transform
+
 from matplotlib.animation import FuncAnimation
 import pandas as pd
 import argparse
@@ -66,7 +71,7 @@ def animate(frame):
     wind_dir = 0
     spoke_length = 27
 
-    if args.data:
+    if args.data or args.agent:
         # If reading from file:
         x_surface = data_position[0][frame]
         y_surface = data_position[1][frame]
@@ -85,7 +90,7 @@ def animate(frame):
         ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
 
         if frame % 100 == 0:
-            info = f"Reward: {data_reward[0][frame]}"
+            info = f"Reward: {data_reward[frame]}"
             print(info)
     else:
         ## Simulate turbine step by step ##
@@ -156,7 +161,18 @@ if __name__ == "__main__":
         '--data',
         help='Path to data .csv file.',
     )
+    parser.add_argument(
+        '--agent',
+        help='Path to agent .pkl file or model .zip file.',
+    )
+    parser.add_argument(
+        '--time',
+        type=int,
+        default=50,
+        help='Max simulation time (seconds).',
+    )
     args = parser.parse_args()
+
     if args.data:
         # If file specified, read data from file and animate
         data = pd.read_csv(args.data)
@@ -165,6 +181,11 @@ if __name__ == "__main__":
         data_pitch = data['theta_p']
         data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
         data_reward = np.array(data['reward'])
+    elif args.agent:
+        agent_path = args.agent
+        env = gym.make("TurbineStab-v0")
+        agent = PPO.load(agent_path)
+        data = utils.simulate_environment(env, agent, args.time)
     else:
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01
@@ -172,11 +193,18 @@ if __name__ == "__main__":
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
+    if args.data or args.agent:
+        data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
+        data_roll = data['theta_r']
+        data_pitch = data['theta_p']
+        data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
+        data_reward = np.array(data['reward'])
+
     ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
 
     plt.tight_layout()
     plt.show()
-    if not args.data:
+    if not args.data and not args.agent:
         rec_data = pd.DataFrame(recorded_states, columns=state_labels)
         plt.plot(rec_data['x_tf'])
         plt.plot(rec_data['x_ts'])

@@ -42,10 +42,10 @@ class ReportingCallback(BaseCallback):
         self.reported_episodes = 0
 
     def _on_step(self) -> bool:
-        ## TODO: This is a bottleneck for framerate!
         vec_env = self.training_env
 
-        env_histories = vec_env.get_attr('history')
+        env_histories = vec_env.get_attr('history')     # TODO: This is a bottleneck for framerate!
+
         history_empty = max(map(len, env_histories)) == 0
 
         if not history_empty and env_histories[0]['episode_num'] > self.reported_episodes:

@@ -68,13 +68,21 @@ class ReportingCallback(BaseCallback):
         """
         This event is triggered before exiting the `learn()` method.
         """
-        try:
-            training_data = pd.read_csv(os.path.join(self.report_dir, 'history_data.csv'))
+        vec_env = self.training_env
+        env_histories = vec_env.get_attr('total_history')
+        class Struct(object): pass
+        report_env = Struct()
+        report_env.history = []
+        for episode in range(max(map(len, env_histories))):
+            for env_idx in range(len(env_histories)):
+                if (episode < len(env_histories[env_idx])):
+                    report_env.history.append(env_histories[env_idx][episode])
+
+        if len(report_env.history) > 0:
+            training_data = reporting.format_history(report_env, lastn=-1)
             reporting.make_summary_file(training_data, self.report_dir)
             if self.verbose:
                 print("Made summary file of training")
-        except FileNotFoundError as e:
-            print('Warning: Could not make summary, File not found ' + str(repr(e)))
 
 class TensorboardCallback(BaseCallback):
     """
@@ -107,6 +115,11 @@ if __name__ == '__main__':
         default=None,
         help="Note with additional info about training"
     )
+    parser.add_argument(
+        '--no_reporting',
+        help='Skip reporting to increase framerate',
+        action='store_true'
+    )
     args = parser.parse_args()
 
     # Define necessary directories
@@ -132,7 +145,10 @@ if __name__ == '__main__':
     # Callback to report additional values to tensorboard
     tensorboard_callback = TensorboardCallback()
     # Create the callback list
-    callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
+    if args.no_reporting:
+        callback = CallbackList([checkpoint_callback, tensorboard_callback])
+    else:
+        callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
 
     # Make and train agent
     agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)

@@ -23,10 +23,14 @@ python train.py
 
 To simulate the system with an agent run:
 ```
-python run.py --agent <path to agent .pkl file>
+python run.py --agent <path to agent .pkl or .zip file>
 ```
 
 To show an animation of the simulation run:
 ```
-python animate.py --data <path to .csv data file>
+python animate.py --data <path to .csv data file> --time <Max simulation time (seconds)>
+```
+or to animate a simulation of an agent directly run:
+```
+python run.py --agent <path to agent .pkl or .zip file> --time <Max simulation time (seconds)>
 ```

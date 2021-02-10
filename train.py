@@ -26,7 +26,7 @@ hyperparams = {
     'ent_coef': 0.01,
     'verbose': 2
 }
-# TODO: reporting has assumed that all envs are done at same time. need to account for env done at different times
+
 class ReportingCallback(BaseCallback):
     """
     Callback for reporting training

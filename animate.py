@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d.proj3d import proj_transform
 from matplotlib.animation import FuncAnimation
 import pandas as pd
 import argparse
+import time
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
@@ -71,7 +72,7 @@ def animate(frame):
     wind_dir = 0
     spoke_length = 27
 
-    if args.data or args.agent:
+    if args.data:
         # If reading from file:
         x_surface = data_position[0][frame]
         y_surface = data_position[1][frame]
@@ -79,23 +80,23 @@ def animate(frame):
         x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
-
-        # Plot arrow proportional to DVA_1 input
-        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_2 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_3 input
-        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_4 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-
-        if frame % 100 == 0:
-            info = f"Pitch: {data_pitch[frame]*(180/np.pi)}\nRoll: {data_roll[frame]*(180/np.pi)}"
-            print(info)
+    elif args.agent:
+        action, _states = agent.predict(env.observation, deterministic=True)
+        _, _, done, _ = env.step(action)
+        # if done:
+        #     print("Environment done")
+        #     raise SystemExit
+        x_surface = env.turbine.position[0]
+        y_surface = env.turbine.position[1]
+        z_surface = env.turbine.position[2]
+        x_top = x_surface + height*np.sin(env.turbine.pitch)*np.cos(env.turbine.roll)
+        y_top = -(y_surface + height*np.sin(env.turbine.roll)*np.cos(env.turbine.pitch))
+        z_top = z_surface + height*np.cos(env.turbine.pitch)
+        recorded_states.append(env.turbine.state[0:11])
     else:
         ## Simulate turbine step by step ##
-        if frame in range(50, 70):
-            action = np.array([1, 0, 0, 0])
+        if frame in range(50, 60):
+            action = np.array([0.5, 0, 0, 0])
         else:
             action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
@@ -107,6 +108,16 @@ def animate(frame):
         z_top = z_surface + height*np.cos(turbine.pitch)
         recorded_states.append(turbine.state[0:11])
 
+    if args.data:
+        # Plot arrow proportional to DVA_1 input
+        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_2 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_3 input
+        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+        # Plot arrow proportional to DVA_4 input
+        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
+    else:
         # Plot arrow proportional to DVA_1 input
         ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
         # Plot arrow proportional to DVA_2 input
@@ -182,18 +193,19 @@ if __name__ == "__main__":
         data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
         data_reward = np.array(data['reward'])
     elif args.agent:
+        done = False
         agent_path = args.agent
         env = gym.make("TurbineStab-v0")
         agent = PPO.load(agent_path)
-        data = utils.simulate_environment(env, agent, args.time)
+        env.reset()
     else:
         # If not file specified, simulate turbine step by step and animate
         step_size = 0.01
-        init_roll = 0   # 10*(np.pi/180)
+        init_roll = 0
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
 
-    if args.data or args.agent:
+    if args.data:
         data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
@@ -204,9 +216,18 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
-    if not args.data and not args.agent:
+    if not (args.data or args.agent):
+        fig, (ax1, ax2) = plt.subplots(1, 2)
         rec_data = pd.DataFrame(recorded_states, columns=state_labels)
-        plt.plot(rec_data['x_tf'])
-        plt.plot(rec_data['x_ts'])
-        plt.ylabel('Meters')
+        ax1.plot(rec_data['x_tf'], label='Fore-Aft')
+        ax1.plot(rec_data['x_ts'], label='Side-Side')
+        ax1.set_ylabel('Meters')
+        ax1.set_title('Tower top displacements')
+        ax1.legend()
+
+        ax2.plot(rec_data['theta_p']*(180/np.pi), label='Pitch')
+        ax2.plot(rec_data['theta_r']*(180/np.pi), label='Roll')
+        ax2.set_ylabel('Degrees')
+        ax2.set_title('Angles')
+        ax2.legend()
         plt.show()

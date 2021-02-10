@@ -192,7 +192,6 @@ class TurbineEnv(gym.Env):
     def save_latest_episode(self):
         self.history = {
             'episode_num': self.episode,
-            'episode_history': self.episode_history,
             'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),
             'avg_x_ts': np.array(self.episode_history['states'])[:, 6].mean(),
             'avg_theta_r': np.array(self.episode_history['states'])[:, 3].mean(),

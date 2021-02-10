@@ -44,7 +44,7 @@ class ReportingCallback(BaseCallback):
     def _on_step(self) -> bool:
         vec_env = self.training_env
 
-        env_histories = vec_env.get_attr('history')     # TODO: This is a bottleneck for framerate!
+        env_histories = vec_env.get_attr('history')
 
         history_empty = max(map(len, env_histories)) == 0
 
@@ -129,10 +129,10 @@ if __name__ == '__main__':
     report_dir = os.path.join('logs', EXPERIMENT_ID, 'training_report')
     tensorboard_log = os.path.join('logs', EXPERIMENT_ID, 'tensorboard')
 
-    # Make environment
+    # Make environment (NUM_CPUs parallel envs)
     env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
 
-    # Write note and cofig to Note.txt file
+    # Write note and config to Note.txt file
     with open(os.path.join('logs', EXPERIMENT_ID, "Note.txt"), "a") as file_object:
         file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]))
         if args.note:

@@ -6,7 +6,9 @@ import argparse
 RAD2DEG = 180/np.pi
 
 def rew_func(x, y, gamma):
-    return np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
+    # tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
+    tmp = np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
+    return tmp
 
 def plot_r_stab_3d(gamma, save=False):
 

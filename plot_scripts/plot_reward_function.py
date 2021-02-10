@@ -6,8 +6,8 @@ import argparse
 RAD2DEG = 180/np.pi
 
 def rew_func(x, y, gamma):
-    # tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
-    tmp = np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
+    tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
+    # tmp = np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
     return tmp
 
 def plot_r_stab_3d(gamma, save=False):
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    gamma = 250
+    gamma = 100
     plot_r_stab_3d(gamma, save=args.save)
     plot_r_stab_contour(gamma, save=args.save)
     plt.show()

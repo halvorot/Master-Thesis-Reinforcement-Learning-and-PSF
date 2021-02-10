@@ -5,7 +5,6 @@ from time import time
 import multiprocessing
 import argparse
 import numpy as np
-import pandas as pd
 import json
 
 from gym_turbine import reporting
@@ -27,7 +26,7 @@ hyperparams = {
     'ent_coef': 0.01,
     'verbose': 2
 }
-
+# TODO: reporting has assumed that all envs are done at same time. need to account for env done at different times
 class ReportingCallback(BaseCallback):
     """
     Callback for reporting training
@@ -39,27 +38,25 @@ class ReportingCallback(BaseCallback):
         super(ReportingCallback, self).__init__(verbose)
         self.report_dir = report_dir
         self.verbose = verbose
-        self.reported_episodes = 0
 
     def _on_step(self) -> bool:
-        vec_env = self.training_env
+        # check if env is done, if yes report it to csv file
+        done_array = np.array(self.locals.get("done") if self.locals.get("done") is not None else self.locals.get("dones"))
+        if np.sum(done_array).item() > 0:
+            env_histories = self.training_env.get_attr('history')
 
-        env_histories = vec_env.get_attr('history')
-
-        history_empty = max(map(len, env_histories)) == 0
-
-        if not history_empty and env_histories[0]['episode_num'] > self.reported_episodes:
             class Struct(object): pass
             report_env = Struct()
             report_env.history = []
-            for env_idx in range(len(env_histories)):
-                report_env.history.append(env_histories[env_idx])
+            for env_idx in range(len(done_array)):
+                if done_array[env_idx]:
+                    report_env.history.append(env_histories[env_idx])
 
-            if len(report_env.history) > 0:
-                reporting.report(env=report_env, report_dir=self.report_dir)
-                self.reported_episodes += 1
-                if self.verbose:
-                    print("reported episode")
+            print(done_array)
+
+            reporting.report(env=report_env, report_dir=self.report_dir)
+            if self.verbose:
+                print("reported episode to file")
 
 
         return True
@@ -93,9 +90,16 @@ class TensorboardCallback(BaseCallback):
         super(TensorboardCallback, self).__init__(verbose)
 
     def _on_step(self) -> bool:
-        # Log scalar value (here a random variable)
-        value = np.array(self.training_env.get_attr('cumulative_reward')).mean()
-        self.logger.record('custom/cumulative_reward', value)
+        done_array = np.array(self.locals.get("done") if self.locals.get("done") is not None else self.locals.get("dones"))
+
+        if np.sum(done_array).item():
+            history = self.training_env.get_attr('history')
+
+            for env_idx in range(len(done_array)):
+                if done_array[env_idx]:
+                    self.logger.record_mean('custom/reward', history[env_idx]['reward'])
+                    self.logger.record_mean('custom/crashed', history[env_idx]['crashed'])
+
         return True
 
 

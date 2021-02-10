@@ -123,9 +123,10 @@ class TurbineEnv(gym.Env):
 
         r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
         r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
-        reward_stab = r_p * r_r
-
-        step_reward = reward_stab
+        step_reward = r_p * r_r
+        # x = self.turbine.pitch
+        # y = self.turbine.roll
+        # step_reward = np.minimum(1, -np.log(self.gamma_p*np.abs(x)+1/self.gamma_p)) + np.minimum(1, -np.log(self.gamma_r*np.abs(y)+1/self.gamma_r))
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps

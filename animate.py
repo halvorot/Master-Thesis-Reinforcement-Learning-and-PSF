@@ -90,7 +90,7 @@ def animate(frame):
         ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
 
         if frame % 100 == 0:
-            info = f"Reward: {data_reward[frame]}"
+            info = f"Pitch: {data_pitch[frame]*(180/np.pi)}\nRoll: {data_roll[frame]*(180/np.pi)}"
             print(info)
     else:
         ## Simulate turbine step by step ##

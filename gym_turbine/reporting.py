@@ -12,10 +12,10 @@ def format_history(env, lastn=100):
     episode_nums = np.array([obj['episode_num'] for obj in relevant_history])
     crashes = np.array([obj['crashed'] for obj in relevant_history])
     no_crashes = crashes == 0
-    avg_x_tf = np.array([obj['avg_x_tf'] for obj in relevant_history])
-    avg_x_ts = np.array([obj['avg_x_ts'] for obj in relevant_history])
-    avg_theta_r = np.array([obj['avg_theta_r'] for obj in relevant_history])
-    avg_theta_p = np.array([obj['avg_theta_p'] for obj in relevant_history])
+    avg_abs_x_tf = np.array([obj['avg_abs_x_tf'] for obj in relevant_history])
+    avg_abs_x_ts = np.array([obj['avg_abs_x_ts'] for obj in relevant_history])
+    avg_abs_theta_r = np.array([obj['avg_abs_theta_r'] for obj in relevant_history])
+    avg_abs_theta_p = np.array([obj['avg_abs_theta_p'] for obj in relevant_history])
     rewards = np.array([obj['reward'] for obj in relevant_history])
     timesteps = np.array([obj['timesteps'] for obj in relevant_history])
     durations = np.array([obj['duration'] for obj in relevant_history])
@@ -26,10 +26,10 @@ def format_history(env, lastn=100):
     rewards = rewards.reshape((len(relevant_history), 1))
     crashes = crashes.reshape((len(relevant_history), 1))
     no_crashes = no_crashes.reshape((len(relevant_history), 1))
-    avg_x_tf = avg_x_tf.reshape((len(relevant_history), 1))
-    avg_x_ts = avg_x_ts.reshape((len(relevant_history), 1))
-    avg_theta_r = avg_theta_r.reshape((len(relevant_history), 1))
-    avg_theta_p = avg_theta_p.reshape((len(relevant_history), 1))
+    avg_abs_x_tf = avg_abs_x_tf.reshape((len(relevant_history), 1))
+    avg_abs_x_ts = avg_abs_x_ts.reshape((len(relevant_history), 1))
+    avg_abs_theta_r = avg_abs_theta_r.reshape((len(relevant_history), 1))
+    avg_abs_theta_p = avg_abs_theta_p.reshape((len(relevant_history), 1))
     timesteps = timesteps.reshape((len(relevant_history), 1))
     durations = durations.reshape((len(relevant_history), 1))
 
@@ -37,10 +37,10 @@ def format_history(env, lastn=100):
                                 rewards,
                                 crashes,
                                 no_crashes,
-                                avg_x_tf,
-                                avg_x_ts,
-                                avg_theta_r,
-                                avg_theta_p,
+                                avg_abs_x_tf,
+                                avg_abs_x_ts,
+                                avg_abs_theta_r,
+                                avg_abs_theta_p,
                                 timesteps,
                                 durations
                             ])
@@ -70,13 +70,12 @@ def make_summary_file(data, report_dir, lastn=100):
     os.makedirs(report_dir, exist_ok=True)
 
     relevant_data = data[-min(lastn, data.shape[0]):]
-    episode_nums = np.array(relevant_data['episode'])
     crashes = np.array(relevant_data['crash'])
     no_crashes = crashes == 0
-    avg_x_tf = np.array(relevant_data['x_tf'])
-    avg_x_ts = np.array(relevant_data['x_ts'])
-    avg_theta_r = np.array(relevant_data['theta_r'])
-    avg_theta_p = np.array(relevant_data['theta_p'])
+    avg_abs_x_tf = np.array(relevant_data['x_tf'])
+    avg_abs_x_ts = np.array(relevant_data['x_ts'])
+    avg_abs_theta_r = np.array(relevant_data['theta_r'])
+    avg_abs_theta_p = np.array(relevant_data['theta_p'])
     rewards = np.array(relevant_data['reward'])
     timesteps = np.array(relevant_data['timesteps'])
     durations = np.array(relevant_data['duration'])
@@ -87,9 +86,9 @@ def make_summary_file(data, report_dir, lastn=100):
         f.write('{:<30}{:<30}\n'.format('Std. Reward', rewards.std()))
         f.write('{:<30}{:<30.2%}\n'.format('Avg. Crashes', crashes.mean()))
         f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
-        f.write('{:<30}{:<30}\n'.format('Avg. x_tf', avg_x_tf.mean()))
-        f.write('{:<30}{:<30}\n'.format('Avg. x_ts', avg_x_ts.mean()))
-        f.write('{:<30}{:<30}\n'.format('Avg. theta_r [deg]', np.rad2deg(avg_theta_r.mean())))
-        f.write('{:<30}{:<30}\n'.format('Avg. theta_p [deg]', np.rad2deg(avg_theta_p.mean())))
+        f.write('{:<30}{:<30}\n'.format('Avg. absolute x_tf', avg_abs_x_tf.mean()))
+        f.write('{:<30}{:<30}\n'.format('Avg. absolute x_ts', avg_abs_x_ts.mean()))
+        f.write('{:<30}{:<30}\n'.format('Avg. absolute theta_r [deg]', avg_abs_theta_r.mean()*(180/np.pi)))
+        f.write('{:<30}{:<30}\n'.format('Avg. absolute theta_p [deg]', avg_abs_theta_p.mean()*(180/np.pi)))
         f.write('{:<30}{:<30}\n'.format('Avg. Timesteps', timesteps.mean()))
         f.write('{:<30}{:<30}\n'.format('Avg. Duration', durations.mean()))

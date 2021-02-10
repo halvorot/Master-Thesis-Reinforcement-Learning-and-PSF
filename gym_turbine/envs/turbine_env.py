@@ -193,14 +193,16 @@ class TurbineEnv(gym.Env):
     def save_latest_episode(self):
         self.history = {
             'episode_num': self.episode,
-            'avg_x_tf': np.array(self.episode_history['states'])[:, 5].mean(),
-            'avg_x_ts': np.array(self.episode_history['states'])[:, 6].mean(),
-            'avg_theta_r': np.array(self.episode_history['states'])[:, 3].mean(),
-            'avg_theta_p': np.array(self.episode_history['states'])[:, 4].mean(),
+            'avg_abs_x_tf': np.abs(np.array(self.episode_history['states'])[:, 5]).mean(),
+            'avg_abs_x_ts': np.abs(np.array(self.episode_history['states'])[:, 6]).mean(),
+            'avg_abs_theta_r': np.abs(np.array(self.episode_history['states'])[:, 3]).mean(),
+            'avg_abs_theta_p': np.abs(np.array(self.episode_history['states'])[:, 4]).mean(),
             'crashed': int(self.crashed),
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
             'duration': self.t_step*self.step_size
         }
+
+        print(np.array(self.episode_history['states'])[:, 3].mean()*(180/np.pi))
 
         self.total_history.append(self.history)

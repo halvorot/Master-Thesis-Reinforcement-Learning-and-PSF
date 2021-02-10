@@ -52,8 +52,6 @@ class ReportingCallback(BaseCallback):
                 if done_array[env_idx]:
                     report_env.history.append(env_histories[env_idx])
 
-            print(done_array)
-
             reporting.report(env=report_env, report_dir=self.report_dir)
             if self.verbose:
                 print("reported episode to file")

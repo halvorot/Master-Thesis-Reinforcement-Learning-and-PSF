@@ -6,8 +6,11 @@ import argparse
 RAD2DEG = 180/np.pi
 
 def rew_func(x, y, gamma):
-    tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
-    # tmp = np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
+    # tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
+    # tmp = np.exp(-gamma*(np.abs(x))) * np.exp(-gamma*(np.abs(y)))
+    r_p = np.exp(-gamma*(np.abs(x)))
+    r_r = np.exp(-gamma*(np.abs(y)))
+    tmp = r_p * r_r - 2*gamma*(x**2 + y**2)
     return tmp
 
 def plot_r_stab_3d(gamma, save=False):
@@ -15,8 +18,8 @@ def plot_r_stab_3d(gamma, save=False):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     # Make data.
-    X = np.arange(-0.2, 0.2, 0.01)
-    Y = np.arange(-0.2, 0.2, 0.01)
+    X = np.arange(-0.2, 0.2, 0.001)
+    Y = np.arange(-0.2, 0.2, 0.001)
     X, Y = np.meshgrid(X, Y)
     Z = rew_func(X, Y, gamma)
 
@@ -46,8 +49,8 @@ def plot_r_stab_contour(gamma, save=False):
     ax = fig.add_subplot(111)
 
     # Make data.
-    X = np.arange(-0.2, 0.2, 0.01)
-    Y = np.arange(-0.2, 0.2, 0.01)
+    X = np.arange(-0.2, 0.2, 0.001)
+    Y = np.arange(-0.2, 0.2, 0.001)
     X, Y = np.meshgrid(X, Y)
     Z = rew_func(X, Y, gamma)
 
@@ -73,7 +76,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    gamma = 100
+    gamma = 20
     plot_r_stab_3d(gamma, save=args.save)
     plot_r_stab_contour(gamma, save=args.save)
     plt.show()

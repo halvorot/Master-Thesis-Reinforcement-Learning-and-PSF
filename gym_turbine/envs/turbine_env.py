@@ -121,12 +121,16 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        r_p = np.exp(-self.gamma_p*self.turbine.pitch**2)
-        r_r = np.exp(-self.gamma_r*self.turbine.roll**2)
-        step_reward = r_p * r_r
-        # x = self.turbine.pitch
-        # y = self.turbine.roll
+        x = self.turbine.pitch
+        y = self.turbine.roll
+        # r_p = np.exp(-self.gamma_p*x**2)
+        # r_r = np.exp(-self.gamma_r*y**2)
+
         # step_reward = np.minimum(1, -np.log(self.gamma_p*np.abs(x)+1/self.gamma_p)) + np.minimum(1, -np.log(self.gamma_r*np.abs(y)+1/self.gamma_r))
+
+        r_p = np.exp(-self.gamma_p*(np.abs(x)))
+        r_r = np.exp(-self.gamma_r*(np.abs(y)))
+        step_reward = r_p * r_r - 2*self.gamma_p*(x**2 + y**2)
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
@@ -138,7 +142,7 @@ class TurbineEnv(gym.Env):
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
-            print(colored('Trubine crashed', 'green'))
+            print(colored('Trubine crashed', 'red'))
 
         return done, step_reward
 
@@ -202,7 +206,5 @@ class TurbineEnv(gym.Env):
             'timesteps': self.t_step,
             'duration': self.t_step*self.step_size
         }
-
-        print(np.array(self.episode_history['states'])[:, 3].mean()*(180/np.pi))
 
         self.total_history.append(self.history)

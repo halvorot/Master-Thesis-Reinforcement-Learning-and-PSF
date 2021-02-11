@@ -3,7 +3,7 @@ import numpy as np
 
 DEFAULT_CONFIG = {
     "step_size": 0.01,
-    "min_reward": -1000,
+    "min_reward": -800,
     "max_t_steps": 3000,
     "crash_angle_condition": 7*(np.pi/180),
     "max_init_angle": 5*(np.pi/180),

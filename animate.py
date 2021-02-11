@@ -67,9 +67,9 @@ def plot_states(turbine, sim_time):
 
 def animate(frame):
     plt.cla()
-    height = 90
+    height = ss.H-ss.l_c
     wind_dir = 0
-    spoke_length = 27
+    spoke_length = ss.l
 
     if args.data:
         # If reading from file:
@@ -81,6 +81,7 @@ def animate(frame):
         z_top = z_surface + height*np.cos(data_pitch[frame])
         action = np.array([data_input[0][frame]/ss.max_input, data_input[1][frame]/ss.max_input, data_input[2][frame]/ss.max_input, data_input[3][frame]/ss.max_input])
     elif args.agent:
+        wind_dir = env.wind_dir
         action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
         if done:
@@ -201,7 +202,7 @@ if __name__ == "__main__":
     else:
         # If argument is specified, simulate turbine step by step and animate
         step_size = 0.01
-        init_roll = 3*(np.pi/180)
+        init_roll = 5*(np.pi/180)
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
         recorded_states.append(turbine.state[0:11])

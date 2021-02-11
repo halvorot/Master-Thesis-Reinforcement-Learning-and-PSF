@@ -9,6 +9,28 @@ from numpy.linalg import inv
 # Is k_d = 1.91e5 or 6.18e4
 # How do we control wind speed and disturbances? Have to calculate F_d somehow?
 
+### ||            R (Rotor=blade+hub)
+### ||    |------|
+### ||======|-|  |N (Nacelle mass centor)   -------- 1.75+87.6 m
+### ||    |-| |--|T (Tower top)             -------- 87.6 m 
+### ||      | |
+###         | |
+###         | |
+###         | |
+###         |-|   M (Tower mass center)     -------- 38.234 m
+###         | |
+###         | |   
+###         | |
+### ~~~~~~~~| |~~ W (sea level, reference center)-------- 0 m
+###        | - |  B (Buoyancy centre)       -------- -23.945 m
+###        | - |  F (M.C. of full system)   -------- -32.7957 m
+###        | - |  G (M.C. of platform)      -------- -40.612 m
+###   -----| - |------ S (spoke)            -------- -47.89 m
+###   |              |
+###   |              |
+###   |              | SB (sea bed)         -------- -200 m
+### this figure is from wiley paper: https://onlinelibrary.wiley.com/doi/10.1002/we.2453
+
 DoFs = 11
 zero_4_2 = np.zeros((4, 2))
 zero_2_4 = np.zeros((2, 4))

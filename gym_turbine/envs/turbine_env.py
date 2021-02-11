@@ -16,6 +16,7 @@ class TurbineEnv(gym.Env):
             setattr(self, key, env_config[key])
 
         self.config = env_config
+        self.n_actuators = 4
 
         self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
                                            high=np.array([1]*self.n_actuators),

@@ -12,14 +12,14 @@ from numpy.linalg import inv
 ### ||            R (Rotor=blade+hub)
 ### ||    |------|
 ### ||======|-|  |N (Nacelle mass centor)   -------- 1.75+87.6 m
-### ||    |-| |--|T (Tower top)             -------- 87.6 m 
+### ||    |-| |--|T (Tower top)             -------- 87.6 m
 ### ||      | |
 ###         | |
 ###         | |
 ###         | |
 ###         |-|   M (Tower mass center)     -------- 38.234 m
 ###         | |
-###         | |   
+###         | |
 ###         | |
 ### ~~~~~~~~| |~~ W (sea level, reference center)-------- 0 m
 ###        | - |  B (Buoyancy centre)       -------- -23.945 m

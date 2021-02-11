@@ -1,6 +1,5 @@
 import numpy as np
 import gym
-import utils
 from stable_baselines3 import PPO
 from gym_turbine.objects import turbine
 from gym_turbine.utils import state_space as ss
@@ -13,7 +12,6 @@ from mpl_toolkits.mplot3d.proj3d import proj_transform
 from matplotlib.animation import FuncAnimation
 import pandas as pd
 import argparse
-import time
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
@@ -80,6 +78,7 @@ def animate(frame):
         x_top = x_surface + height*np.sin(data_pitch[frame])*np.cos(data_roll[frame])
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
+        action = np.array([data_input[0][frame]/ss.max_input, data_input[1][frame]/ss.max_input, data_input[2][frame]/ss.max_input, data_input[3][frame]/ss.max_input])
     elif args.agent:
         action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
@@ -107,25 +106,6 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
         z_top = z_surface + height*np.cos(turbine.pitch)
         recorded_states.append(turbine.state[0:11])
-
-    if args.data:
-        # Plot arrow proportional to DVA_1 input
-        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[0][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_2 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[1][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_3 input
-        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*data_input[2][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_4 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*data_input[3][frame]/ss.max_input, mutation_scale=10, arrowstyle="-|>")
-    else:
-        # Plot arrow proportional to DVA_1 input
-        ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_2 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[1], mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_3 input
-        ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[2], mutation_scale=10, arrowstyle="-|>")
-        # Plot arrow proportional to DVA_4 input
-        ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
 
 
     x = [x_surface, x_top]
@@ -156,6 +136,14 @@ def animate(frame):
     # Plot line from neutral base position to current base position
     ax_ani.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
 
+    # Plot arrow proportional to DVA_1 input
+    ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
+    # Plot arrow proportional to DVA_2 input
+    ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[1], mutation_scale=10, arrowstyle="-|>")
+    # Plot arrow proportional to DVA_3 input
+    ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[2], mutation_scale=10, arrowstyle="-|>")
+    # Plot arrow proportional to DVA_4 input
+    ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
 
 
 if __name__ == "__main__":
@@ -204,13 +192,6 @@ if __name__ == "__main__":
         init_roll = 0
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
-
-    if args.data:
-        data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
-        data_roll = data['theta_r']
-        data_pitch = data['theta_p']
-        data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
-        data_reward = np.array(data['reward'])
 
     ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
 

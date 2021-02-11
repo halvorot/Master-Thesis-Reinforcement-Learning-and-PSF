@@ -1,7 +1,8 @@
 # gym-turbine
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing floating wind turbines using Deep Reinforcement Learning
 
-## required software
+## Prerequisites
+ - ffmpeg (has to be installed with conda, with pip does not work)
  - OpenFAST
   - Visual Studio (needed for OpenFAST)
   - Intel oneAPI Base toolkit (for fortran compiler needed for OpenFAST) 
@@ -16,21 +17,48 @@ pip install -e ./gym-turbine/
 
 ## Running the program
 
+### Training
 To train an agent run:
 ```
-python train.py --timesteps <number of timesteps to train>
+python train.py
 ```
+Optional arguments:
+- --timesteps <number of timesteps to train the agent>
+- --note <Note with additional info about training, gets added to Note.txt>
+- --no_reporting <Skip reporting>
 
+
+### Simulating with a trained agent
 To simulate the system with an agent run:
 ```
-python run.py --agent <path to agent .pkl or .zip file>
+python run.py
 ```
+Required arguments:
+- --agent <path to agent .pkl or .zip file>
 
+Optional arguments:
+- --time <Max simulation time (seconds)>
+
+
+### Animating
 To show an animation of the simulation run:
 ```
-python animate.py --data <path to .csv data file> --time <Max simulation time (seconds)>
+python animate.py
 ```
+Required arguments:
+- --data <path to .csv data file>
+
+Optional arguments:
+- --save_video
+- --time <Max simulation time (seconds)>
+
 or to animate a simulation of an agent directly run:
 ```
-python run.py --agent <path to agent .pkl or .zip file> --time <Max simulation time (seconds)>
+python animate.py
 ```
+Required arguments:
+- --agent <path to agent .pkl or .zip file>
+
+Optional arguments:
+- --save_video
+- --time <Max simulation time (seconds)>

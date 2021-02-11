@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--agent',
         help='Path to agent .pkl file or model .zip file.',
+        required=True,
     )
     parser.add_argument(
         '--time',

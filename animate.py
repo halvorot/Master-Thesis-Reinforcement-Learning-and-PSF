@@ -12,6 +12,7 @@ from mpl_toolkits.mplot3d.proj3d import proj_transform
 from matplotlib.animation import FuncAnimation
 import pandas as pd
 import argparse
+import os
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
@@ -82,9 +83,9 @@ def animate(frame):
     elif args.agent:
         action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
-        # if done:
-        #     print("Environment done")
-        #     raise SystemExit
+        if done:
+            print("Environment done")
+            raise SystemExit
         x_surface = env.turbine.position[0]
         y_surface = env.turbine.position[1]
         z_surface = env.turbine.position[2]
@@ -92,10 +93,11 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(env.turbine.roll)*np.cos(env.turbine.pitch))
         z_top = z_surface + height*np.cos(env.turbine.pitch)
         recorded_states.append(env.turbine.state[0:11])
+        recorded_inputs.append(env.turbine.input)
     else:
         ## Simulate turbine step by step ##
-        if frame in range(50, 60):
-            action = np.array([0.5, 0, 0, 0])
+        if frame > 50:
+            action = np.array([0, 0, 0, 0])
         else:
             action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
@@ -106,6 +108,7 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
         z_top = z_surface + height*np.cos(turbine.pitch)
         recorded_states.append(turbine.state[0:11])
+        recorded_inputs.append(turbine.input)
 
 
     x = [x_surface, x_top]
@@ -153,14 +156,17 @@ if __name__ == "__main__":
     ax_ani.view_init(elev=18, azim=45)
 
     state_labels = np.array([r"x_sg", r"x_sw", r"x_hv", r"theta_r", r"theta_p", r"x_tf", r"x_ts", r"x_1", r"x_2", r"x_3", r"x_4"])
+    input_labels = [r"Fa_1", r"Fa_2", r"Fa_3",  r"Fa_4"]
     recorded_states = []
+    recorded_inputs = []
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    parser_group = parser.add_mutually_exclusive_group()
+    parser_group.add_argument(
         '--data',
         help='Path to data .csv file.',
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '--agent',
         help='Path to agent .pkl file or model .zip file.',
     )
@@ -169,6 +175,11 @@ if __name__ == "__main__":
         type=int,
         default=50,
         help='Max simulation time (seconds).',
+    )
+    parser.add_argument(
+        '--save_video',
+        help='Save animation as mp4 file',
+        action='store_true'
     )
     args = parser.parse_args()
 
@@ -182,24 +193,39 @@ if __name__ == "__main__":
         data_reward = np.array(data['reward'])
     elif args.agent:
         done = False
-        agent_path = args.agent
         env = gym.make("TurbineStab-v0")
-        agent = PPO.load(agent_path)
+        agent = PPO.load(args.agent)
         env.reset()
+        recorded_states.append(env.turbine.state[0:11])
+        recorded_inputs.append(env.turbine.input)
     else:
-        # If not file specified, simulate turbine step by step and animate
+        # If argument is specified, simulate turbine step by step and animate
         step_size = 0.01
-        init_roll = 0
+        init_roll = 3*(np.pi/180)
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
+        recorded_states.append(turbine.state[0:11])
+        recorded_inputs.append(turbine.input)
 
-    ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
+    ani = FuncAnimation(fig_ani, animate, interval=50, blit=False)
 
     plt.tight_layout()
+    if args.save_video:
+        agent_path_list = args.agent.split("\\")
+        video_dir = os.path.join("logs", agent_path_list[-3], "videos")
+        os.makedirs(video_dir, exist_ok=True)
+        i = 0
+        video_path = os.path.join(video_dir, agent_path_list[-1][0:-4] + f"_animation_{i}.mp4")
+        while os.path.exists(video_path):
+            i += 1
+            video_path = os.path.join(video_dir, agent_path_list[-1][0:-4] + f"_animation_{i}.mp4")
+        ani.save(video_path, dpi=150)
     plt.show()
-    if not (args.data or args.agent):
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        rec_data = pd.DataFrame(recorded_states, columns=state_labels)
+
+    if not args.data:
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
+
         ax1.plot(rec_data['x_tf'], label='Fore-Aft')
         ax1.plot(rec_data['x_ts'], label='Side-Side')
         ax1.set_ylabel('Meters')
@@ -211,4 +237,21 @@ if __name__ == "__main__":
         ax2.set_ylabel('Degrees')
         ax2.set_title('Angles')
         ax2.legend()
+
+        ax3.plot(rec_data['Fa_1'], label='Fa_1', linestyle='--')
+        ax3.plot(rec_data['Fa_2'], label='Fa_2')
+        ax3.plot(rec_data['Fa_3'], label='Fa_3', linestyle='--')
+        ax3.plot(rec_data['Fa_4'], label='Fa_4')
+        ax3.set_ylabel('[N]')
+        ax3.set_title('Inputs')
+        ax3.legend()
+
+        ax4.plot(rec_data['x_1'], label='x_1', linestyle='--')
+        ax4.plot(rec_data['x_2'], label='x_2')
+        ax4.plot(rec_data['x_3'], label='x_3', linestyle='--')
+        ax4.plot(rec_data['x_4'], label='x_4')
+        ax4.set_ylabel('Meters')
+        ax4.set_title('DVA displacements')
+        ax4.legend()
+
         plt.show()

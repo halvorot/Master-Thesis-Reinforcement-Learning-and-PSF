@@ -36,11 +36,11 @@ class Turbine():
         self.height = ss.H - ss.l_c                     # Distance from mean sea level to nacelle center
 
     def step(self, action, wind_dir):
-        DVA1 = _un_normalize_dva_input(action[0])
-        DVA2 = _un_normalize_dva_input(action[1])
-        DVA3 = _un_normalize_dva_input(action[2])
-        DVA4 = _un_normalize_dva_input(action[3])
-        self.input = np.array([DVA1, DVA2, DVA3, DVA4])
+        Fa_1 = _un_normalize_dva_input(action[0])
+        Fa_2 = _un_normalize_dva_input(action[1])
+        Fa_3 = _un_normalize_dva_input(action[2])
+        Fa_4 = _un_normalize_dva_input(action[3])
+        self.input = np.array([Fa_1, Fa_2, Fa_3, Fa_4])
 
         self._sim(wind_dir)
 

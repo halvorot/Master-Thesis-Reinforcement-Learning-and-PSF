@@ -111,6 +111,10 @@ if __name__ == '__main__':
         help='Number of timesteps to train the agent. Default=500000',
     )
     parser.add_argument(
+        '--agent',
+        help='Path to the RL agent to continue training from.',
+    )
+    parser.add_argument(
         '--note',
         type=str,
         default=None,
@@ -119,11 +123,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--no_reporting',
         help='Skip reporting to increase framerate',
-        action='store_true'
-    )
-    parser.add_argument(
-        '--verbose',
-        help='Print debug info during training',
         action='store_true'
     )
     args = parser.parse_args()
@@ -147,21 +146,24 @@ if __name__ == '__main__':
     # Callback to save model at checkpoints during training
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
     # Callback to report training to file
-    reporting_callback = ReportingCallback(report_dir=report_dir, verbose=args.verbose)
+    reporting_callback = ReportingCallback(report_dir=report_dir, verbose=True)
     # Callback to report additional values to tensorboard
-    tensorboard_callback = TensorboardCallback()
+    tensorboard_callback = TensorboardCallback(verbose=True)
     # Create the callback list
     if args.no_reporting:
         callback = CallbackList([checkpoint_callback, tensorboard_callback])
     else:
         callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
 
-    # Make and train agent
-    agent = PPO('MlpPolicy', env, verbose=args.verbose, tensorboard_log=tensorboard_log)
+    if (args.agent is not None):
+        agent = PPO.load(args.agent, env=env, verbose=True, tensorboard_log=tensorboard_log)
+    else:
+        agent = PPO('MlpPolicy', env, verbose=True, tensorboard_log=tensorboard_log)
+
     agent.learn(total_timesteps=args.timesteps, callback=callback)
 
     # Save trained agent
-    agents_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps) + ".pkl")
-    agent.save(agents_path)
+    agent_path = os.path.join(agents_dir, "last_model_" + str(args.timesteps))
+    agent.save(agent_path)
 
     env.close()

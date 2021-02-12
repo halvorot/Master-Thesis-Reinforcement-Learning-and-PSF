@@ -169,7 +169,7 @@ if __name__ == "__main__":
     )
     parser_group.add_argument(
         '--agent',
-        help='Path to agent .pkl file or model .zip file.',
+        help='Path to agent .zip file.',
     )
     parser.add_argument(
         '--time',
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         data_position = np.array([data['x_sg'], data['x_sw'], data['x_hv']])
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
-        data_input = np.array([data['DVA_1'], data['DVA_2'], data['DVA_3'], data['DVA_4']])
+        data_input = np.array([data['Fa_1'], data['Fa_2'], data['Fa_3'], data['Fa_4']])
         data_reward = np.array(data['reward'])
     elif args.agent:
         done = False

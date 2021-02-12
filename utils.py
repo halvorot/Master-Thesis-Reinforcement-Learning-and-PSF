@@ -3,11 +3,11 @@ import numpy as np
 
 from pandas import DataFrame
 
-def simulate_environment(env, agent, max_time):
+def simulate_episode(env, agent, max_time):
     global input_labels, state_labels
     state_labels = [r"x_sg", r"x_sw", r"x_hv", r"theta_r", r"theta_p", r"x_tf", r"x_ts", r"x_1", r"x_2", r"x_3", r"x_4"]
     state_dot_labels = [r"x_sg_dot", r"x_sw_dot", r"x_hv_dot", r"theta_r_dot", r"theta_p_dot", r"x_tf_dot", r"x_ts_dot", r"x_1_dot", r"x_2_dot", r"x_3_dot", r"x_4_dot"]
-    input_labels = [r"DVA_1", r"DVA_2", r"DVA_3",  r"DVA_4"]
+    input_labels = [r"Fa_1", r"Fa_2", r"Fa_3",  r"Fa_4"]
     reward_labels = r"reward"
     labels = np.hstack(["time", state_labels, state_dot_labels, input_labels, reward_labels])
 

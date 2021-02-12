@@ -34,7 +34,7 @@ To simulate the system with an agent run:
 python run.py
 ```
 Required arguments:
-- --agent <path to agent .pkl or .zip file>
+- --agent <path to agent .zip file>
 
 Optional arguments:
 - --time <Max simulation time (seconds)>
@@ -57,7 +57,7 @@ or to animate a simulation of an agent directly run:
 python animate.py
 ```
 Required arguments:
-- --agent <path to agent .pkl or .zip file>
+- --agent <path to agent .zip file>
 
 Optional arguments:
 - --save_video

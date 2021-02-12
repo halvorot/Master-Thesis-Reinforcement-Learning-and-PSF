@@ -143,12 +143,8 @@ class TurbineEnv(gym.Env):
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
-            print(colored('Trubine crashed', 'red'))
-
-        if end_cond_1:
-            print(colored('Episode reached minimum reward', 'red'))
-        if end_cond_2:
-            print(colored('Episode reached max timesteps', 'red'))
+            if self.verbose:
+                print(colored('Trubine crashed', 'red'))
 
         return done, step_reward
 

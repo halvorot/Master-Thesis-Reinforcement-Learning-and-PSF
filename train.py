@@ -24,7 +24,6 @@ hyperparams = {
     'noptepochs': 4,
     'cliprange': 0.2,
     'ent_coef': 0.01,
-    'verbose': 2
 }
 
 class ReportingCallback(BaseCallback):
@@ -108,8 +107,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--timesteps',
         type=int,
-        default=100000,
-        help='Number of timesteps to train the agent.',
+        default=500000,
+        help='Number of timesteps to train the agent. Default=500000',
     )
     parser.add_argument(
         '--note',
@@ -120,6 +119,11 @@ if __name__ == '__main__':
     parser.add_argument(
         '--no_reporting',
         help='Skip reporting to increase framerate',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--verbose',
+        help='Print debug info during training',
         action='store_true'
     )
     args = parser.parse_args()
@@ -143,7 +147,7 @@ if __name__ == '__main__':
     # Callback to save model at checkpoints during training
     checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
     # Callback to report training to file
-    reporting_callback = ReportingCallback(report_dir=report_dir, verbose=1)
+    reporting_callback = ReportingCallback(report_dir=report_dir, verbose=args.verbose)
     # Callback to report additional values to tensorboard
     tensorboard_callback = TensorboardCallback()
     # Create the callback list
@@ -153,7 +157,7 @@ if __name__ == '__main__':
         callback = CallbackList([checkpoint_callback, reporting_callback, tensorboard_callback])
 
     # Make and train agent
-    agent = PPO('MlpPolicy', env, verbose=1, tensorboard_log=tensorboard_log)
+    agent = PPO('MlpPolicy', env, verbose=args.verbose, tensorboard_log=tensorboard_log)
     agent.learn(total_timesteps=args.timesteps, callback=callback)
 
     # Save trained agent

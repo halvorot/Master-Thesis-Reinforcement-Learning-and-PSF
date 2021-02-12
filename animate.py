@@ -98,7 +98,7 @@ def animate(frame):
     else:
         ## Simulate turbine step by step ##
         if frame > 50:
-            action = np.array([0, 0, 0, 0])
+            action = np.array([1, 0, 0, 0])
         else:
             action = np.array([0, 0, 0, 0])
         turbine.step(action, wind_dir)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     else:
         # If argument is specified, simulate turbine step by step and animate
         step_size = 0.01
-        init_roll = 5*(np.pi/180)
+        init_roll = 0*5*(np.pi/180)
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
         recorded_states.append(turbine.state[0:11])

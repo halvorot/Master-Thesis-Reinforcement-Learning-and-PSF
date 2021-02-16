@@ -37,8 +37,12 @@ python run.py
 Required arguments:
 - --agent <path to agent .zip file>
 
+  or
+- --lqr
+
 Optional arguments:
 - --time <Max simulation time (seconds)>
+- --plot
 
 
 ### Animating

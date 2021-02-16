@@ -2,7 +2,8 @@
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing floating wind turbines using Deep Reinforcement Learning
 
 ## Prerequisites
- - ffmpeg (has to be installed with conda, with pip does not work)
+ - ffmpeg (has to be installed with conda, with pip does not work, conda install ffmpeg)
+ - slycot (has to be installed with conda, with pip does not work, conda install -c conda-forge slycot)
  - OpenFAST
   - Visual Studio (needed for OpenFAST)
   - Intel oneAPI Base toolkit (for fortran compiler needed for OpenFAST) 

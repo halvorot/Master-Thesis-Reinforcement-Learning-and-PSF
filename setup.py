@@ -11,5 +11,6 @@ setup(
         'stable-baselines3[extra]',
         'matplotlib',
         'termcolor',
+        'control',
     ]  # And any other dependencies it needs
 )

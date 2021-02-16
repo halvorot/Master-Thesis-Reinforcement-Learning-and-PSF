@@ -29,7 +29,7 @@ from numpy.linalg import inv
 ###   |              |
 ###   |              |
 ###   |              | SB (sea bed)         -------- -200 m
-### this figure is from wiley paper: https://onlinelibrary.wiley.com/doi/10.1002/we.2453
+### this figure is from source code to wiley paper: https://onlinelibrary.wiley.com/doi/10.1002/we.2453
 
 DoFs = 11
 zero_4_2 = np.zeros((4, 2))
@@ -44,13 +44,13 @@ m_d = 1e5                           # DVA mass [kg]
 k_d = 6.18e4                        # TODO: CHECK, DVA stiffness [N/m]
 zeta_d = 0.6                        # DVA damping ratio
 c_d = 2*zeta_d*np.sqrt(m_d*k_d)     # TODO: CHECK, DVA damping coefficient
-m_tf = 5.71e5                       # TODO: From LQR .m file.
-m_ts = 2.88e5                       # TODO: From LQR .m file.
+m_tf = 5.71e5                       # TODO: From LQR .m file. Tower top mass, Fore-aft [kg]
+m_ts = 2.88e5                       # TODO: From LQR .m file. Tower top mass, Side-side [kg]
 c_tf = 7.70e4                       # Damping coefficient of tower top fore‐aft motion [N/(m/s)]
 c_ts = 6.67e3                       # Damping coefficient of tower top side-side motion [N/(m/s)]
 c_s = 4.861e5                       # Damping coefficient of platform surge and sway [N/(m/s)]
 c_t = 13263                         # Structural damping coefficient of tower [N/(m/s)]
-H = 129.962                         # Distance from nacelle center to platform mass center [m]
+H = 129.962                         # Distance from nacelle center to platform mass center [m] (87.6+1.75+40.612)
 c_ph = 1.60e4                       # Damping coefficient of platform pitch and roll [N/(m/s)]
 c_hv = 3.53e5                       # TODO: From LQR .m file.
 k_s = 3.374e6                       # Spring stiffness of platform surge and sway [N/m]
@@ -61,7 +61,7 @@ k_sh = -0.0124                      # Couple parameter between surge and heave
 l = 27                              # Platform spoke length [m]
 l_s = 47.89                         # Vertical distance from mean sea level to platform bottom
 
-max_input = 1.5e6  # 6e5                     # DVA maximum force input [N]
+max_input = 1.5e6  # 6e5            # DVA maximum force input [N]
 
 F_Wsg = 0                           # Wave force to platform surge [N]
 F_Wsw = 0                           # Wave force to platform sway [N]
@@ -170,3 +170,19 @@ def W():
     W = left.dot(B_Fd())
 
     return W
+
+def C():
+    Csys = np.identity(22)
+    Csys[5, 0] = -1
+    Csys[5, 5] = 1
+    Csys[5, 4] = -H
+    Csys[16, 11] = -1
+    Csys[16, 16] = 1
+    Csys[16, 15] = -H
+    Csys[6, 1] = 1
+    Csys[6, 6] = 1
+    Csys[6, 3] = -H
+    Csys[17, 12] = -1
+    Csys[17, 17] = 1
+    Csys[17, 14] = -H
+    return Csys

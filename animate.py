@@ -80,9 +80,16 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
         action = np.array([data_input[0][frame]/ss.max_input, data_input[1][frame]/ss.max_input, data_input[2][frame]/ss.max_input, data_input[3][frame]/ss.max_input])
-    elif args.agent:
-        wind_dir = env.wind_dir
-        action, _states = agent.predict(env.observation, deterministic=True)
+    else:
+        if args.agent:
+            wind_dir = env.wind_dir
+            action, _states = agent.predict(env.observation, deterministic=True)
+        else:
+            if frame > 50:
+                action = np.array([1, 0, 0, 0])
+            else:
+                action = np.array([0, 0, 0, 0])
+
         _, _, done, _ = env.step(action)
         if done:
             print("Environment done")
@@ -95,22 +102,6 @@ def animate(frame):
         z_top = z_surface + height*np.cos(env.turbine.pitch)
         recorded_states.append(env.turbine.state[0:11])
         recorded_inputs.append(env.turbine.input)
-    else:
-        ## Simulate turbine step by step ##
-        if frame > 50:
-            action = np.array([1, 0, 0, 0])
-        else:
-            action = np.array([0, 0, 0, 0])
-        turbine.step(action, wind_dir)
-        x_surface = turbine.position[0]
-        y_surface = turbine.position[1]
-        z_surface = turbine.position[2]
-        x_top = x_surface + height*np.sin(turbine.pitch)*np.cos(turbine.roll)
-        y_top = -(y_surface + height*np.sin(turbine.roll)*np.cos(turbine.pitch))
-        z_top = z_surface + height*np.cos(turbine.pitch)
-        recorded_states.append(turbine.state[0:11])
-        recorded_inputs.append(turbine.input)
-
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]

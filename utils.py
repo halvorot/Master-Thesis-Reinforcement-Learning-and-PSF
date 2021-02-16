@@ -17,33 +17,14 @@ def simulate_episode(env, agent, max_time, lqr=False):
     labels = np.hstack(["time", state_labels, state_dot_labels, input_labels, reward_labels])
 
     if lqr:
-        gamma = env.wind_dir
-        A = ss.A(gamma)
-        B = ss.B(gamma)
-        Q = np.identity(22)
-        Q[0, 0] = 1.6e-2/10000
-        Q[1, 1] = 17.7
-        Q[2, 2] = 599
-        Q[3, 3] = 9.23e5
-        Q[4, 4] = 1.12e4
-        Q[5, 5] = 1.44e-2
-        Q[6, 6] = 1.56e1
-        Q[11, 11] = 0.25/100
-        Q[12, 12] = 285
-        Q[13, 13] = 145
-        Q[14, 14] = 100*147
-        Q[15, 15] = 4*2.7
-        Q[16, 16] = 40*0.17e11
-        Q[17, 17] = 5*0.17e11
-        R = np.identity(4)
-        # K, S, E = control.lqr(A, B, Q, R) # Not working
-        K = loadmat('Ksys.mat')["Ksys"]
+        K = loadmat('gym_turbine\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
+        # K = loadmat('gym_turbine\\utils\\LQR_params.mat')["K"]      # Use K calculated in matlab using own system matrices
 
     done = False
     env.reset()
     while not done and env.t_step < max_time/env.step_size:
         if lqr:
-            action = -K*env.turbine.state
+            action = (-K.dot(env.turbine.state))/ss.max_input
         else:
             action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
@@ -58,33 +39,3 @@ def simulate_episode(env, agent, max_time, lqr=False):
                         ])
     df = DataFrame(sim_data, columns=labels)
     return df
-
-
-if __name__ == '__main__':
-    gamma = 0
-    A = ss.A(gamma)
-    B = ss.B(gamma)
-    C = ss.C()
-    Q = np.identity(22)
-    Q[0, 0] = 1.6e-2/10000
-    Q[1, 1] = 17.7
-    Q[2, 2] = 599
-    Q[3, 3] = 9.23e5
-    Q[4, 4] = 1.12e4
-    Q[5, 5] = 1.44e-2
-    Q[6, 6] = 1.56e1
-    Q[11, 11] = 0.25/100
-    Q[12, 12] = 285
-    Q[13, 13] = 145
-    Q[14, 14] = 100*147
-    Q[15, 15] = 4*2.7
-    Q[16, 16] = 40*0.17e11
-    Q[17, 17] = 5*0.17e11
-    Q_bar = np.matmul( np.matmul(np.transpose(C), Q), C)
-    R = np.identity(4)
-    mdict = {"Q": Q, "Q_bar": Q_bar, "R": R, "A": A, "B": B}
-    savemat('lqr_params.mat', mdict)
-    ctrl = control.ctrb(A, B)
-    print(f"Rank ctrb: {matrix_rank(ctrl)}")
-    K, S, E = control.lqr(A, B, Q_bar, R)
-    print(K.shape)

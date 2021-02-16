@@ -10,11 +10,12 @@ import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    parser_group = parser.add_mutually_exclusive_group()
+    parser_group.add_argument(
         '--agent',
         help='Path to agent .zip file.',
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '--lqr',
         help='Use LQR controller',
         action='store_true'
@@ -33,13 +34,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env = gym.make("TurbineStab-v0")
-    if True:
+    if args.lqr:
         sim_df = utils.simulate_episode(env=env, agent=None, max_time=args.time, lqr=True)
-        sim_df.to_csv(os.path.join("logs", "_simdata_lqr.csv"))
+        LQR_dir = os.path.join("logs", "LQR_simulations")
+        os.makedirs(LQR_dir, exist_ok=True)
+        i = 0
+        while os.path.exists(os.path.join(LQR_dir, f"_simdata_lqr_{i}.csv")):
+            i += 1
+        sim_df.to_csv(os.path.join(LQR_dir, f"_simdata_lqr_{i}.csv"))
     else:
         agent_path = args.agent
         agent = PPO.load(agent_path)
-        sim_df = utils.simulate_episode(env, agent, args.time)
+        sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time, lqr=False)
         agent_path_list = agent_path.split("\\")
         simdata_dir = os.path.join("logs", agent_path_list[-3], "sim_data")
         os.makedirs(simdata_dir, exist_ok=True)

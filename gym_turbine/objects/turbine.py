@@ -29,8 +29,6 @@ class Turbine():
         self.state = np.zeros(22)                       # Initialize states
         self.state[3] = init_state[0]                   # Roll initial angle
         self.state[4] = init_state[1]                   # Pitch initial angle
-        self.state[5] = ss.H*np.sin(self.pitch)*np.cos(self.roll)
-        self.state[6] = -ss.H*np.sin(self.roll)*np.cos(self.pitch)
         self.input = np.zeros(4)                        # Initialize control input
         self.step_size = step_size
         self.height = ss.H - ss.l_c                     # Distance from mean sea level to nacelle center

@@ -14,6 +14,8 @@ import pandas as pd
 import argparse
 import os
 
+
+### For arrow plotting ###
 class Arrow3D(FancyArrowPatch):
     def __init__(self, x, y, z, dx, dy, dz, *args, **kwargs):
         super().__init__((0, 0), (0, 0), *args, **kwargs)
@@ -34,7 +36,7 @@ def _arrow3D(ax, x, y, z, dx, dy, dz, *args, **kwargs):
 
     arrow = Arrow3D(x, y, z, dx, dy, dz, *args, **kwargs)
     ax.add_artist(arrow)
-
+### --- ###
 
 def plot_states(turbine, sim_time):
     step_size = 0.01
@@ -80,6 +82,7 @@ def animate(frame):
         y_top = -(y_surface + height*np.sin(data_roll[frame])*np.cos(data_pitch[frame]))
         z_top = z_surface + height*np.cos(data_pitch[frame])
         action = np.array([data_input[0][frame]/ss.max_input, data_input[1][frame]/ss.max_input, data_input[2][frame]/ss.max_input, data_input[3][frame]/ss.max_input])
+        dva_displacement = data_dva_displacement
     else:
         if args.agent:
             wind_dir = env.wind_dir
@@ -102,6 +105,7 @@ def animate(frame):
         z_top = z_surface + height*np.cos(env.turbine.pitch)
         recorded_states.append(env.turbine.state[0:11])
         recorded_inputs.append(env.turbine.input)
+        dva_displacement = np.array([env.turbine.state[7], env.turbine.state[8], env.turbine.state[9], env.turbine.state[10]])
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]
@@ -131,14 +135,17 @@ def animate(frame):
     # Plot line from neutral base position to current base position
     ax_ani.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
 
-    # Plot arrow proportional to DVA_1 input
-    ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
-    # Plot arrow proportional to DVA_2 input
-    ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[1], mutation_scale=10, arrowstyle="-|>")
-    # Plot arrow proportional to DVA_3 input
-    ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[2], mutation_scale=10, arrowstyle="-|>")
-    # Plot arrow proportional to DVA_4 input
-    ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
+    # # Plot arrow proportional to DVA input
+    # ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[0], mutation_scale=10, arrowstyle="-|>")
+    # ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[1], mutation_scale=10, arrowstyle="-|>")
+    # ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=100*action[2], mutation_scale=10, arrowstyle="-|>")
+    # ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
+
+    # Plot arrow proportional to DVA displacement
+    ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[0], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[1], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[2], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[3], mutation_scale=10, arrowstyle="-|>")
 
 
 if __name__ == "__main__":
@@ -182,6 +189,7 @@ if __name__ == "__main__":
         data_roll = data['theta_r']
         data_pitch = data['theta_p']
         data_input = np.array([data['Fa_1'], data['Fa_2'], data['Fa_3'], data['Fa_4']])
+        data_dva_displacement = np.array([data['x_1'], data['x_2'], data['x_3'], data['x_4']])
         data_reward = np.array(data['reward'])
     elif args.agent:
         done = False

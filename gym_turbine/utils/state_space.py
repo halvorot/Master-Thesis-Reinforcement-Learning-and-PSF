@@ -31,7 +31,7 @@ from numpy.linalg import inv
 ###   |              | SB (sea bed)         -------- -200 m
 ### this figure is from source code to wiley paper: https://onlinelibrary.wiley.com/doi/10.1002/we.2453
 
-DoFs = 11
+DoFs = 9
 zero_4_2 = np.zeros((4, 2))
 zero_2_4 = np.zeros((2, 4))
 
@@ -44,10 +44,6 @@ m_d = 1e5                           # DVA mass [kg]
 k_d = 6.18e4                        # TODO: CHECK, DVA stiffness [N/m]
 zeta_d = 0.6                        # DVA damping ratio
 c_d = 2*zeta_d*np.sqrt(m_d*k_d)     # TODO: CHECK, DVA damping coefficient
-m_tf = 5.71e5                       # TODO: From LQR .m file. Tower top mass, Fore-aft [kg]
-m_ts = 2.88e5                       # TODO: From LQR .m file. Tower top mass, Side-side [kg]
-c_tf = 7.70e4                       # Damping coefficient of tower top fore‐aft motion [N/(m/s)]
-c_ts = 6.67e3                       # Damping coefficient of tower top side-side motion [N/(m/s)]
 c_s = 4.861e5                       # Damping coefficient of platform surge and sway [N/(m/s)]
 c_t = 13263                         # Structural damping coefficient of tower [N/(m/s)]
 H = 129.962                         # Distance from nacelle center to platform mass center [m] (87.6+1.75+40.612)
@@ -74,7 +70,7 @@ F_ts = 0                            # Force in side-side direction [N]
 F_d = [F_Wsg, F_Wsw, F_Whv, T_Wr, T_Wp, F_thr, F_ts]     # Disturbance forces
 
 def M():
-    M = np.diag([m_s, m_s, m_hv, J_p + m_s*l_c**2, J_p + m_s*l_c**2, m_tf, m_ts, m_d, m_d, m_d, m_d])
+    M = np.diag([m_s, m_s, m_hv, J_p + m_s*l_c**2, J_p + m_s*l_c**2, m_d, m_d, m_d, m_d])
     M[4, 0] = -m_s*l_c
     M[3, 1] = m_s*l_c
     M[1, 3] = m_s*l_c
@@ -87,24 +83,19 @@ def M_inv():
 
 def C_d(gamma):
 
-    C_upper = np.array([[c_s + c_t, 0,          0,                  0,                          H*c_t,                      -c_t,   0,      0,                      0,                      0,                      0],
-                        [0,         c_s + c_t,  0,                  H*c_t,                      0,                          0,      -c_t,   0,                      0,                      0,                      0],
-                        [0,         0,          4*(c_ph+c_d)+c_hv,  0,                          0,                          0,      0,      -c_d,                   -c_d,                   -c_d,                   -c_d],
-                        [0,         H*c_t,      0,                  2*(c_ph+c_d)*l**2+H**2*c_t, 0,                          0,      -c_t*H, -c_d*l*np.sin(gamma),   -c_d*l*np.cos(gamma),   c_d*l*np.sin(gamma),   c_d*l*np.cos(gamma)],
-                        [H*c_t,     0,          0,                  0,                          2*(c_ph+c_d)*l**2+H**2*c_t, -c_t*H, 0,      c_d*l*np.cos(gamma),    -c_d*l*np.sin(gamma),   -c_d*l*np.cos(gamma),   c_d*l*np.sin(gamma)]])
+    C_upper = np.array([[c_s + c_t, 0,          0,                  0,                          H*c_t,                      0,                      0,                      0,                      0],
+                        [0,         c_s + c_t,  0,                  H*c_t,                      0,                          0,                      0,                      0,                      0],
+                        [0,         0,          4*(c_ph+c_d)+c_hv,  0,                          0,                          -c_d,                   -c_d,                   -c_d,                   -c_d],
+                        [0,         H*c_t,      0,                  2*(c_ph+c_d)*l**2+H**2*c_t, 0,                          -c_d*l*np.sin(gamma),   -c_d*l*np.cos(gamma),   c_d*l*np.sin(gamma),   c_d*l*np.cos(gamma)],
+                        [H*c_t,     0,          0,                  0,                          2*(c_ph+c_d)*l**2+H**2*c_t, c_d*l*np.cos(gamma),    -c_d*l*np.sin(gamma),   -c_d*l*np.cos(gamma),   c_d*l*np.sin(gamma)]])
 
-    ct_diag = np.diag([-c_t, -c_t])
     cd_stack = np.vstack([-c_d, -c_d, -c_d, -c_d])
-
-    lower_left = np.vstack((np.hstack((ct_diag, np.vstack((0, 0)))), np.hstack((zero_4_2, cd_stack))))
-    lower_mid = np.array([  [0,                     -c_t*H],
-                            [-c_t*H,                0],
-                            [-c_d*l*np.sin(gamma),  c_d*l*np.cos(gamma)],
+    lower_left = np.hstack((zero_4_2, cd_stack))
+    lower_mid = np.array([  [-c_d*l*np.sin(gamma),  c_d*l*np.cos(gamma)],
                             [-c_d*l*np.cos(gamma),  -c_d*l*np.sin(gamma)],
                             [c_d*l*np.sin(gamma),   -c_d*l*np.cos(gamma)],
                             [c_d*l*np.cos(gamma),   c_d*l*np.sin(gamma)]])
-
-    lower_right = np.diag([c_tf+c_t, c_ts+c_t, c_d, c_d, c_d, c_d])
+    lower_right = np.diag([c_d, c_d, c_d, c_d])
 
     C_lower = np.hstack((lower_left, lower_mid, lower_right))
 
@@ -114,24 +105,20 @@ def C_d(gamma):
 
 def K(gamma):
 
-    K_upper = np.array([[k_s + k_t,                 0,              0,                  0,                                      k_t*H - k_s*l_s,                        -k_t,   0,      0,                      0,                      0,                      0],
-                        [0,                         k_s + k_t,      0,                  k_t*H + k_s*l_s,                        0,                                      0,      k_t,    0,                      0,                      0,                      0],
-                        [k_sh*(4*(k_ph+k_d)+k_B),   0,              4*(k_ph+k_d)+k_B,   0,                                      0,                                      0,      0,      -k_d,                   -k_d,                   -k_d,                   -k_d],
-                        [0,                         k_t*H+k_s*l_s,  0,                  2*(k_ph+k_d)*l**2+k_t*H**2+k_s*l_s**2,  0,                                      0,      k_t*H,  -k_d*l*np.sin(gamma),   -k_d*l*np.cos(gamma),   k_d*l*np.sin(gamma),   k_d*l*np.cos(gamma)],
-                        [k_t*H-k_s*l_s,             0,              0,                  0,                                      2*(k_ph+k_d)*l**2+k_t*H**2+k_s*l_s**2,  -k_t*H, 0,      k_d*l*np.cos(gamma),   -k_d*l*np.sin(gamma),   -k_d*l*np.cos(gamma),   k_d*l*np.sin(gamma)]])
+    K_upper = np.array([[k_s + k_t,                 0,              0,                  0,                                      k_t*H - k_s*l_s,                        0,                      0,                      0,                      0],
+                        [0,                         k_s + k_t,      0,                  k_t*H + k_s*l_s,                        0,                                      0,                      0,                      0,                      0],
+                        [k_sh*(4*(k_ph+k_d)+k_B),   0,              4*(k_ph+k_d)+k_B,   0,                                      0,                                      -k_d,                   -k_d,                   -k_d,                   -k_d],
+                        [0,                         k_t*H+k_s*l_s,  0,                  2*(k_ph+k_d)*l**2+k_t*H**2+k_s*l_s**2,  0,                                      -k_d*l*np.sin(gamma),   -k_d*l*np.cos(gamma),   k_d*l*np.sin(gamma),   k_d*l*np.cos(gamma)],
+                        [k_t*H-k_s*l_s,             0,              0,                  0,                                      2*(k_ph+k_d)*l**2+k_t*H**2+k_s*l_s**2,  k_d*l*np.cos(gamma),   -k_d*l*np.sin(gamma),   -k_d*l*np.cos(gamma),   k_d*l*np.sin(gamma)]])
 
-    kt_skew = np.diag([-k_t, k_t])
+
     kd_stack = np.vstack([-k_d, -k_d, -k_d, -k_d])
-
-    lower_left = np.vstack((np.hstack((kt_skew, np.vstack((0, 0)))), np.hstack((zero_4_2, kd_stack))))
-    lower_mid = np.array([  [0,                     -k_t*H],
-                            [k_t*H,                 0],
-                            [-k_d*l*np.sin(gamma),  k_d*l*np.cos(gamma)],
+    lower_left = np.hstack((zero_4_2, kd_stack))
+    lower_mid = np.array([  [-k_d*l*np.sin(gamma),  k_d*l*np.cos(gamma)],
                             [-k_d*l*np.cos(gamma),  -k_d*l*np.sin(gamma)],
                             [k_d*l*np.sin(gamma),   -k_d*l*np.cos(gamma)],
                             [k_d*l*np.cos(gamma),   k_d*l*np.sin(gamma)]])
-
-    lower_right = np.diag([k_t, k_t, k_d, k_d, k_d, k_d])
+    lower_right = np.diag([k_d, k_d, k_d, k_d])
 
     K_lower = np.hstack((lower_left, lower_mid, lower_right))
 
@@ -142,12 +129,12 @@ def K(gamma):
 def B_Fa(gamma):
     mid = np.array([[l*np.sin(gamma),   l*np.cos(gamma), -l*np.sin(gamma), -l*np.cos(gamma)],
                     [-l*np.cos(gamma),  l*np.sin(gamma), l*np.cos(gamma),  -l*np.sin(gamma)]])
-    B_Fa = np.vstack([zero_2_4, [1, 1, 1, 1], mid, zero_2_4, -np.identity(4)])
+    B_Fa = np.vstack([zero_2_4, [1, 1, 1, 1], mid, -np.identity(4)])
 
     return B_Fa
 
 def B_Fd():
-    return np.vstack((np.identity(7), np.zeros((4, 7))))
+    return np.vstack([np.diag([1, 1, 1, 1, 1, 0, 0]), np.zeros((2, 7))])
 
 
 def A(gamma):
@@ -170,19 +157,3 @@ def W():
     W = left.dot(B_Fd())
 
     return W
-
-def C():
-    Csys = np.identity(22)
-    Csys[5, 0] = -1
-    Csys[5, 5] = 1
-    Csys[5, 4] = -H
-    Csys[16, 11] = -1
-    Csys[16, 16] = 1
-    Csys[16, 15] = -H
-    Csys[6, 1] = 1
-    Csys[6, 6] = 1
-    Csys[6, 3] = -H
-    Csys[17, 12] = -1
-    Csys[17, 17] = 1
-    Csys[17, 14] = -H
-    return Csys

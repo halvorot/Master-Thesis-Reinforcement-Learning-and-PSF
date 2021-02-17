@@ -54,7 +54,7 @@ class Turbine():
         """
         The right hand side of the 11 ODEs governing the Trubine dyanmics. state_dot = A*state + B*F_a + W*F_d
         state = [q, q_dot]
-        q = [x_sg, x_sw, x_hv, theta_r, theta_p, x_tf, x_ts, x_1, x_2, x_3, x_4]
+        q = [x_sg, x_sw, x_hv, theta_r, theta_p, x_1, x_2, x_3, x_4]
         """
         state_dot = ss.A(wind_dir).dot(state) + ss.B(wind_dir).dot(self.input) + ss.W().dot(ss.F_d)
 
@@ -79,14 +79,14 @@ class Turbine():
         """
         Returns array of displacements of DVAs [x_1, x_2, x_3, x_4]
         """
-        return self.state[7:12]
+        return self.state[5:9]
 
     @property
     def dva_displacement_dot(self):
         """
         Returns array of time derivative of displacements of DVAs [x_1_dot, x_2_dot, x_3_dot, x_4_dot]
         """
-        return self.state[18:22]
+        return self.state[14:18]
 
     @property
     def position(self):

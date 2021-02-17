@@ -28,15 +28,11 @@ class TurbineEnv(gym.Env):
                             np.finfo(np.float32).max,           # x_hv
                             np.pi,                              # theta_r
                             np.pi,                              # theta_p
-                            np.finfo(np.float32).max,           # x_tf
-                            np.finfo(np.float32).max,           # x_ts
                             np.finfo(np.float32).max,           # x_sg_dot
                             np.finfo(np.float32).max,           # x_sw_dot
                             np.finfo(np.float32).max,           # x_hv_dot
                             np.finfo(np.float32).max,           # theta_r_dot
                             np.finfo(np.float32).max,           # theta_p_dot
-                            np.finfo(np.float32).max,           # x_tf_dot
-                            np.finfo(np.float32).max,           # x_ts_dot
                         ])
 
         self.observation_space = gym.spaces.Box(low=-high,
@@ -154,12 +150,12 @@ class TurbineEnv(gym.Env):
         -------
         obs : np.ndarray
             The observation of the environment.
-            Includes x and x_dot, where x = [x_sg, x_sw, x_hv, theta_r, theta_p, x_tf, x_ts]
+            Includes x and x_dot, where x = [x_sg, x_sw, x_hv, theta_r, theta_p]
         """
         # roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
         # pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees
 
-        obs = np.hstack([self.turbine.state[0:7], self.turbine.state[11:18]])
+        obs = np.hstack([self.turbine.state[0:5], self.turbine.state[9:14]])
         return obs
 
     def seed(self, seed=None):
@@ -189,8 +185,8 @@ class TurbineEnv(gym.Env):
         return ax
 
     def save_latest_step(self):
-        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:11]))
-        self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[11:22]))
+        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:9]))
+        self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[9:18]))
         self.episode_history.setdefault('input', []).append(self.turbine.input)
         self.episode_history.setdefault('observations', []).append(self.observation)
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
@@ -199,8 +195,6 @@ class TurbineEnv(gym.Env):
     def save_latest_episode(self):
         self.history = {
             'episode_num': self.episode,
-            'avg_abs_x_tf': np.abs(np.array(self.episode_history['states'])[:, 5]).mean(),
-            'avg_abs_x_ts': np.abs(np.array(self.episode_history['states'])[:, 6]).mean(),
             'avg_abs_theta_r': np.abs(np.array(self.episode_history['states'])[:, 3]).mean(),
             'avg_abs_theta_p': np.abs(np.array(self.episode_history['states'])[:, 4]).mean(),
             'crashed': int(self.crashed),

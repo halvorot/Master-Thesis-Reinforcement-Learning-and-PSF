@@ -103,9 +103,9 @@ def animate(frame):
         x_top = x_surface + height*np.sin(env.turbine.pitch)*np.cos(env.turbine.roll)
         y_top = -(y_surface + height*np.sin(env.turbine.roll)*np.cos(env.turbine.pitch))
         z_top = z_surface + height*np.cos(env.turbine.pitch)
-        recorded_states.append(env.turbine.state[0:11])
+        recorded_states.append(env.turbine.state[0:9])
         recorded_inputs.append(env.turbine.input)
-        dva_displacement = np.array([env.turbine.state[7], env.turbine.state[8], env.turbine.state[9], env.turbine.state[10]])
+        dva_displacement = env.turbine.dva_displacement()
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     ax_ani = fig_ani.add_subplot(111, projection='3d')
     ax_ani.view_init(elev=18, azim=45)
 
-    state_labels = np.array([r"x_sg", r"x_sw", r"x_hv", r"theta_r", r"theta_p", r"x_tf", r"x_ts", r"x_1", r"x_2", r"x_3", r"x_4"])
+    state_labels = np.array([r"x_sg", r"x_sw", r"x_hv", r"theta_r", r"theta_p", r"x_1", r"x_2", r"x_3", r"x_4"])
     input_labels = [r"Fa_1", r"Fa_2", r"Fa_3",  r"Fa_4"]
     recorded_states = []
     recorded_inputs = []
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         env = gym.make("TurbineStab-v0")
         agent = PPO.load(args.agent)
         env.reset()
-        recorded_states.append(env.turbine.state[0:11])
+        recorded_states.append(env.turbine.state[0:9])
         recorded_inputs.append(env.turbine.input)
     else:
         # If argument is specified, simulate turbine step by step and animate
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         init_roll = 0*5*(np.pi/180)
         init_pitch = 0
         turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
-        recorded_states.append(turbine.state[0:11])
+        recorded_states.append(turbine.state[0:9])
         recorded_inputs.append(turbine.input)
 
     ani = FuncAnimation(fig_ani, animate, interval=50, blit=False)
@@ -225,12 +225,6 @@ if __name__ == "__main__":
     if not args.data:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
         rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
-
-        ax1.plot(rec_data['x_tf'], label='Fore-Aft')
-        ax1.plot(rec_data['x_ts'], label='Side-Side')
-        ax1.set_ylabel('Meters')
-        ax1.set_title('Tower top displacements')
-        ax1.legend()
 
         ax2.plot(rec_data['theta_p']*(180/np.pi), label='Pitch')
         ax2.plot(rec_data['theta_r']*(180/np.pi), label='Roll')

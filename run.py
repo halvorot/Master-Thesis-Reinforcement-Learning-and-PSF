@@ -61,12 +61,6 @@ if __name__ == "__main__":
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 
-        ax1.plot(sim_df['x_tf'], label='Fore-Aft')
-        ax1.plot(sim_df['x_ts'], label='Side-Side')
-        ax1.set_ylabel('Meters')
-        ax1.set_title('Tower top displacements')
-        ax1.legend()
-
         ax2.plot(sim_df['theta_p']*(180/np.pi), label='Pitch')
         ax2.plot(sim_df['theta_r']*(180/np.pi), label='Roll')
         ax2.set_ylabel('Degrees')

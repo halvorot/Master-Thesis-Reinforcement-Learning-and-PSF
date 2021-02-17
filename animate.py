@@ -1,7 +1,6 @@
 import numpy as np
 import gym
 from stable_baselines3 import PPO
-from gym_turbine.objects import turbine
 from gym_turbine.utils import state_space as ss
 import matplotlib.pyplot as plt
 
@@ -105,7 +104,7 @@ def animate(frame):
         z_top = z_surface + height*np.cos(env.turbine.pitch)
         recorded_states.append(env.turbine.state[0:9])
         recorded_inputs.append(env.turbine.input)
-        dva_displacement = env.turbine.dva_displacement()
+        dva_displacement = env.turbine.dva_displacement
 
     x = [x_surface, x_top]
     y = [y_surface, y_top]
@@ -142,10 +141,10 @@ def animate(frame):
     # ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=100*action[3], mutation_scale=10, arrowstyle="-|>")
 
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[0], mutation_scale=10, arrowstyle="-|>")
-    ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[1], mutation_scale=10, arrowstyle="-|>")
-    ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[2], mutation_scale=10, arrowstyle="-|>")
-    ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=10*dva_displacement[3], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface + spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=2*dva_displacement[0], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface, y = y_surface + spoke_length, z = z_surface, dx=0, dy=0, dz=2*dva_displacement[1], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface - spoke_length, y = y_surface, z = z_surface, dx=0, dy=0, dz=2*dva_displacement[2], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow3D(x = x_surface, y = y_surface - spoke_length, z = z_surface, dx=0, dy=0, dz=2*dva_displacement[3], mutation_scale=10, arrowstyle="-|>")
 
 
 if __name__ == "__main__":
@@ -191,21 +190,14 @@ if __name__ == "__main__":
         data_input = np.array([data['Fa_1'], data['Fa_2'], data['Fa_3'], data['Fa_4']])
         data_dva_displacement = np.array([data['x_1'], data['x_2'], data['x_3'], data['x_4']])
         data_reward = np.array(data['reward'])
-    elif args.agent:
+    else:
+        if args.agent:
+            agent = PPO.load(args.agent)
         done = False
         env = gym.make("TurbineStab-v0")
-        agent = PPO.load(args.agent)
         env.reset()
         recorded_states.append(env.turbine.state[0:9])
         recorded_inputs.append(env.turbine.input)
-    else:
-        # If argument is specified, simulate turbine step by step and animate
-        step_size = 0.01
-        init_roll = 0*5*(np.pi/180)
-        init_pitch = 0
-        turbine = turbine.Turbine(np.array([init_roll, init_pitch]), step_size)
-        recorded_states.append(turbine.state[0:9])
-        recorded_inputs.append(turbine.input)
 
     ani = FuncAnimation(fig_ani, animate, interval=50, blit=False)
 
@@ -226,11 +218,11 @@ if __name__ == "__main__":
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
         rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
 
-        ax2.plot(rec_data['theta_p']*(180/np.pi), label='Pitch')
-        ax2.plot(rec_data['theta_r']*(180/np.pi), label='Roll')
-        ax2.set_ylabel('Degrees')
-        ax2.set_title('Angles')
-        ax2.legend()
+        ax1.plot(rec_data['theta_p']*(180/np.pi), label='Pitch')
+        ax1.plot(rec_data['theta_r']*(180/np.pi), label='Roll')
+        ax1.set_ylabel('Degrees')
+        ax1.set_title('Angles')
+        ax1.legend()
 
         ax3.plot(rec_data['Fa_1'], label='Fa_1', linestyle='--')
         ax3.plot(rec_data['Fa_2'], label='Fa_2')

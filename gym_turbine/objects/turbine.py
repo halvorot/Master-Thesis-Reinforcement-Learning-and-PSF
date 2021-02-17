@@ -26,7 +26,7 @@ def odesolver45(f, y, h, wind_dir):
 
 class Turbine():
     def __init__(self, init_state, step_size):
-        self.state = np.zeros(22)                       # Initialize states
+        self.state = np.zeros(2*ss.DoFs)                  # Initialize states
         self.state[3] = init_state[0]                   # Roll initial angle
         self.state[4] = init_state[1]                   # Pitch initial angle
         self.input = np.zeros(4)                        # Initialize control input

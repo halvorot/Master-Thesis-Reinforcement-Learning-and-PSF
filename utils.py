@@ -32,15 +32,16 @@ def simulate_episode(env, agent, max_time, lqr=False):
         Q[12, 12] = 100*147
         Q[13, 13] = 4*2.7
         R = np.identity(4)
-        K, S, E = control.lqr(A, B, Q, R)
+        # K, S, E = control.lqr(A, B, Q, R)  # NOT WORKING OMP error #15
         # K = loadmat('gym_turbine\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
-        # K = loadmat('gym_turbine\\utils\\LQR_params.mat')["K"]      # Use K calculated in matlab using own system matrices
+        K = loadmat('gym_turbine\\utils\\lqr_params.mat')["K"]      # Use K calculated in matlab using own system matrices
 
     done = False
     env.reset()
     while not done and env.t_step < max_time/env.step_size:
         if lqr:
             action = (-K.dot(env.turbine.state))/ss.max_input
+            # action = np.array([0,0,0,0])
         else:
             action, _states = agent.predict(env.observation, deterministic=True)
         _, _, done, _ = env.step(action)
@@ -55,3 +56,23 @@ def simulate_episode(env, agent, max_time, lqr=False):
                         ])
     df = DataFrame(sim_data, columns=labels)
     return df
+
+
+if __name__ == '__main__':
+    gamma = 0
+    A = ss.A(gamma)
+    B = ss.B(gamma)
+    Q = np.identity(18)
+    Q[0, 0] = 1.6e-2/10000
+    Q[1, 1] = 17.7
+    Q[2, 2] = 599
+    Q[3, 3] = 9.23e5
+    Q[4, 4] = 1.12e4
+    Q[9, 9] = 0.25/100
+    Q[10, 10] = 285
+    Q[11, 11] = 145
+    Q[12, 12] = 100*147
+    Q[13, 13] = 4*2.7
+    R = np.identity(4)
+    mdict = {'A': A, 'B': B, 'Q': Q, 'R': R}
+    savemat("lqr_params.mat", mdict)

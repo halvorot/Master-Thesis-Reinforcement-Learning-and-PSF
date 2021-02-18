@@ -28,11 +28,19 @@ class TurbineEnv(gym.Env):
                             np.finfo(np.float32).max,           # x_hv
                             np.pi,                              # theta_r
                             np.pi,                              # theta_p
+                            np.finfo(np.float32).max,           # x_1
+                            np.finfo(np.float32).max,           # x_2
+                            np.finfo(np.float32).max,           # x_3
+                            np.finfo(np.float32).max,           # x_4
                             np.finfo(np.float32).max,           # x_sg_dot
                             np.finfo(np.float32).max,           # x_sw_dot
                             np.finfo(np.float32).max,           # x_hv_dot
                             np.finfo(np.float32).max,           # theta_r_dot
                             np.finfo(np.float32).max,           # theta_p_dot
+                            np.finfo(np.float32).max,           # x_1_dot
+                            np.finfo(np.float32).max,           # x_2_dot
+                            np.finfo(np.float32).max,           # x_3_dot
+                            np.finfo(np.float32).max,           # x_4_dot
                         ])
 
         self.observation_space = gym.spaces.Box(low=-high,

@@ -191,11 +191,13 @@ if __name__ == "__main__":
         data_dva_displacement = np.array([data['x_1'], data['x_2'], data['x_3'], data['x_4']])
         data_reward = np.array(data['reward'])
     else:
-        if args.agent:
-            agent = PPO.load(args.agent)
         done = False
         env = gym.make("TurbineStab-v0")
         env.reset()
+        if args.agent:
+            agent = PPO.load(args.agent)
+        else:
+            env.turbine.state = np.zeros(18)
         recorded_states.append(env.turbine.state[0:9])
         recorded_inputs.append(env.turbine.input)
 

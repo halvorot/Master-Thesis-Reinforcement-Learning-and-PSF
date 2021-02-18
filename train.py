@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # Write note and config to Note.txt file
     with open(os.path.join('logs', EXPERIMENT_ID, "Note.txt"), "a") as file_object:
-        file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]))
+        file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]) + "\n")
         if args.note:
             file_object.write(args.note)
 

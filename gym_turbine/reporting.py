@@ -60,7 +60,7 @@ def report(env, report_dir, lastn=100):
     except OSError as e:
         print('Warning: Ignoring OSError: ' + str(repr(e)))
 
-def make_summary_file(data, report_dir, lastn=100):
+def make_summary_file(data, report_dir, lastn=50):
     os.makedirs(report_dir, exist_ok=True)
 
     relevant_data = data[-min(lastn, data.shape[0]):]
@@ -73,6 +73,7 @@ def make_summary_file(data, report_dir, lastn=100):
     durations = np.array(relevant_data['duration'])
 
     with open(os.path.join(report_dir, 'summary.txt'), 'w') as f:
+        f.write('# TOTAL EPISODES TRAINED: {}\n'.format(data.shape[0]))
         f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(min(lastn, data.shape[0])))
         f.write('{:<30}{:<30}\n'.format('Avg. Reward', rewards.mean()))
         f.write('{:<30}{:<30}\n'.format('Std. Reward', rewards.std()))

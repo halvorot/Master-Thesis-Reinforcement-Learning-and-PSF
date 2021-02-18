@@ -67,7 +67,7 @@ T_Wp = 0                            # Wave force to platform pitch [N*m]
 F_thr = 0                           # Thrust force [N]
 F_ts = 0                            # Force in side-side direction [N]
 
-F_d = [F_Wsg, F_Wsw, F_Whv, T_Wr, T_Wp, F_thr, F_ts]     # Disturbance forces
+F_d = [F_Wsg, F_Wsw, F_Whv, T_Wr, T_Wp]     # Disturbance forces
 
 def M():
     M = np.diag([m_s, m_s, m_hv, J_p + m_s*l_c**2, J_p + m_s*l_c**2, m_d, m_d, m_d, m_d])
@@ -134,7 +134,7 @@ def B_Fa(gamma):
     return B_Fa
 
 def B_Fd():
-    return np.vstack([np.diag([1, 1, 1, 1, 1, 0, 0]), np.zeros((2, 7))])
+    return np.vstack([np.identity(5), np.zeros((4, 5))])
 
 
 def A(gamma):

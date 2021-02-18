@@ -155,7 +155,7 @@ class TurbineEnv(gym.Env):
         # roll = np.clip(self.turbine.roll / np.pi, -1, 1)        # Clip at +-180 degrees
         # pitch = np.clip(self.turbine.pitch / np.pi, -1, 1)      # Clip at +-180 degrees
 
-        obs = np.hstack([self.turbine.state[0:5], self.turbine.state[9:14]])
+        obs = self.turbine.state
         return obs
 
     def seed(self, seed=None):

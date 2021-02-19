@@ -52,7 +52,7 @@ class Turbine():
 
     def state_dot(self, state, wind_dir):
         """
-        The right hand side of the 11 ODEs governing the Trubine dyanmics. state_dot = A*state + B*F_a + W*F_d
+        The right hand side of the 9 ODEs governing the Trubine dyanmics. state_dot = A*state + B*F_a + W*F_d
         state = [q, q_dot]
         q = [x_sg, x_sw, x_hv, theta_r, theta_p, x_1, x_2, x_3, x_4]
         """

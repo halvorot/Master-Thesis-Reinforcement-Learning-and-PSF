@@ -2,7 +2,9 @@ import numpy as np
 import gym
 from stable_baselines3 import PPO
 from gym_turbine.utils import state_space_pendulum as ss
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 from matplotlib.animation import FuncAnimation
 import pandas as pd
@@ -65,10 +67,7 @@ def animate(frame):
 
     x = [0, x_top]
     y = [0, y_top]
-    x_base = [-0.5*(x_top), 0]
-    y_base = [-0.5*(y_top), 0]
-    # ax_ani.set_aspect('equal', adjustable='datalim')
-    ax_ani.set(xlim=(-height, height), ylim=(-height, height))
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-0.2*height, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -78,7 +77,10 @@ def animate(frame):
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot base
-    ax_ani.plot(x_base, y_base, color='r', linewidth=8)
+    base_thickness = 5
+    base = Rectangle((-ss.spoke_length, -base_thickness/2), 2*ss.spoke_length, base_thickness)
+    base.set_transform(mpl.transforms.Affine2D().rotate_deg_around(0, 0, -env.pendulum.pitch*180/np.pi) + ax_ani.transData)
+    ax_ani.add_patch(base)
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [0, y_top], color='k', linewidth=1)
 

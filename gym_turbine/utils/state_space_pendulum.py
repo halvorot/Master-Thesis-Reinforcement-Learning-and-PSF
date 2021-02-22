@@ -12,9 +12,9 @@ zero_2_4 = np.zeros((2, 4))
 J = 1e8                             # Rotational intertia of pendulum [kg*m^2]
 height = 100
 m_a = 1e5                           # DVA mass
-k_a = 6.18e4                        # DVA stiffness [N/m]
-zeta_d = 0.6                        # DVA damping ratio
-c_a = 2*zeta_d*np.sqrt(m_a*k_a)
+k_a = 6e4                           # DVA stiffness [N/m]
+zeta_a = 0.6                        # DVA damping ratio
+c_a = 2*zeta_a*np.sqrt(m_a*k_a)
 spoke_length = 27                   # Horizontal distance from pendulum center to DVA
 max_input = 1e6                     # DVA maximum force input [N]
 

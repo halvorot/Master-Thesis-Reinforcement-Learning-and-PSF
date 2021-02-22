@@ -34,9 +34,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env = gym.make("TurbineStab-v0")
+    env_id = env.unwrapped.spec.id
     if args.lqr:
         sim_df = utils.simulate_episode(env=env, agent=None, max_time=args.time, lqr=True)
-        LQR_dir = os.path.join("logs", "LQR_simulations")
+        LQR_dir = os.path.join("logs", env_id, "LQR_simulations")
         os.makedirs(LQR_dir, exist_ok=True)
         i = 0
         while os.path.exists(os.path.join(LQR_dir, f"_simdata_lqr_{i}.csv")):
@@ -47,10 +48,10 @@ if __name__ == "__main__":
         agent = PPO.load(agent_path)
         sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time, lqr=False)
         agent_path_list = agent_path.split("\\")
-        simdata_dir = os.path.join("logs", agent_path_list[-3], "sim_data")
+        simdata_dir = os.path.join("logs", env_id, agent_path_list[-3], "sim_data")
         os.makedirs(simdata_dir, exist_ok=True)
 
-        # Save file to logs\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
+        # Save file to logs\env_id\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
         i = 0
         while os.path.exists(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
             i += 1

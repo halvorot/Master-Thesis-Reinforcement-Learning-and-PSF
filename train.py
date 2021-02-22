@@ -127,18 +127,19 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    # Make environment (NUM_CPUs parallel envs)
+    env = make_vec_env('PendulumStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
+    env_id = env.unwrapped.spec.id
+
     # Define necessary directories
     EXPERIMENT_ID = str(int(time())) + 'ppo'
-    agents_dir = os.path.join('logs', EXPERIMENT_ID, 'agents')
+    agents_dir = os.path.join('logs', env_id, EXPERIMENT_ID, 'agents')
     os.makedirs(agents_dir, exist_ok=True)
-    report_dir = os.path.join('logs', EXPERIMENT_ID, 'training_report')
-    tensorboard_log = os.path.join('logs', EXPERIMENT_ID, 'tensorboard')
-
-    # Make environment (NUM_CPUs parallel envs)
-    env = make_vec_env('TurbineStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
+    report_dir = os.path.join('logs', env_id, EXPERIMENT_ID, 'training_report')
+    tensorboard_log = os.path.join('logs', env_id, EXPERIMENT_ID, 'tensorboard')
 
     # Write note and config to Note.txt file
-    with open(os.path.join('logs', EXPERIMENT_ID, "Note.txt"), "a") as file_object:
+    with open(os.path.join('logs', env_id, EXPERIMENT_ID, "Note.txt"), "a") as file_object:
         file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]) + "\n")
         if args.note:
             file_object.write(args.note)

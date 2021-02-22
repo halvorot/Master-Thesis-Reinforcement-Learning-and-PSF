@@ -206,7 +206,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     if args.save_video:
         agent_path_list = args.agent.split("\\")
-        video_dir = os.path.join("logs", agent_path_list[-3], "videos")
+        video_dir = os.path.join("logs", "TurbineStab-v0", agent_path_list[-3], "videos")
         os.makedirs(video_dir, exist_ok=True)
         i = 0
         video_path = os.path.join(video_dir, agent_path_list[-1][0:-4] + f"_animation_{i}.mp4")

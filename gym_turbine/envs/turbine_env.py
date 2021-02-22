@@ -139,16 +139,14 @@ class TurbineEnv(gym.Env):
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
-        crash_cond_1 = self.turbine.pitch > self.crash_angle_condition
-        crash_cond_2 = self.turbine.roll > self.crash_angle_condition
+        crash_cond_1 = np.abs(self.turbine.pitch) > self.crash_angle_condition
+        crash_cond_2 = np.abs(self.turbine.roll) > self.crash_angle_condition
 
         if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
             done = True
         if crash_cond_1 or crash_cond_2:
             step_reward = self.reward_crash
             self.crashed = True
-            if self.verbose:
-                print(colored('Trubine crashed', 'red'))
 
         return done, step_reward
 

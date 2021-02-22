@@ -2,7 +2,7 @@ import numpy as np
 import gym_turbine.utils.state_space_pendulum as ss
 import gym_turbine.utils.geomutils as geom
 
-def odesolver45(f, y, h, wind_dir):
+def odesolver45(f, y, h):
     """Calculate the next step of an IVP of a time-invariant ODE with a RHS
     described by f, with an order 4 approx. and an order 5 approx.
     Parameters:
@@ -31,7 +31,7 @@ class Pendulum():
         self.input = np.zeros(2)                        # Initialize control input
         self.step_size = step_size
 
-    def step(self, action, wind_dir):
+    def step(self, action):
         Fa_1 = _un_normalize_dva_input(action[0])
         Fa_2 = _un_normalize_dva_input(action[1])
         self.input = np.array([Fa_1, Fa_2])
@@ -45,13 +45,13 @@ class Pendulum():
         self.state = state_o5
         self.state[0] = geom.ssa(self.state[0])
 
-    def state_dot(self, state, wind_dir):
+    def state_dot(self, state):
         """
         The right hand side of the 9 ODEs governing the Trubine dyanmics. state_dot = A*state + B*F_a + W*F_d + W_g*F_g
         state = [q, q_dot]
         q = [theta, x_1, x_2]
         """
-        state_dot = ss.A(wind_dir).dot(state) + ss.B(wind_dir).dot(self.input) + ss.W().dot(ss.F_d) + ss.W_g().dot(ss.F_g)
+        state_dot = ss.A().dot(state) + ss.B().dot(self.input) + ss.W().dot(ss.F_d) + ss.W_g().dot(ss.F_g)
 
         return state_dot
 

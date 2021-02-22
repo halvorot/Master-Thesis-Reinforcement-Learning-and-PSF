@@ -51,13 +51,14 @@ def animate(frame):
                 action = np.array([1, 0])
             else:
                 action = np.array([0, 0])
+            action = np.array([0, 0])
 
         _, _, done, _ = env.step(action)
         if done:
             print("Environment done")
             raise SystemExit
         x_top = height*np.sin(env.pendulum.pitch)
-        y_top = -(height*np.cos(env.pendulum.pitch))
+        y_top = height*np.cos(env.pendulum.pitch)
         recorded_states.append(env.pendulum.state[0:3])
         recorded_inputs.append(env.pendulum.input)
         dva_displacement = env.pendulum.dva_displacement
@@ -67,7 +68,7 @@ def animate(frame):
     x_base = [-0.5*(x_top), 0]
     y_base = [-0.5*(y_top), 0]
     # ax_ani.set_aspect('equal', adjustable='datalim')
-    ax_ani.set(xlim=(-0.6*height, 0.6*height), ylim=(-0.6*height, 0.6*height))
+    ax_ani.set(xlim=(-height, height), ylim=(-height, height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -82,8 +83,8 @@ def animate(frame):
     ax_ani.plot([0, x_top], [0, y_top], color='k', linewidth=1)
 
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = -spoke_length, y = 0, dx=0, dy=2*dva_displacement[0], mutation_scale=10, arrowstyle="-|>")
-    ax_ani.arrow(x = spoke_length, y = 0, dx=0, dy=2*dva_displacement[1], mutation_scale=10, arrowstyle="-|>")
+    ax_ani.arrow(x = -spoke_length, y = 0, dx=0, dy=2*dva_displacement[0])
+    ax_ani.arrow(x = spoke_length, y = 0, dx=0, dy=2*dva_displacement[1])
 
 
 if __name__ == "__main__":
@@ -132,7 +133,8 @@ if __name__ == "__main__":
         if args.agent:
             agent = PPO.load(args.agent)
         else:
-            env.pendulum.state = np.zeros(6)
+            pass
+            # env.pendulum.state = np.zeros(6)
         recorded_states.append(env.pendulum.state[0:3])
         recorded_inputs.append(env.pendulum.input)
 

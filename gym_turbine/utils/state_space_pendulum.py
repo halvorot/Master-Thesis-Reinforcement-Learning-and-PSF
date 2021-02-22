@@ -22,7 +22,7 @@ T_W = 0                             # Wind force to pendulum pitch [N*m]
 
 F_d = T_W                           # Disturbance forces
 
-F_g = m_a*g
+F_g = -m_a*g
 
 def M():
     M = np.array([  [J+2*m_a*spoke_length, m_a*spoke_length, m_a*spoke_length],

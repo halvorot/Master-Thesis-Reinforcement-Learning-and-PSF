@@ -84,7 +84,7 @@ class PendulumEnv(gym.Env):
         Simulates the environment one time-step.
         """
 
-        self.pendulum.step(action, self.wind_dir)
+        self.pendulum.step(action)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
@@ -117,15 +117,13 @@ class PendulumEnv(gym.Env):
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
-        crash_cond = self.pendulum.pitch > self.crash_angle_condition
+        crash_cond = np.abs(self.pendulum.pitch) > self.crash_angle_condition
 
         if end_cond_1 or end_cond_2 or crash_cond:
             done = True
         if crash_cond:
             step_reward = self.reward_crash
             self.crashed = True
-            if self.verbose:
-                print(colored('Pendulum crashed', 'red'))
 
         return done, step_reward
 

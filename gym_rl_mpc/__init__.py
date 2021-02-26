@@ -26,12 +26,12 @@ PENDULUM_CONFIG = {
 
 register(
     id='TurbineStab-v0',
-    entry_point='gym_turbine.envs:TurbineEnv',
+    entry_point='gym_rl_mpc.envs:TurbineEnv',
     kwargs={'env_config': DEFAULT_CONFIG}
 )
 
 register(
     id='PendulumStab-v0',
-    entry_point='gym_turbine.envs:PendulumEnv',
+    entry_point='gym_rl_mpc.envs:PendulumEnv',
     kwargs={'env_config': PENDULUM_CONFIG}
 )

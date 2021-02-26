@@ -1,7 +1,7 @@
 import numpy as np
 import gym
 from stable_baselines3 import PPO
-from gym_turbine.utils import state_space as ss
+from gym_rl_mpc.utils import state_space as ss
 import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D

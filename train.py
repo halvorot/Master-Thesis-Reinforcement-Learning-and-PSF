@@ -1,5 +1,5 @@
 import gym
-import gym_turbine
+import gym_rl_mpc
 import os
 from time import time
 import multiprocessing
@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 import json
 
-from gym_turbine import reporting
+from gym_rl_mpc import reporting
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env

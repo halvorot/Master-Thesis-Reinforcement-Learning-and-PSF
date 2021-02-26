@@ -1,7 +1,7 @@
 import numpy as np
 import gym
 from stable_baselines3 import PPO
-from gym_turbine.utils import state_space_pendulum as ss
+from gym_rl_mpc.utils import state_space_pendulum as ss
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle

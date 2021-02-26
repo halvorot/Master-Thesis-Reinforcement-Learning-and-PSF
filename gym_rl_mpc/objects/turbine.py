@@ -1,6 +1,6 @@
 import numpy as np
-import gym_turbine.utils.state_space as ss
-import gym_turbine.utils.geomutils as geom
+import gym_rl_mpc.utils.state_space as ss
+import gym_rl_mpc.utils.geomutils as geom
 
 def odesolver45(f, y, h, wind_dir):
     """Calculate the next step of an IVP of a time-invariant ODE with a RHS

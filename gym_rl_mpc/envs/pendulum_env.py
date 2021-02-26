@@ -3,7 +3,7 @@ import numpy as np
 from gym.utils import seeding
 from termcolor import colored
 
-from gym_turbine.objects.pendulum import Pendulum
+from gym_rl_mpc.objects.pendulum import Pendulum
 
 class PendulumEnv(gym.Env):
     """

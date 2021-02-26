@@ -4,7 +4,7 @@ from gym.utils import seeding
 from termcolor import colored
 import matplotlib.pyplot as plt
 
-from gym_turbine.objects.turbine import Turbine
+from gym_rl_mpc.objects.turbine import Turbine
 
 class TurbineEnv(gym.Env):
     """

@@ -1,5 +1,5 @@
 import gym
-import gym_turbine
+import gym_rl_mpc
 import os
 import argparse
 

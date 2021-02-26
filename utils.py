@@ -4,8 +4,8 @@ import numpy as np
 from numpy.linalg import matrix_rank
 from scipy.io import savemat
 from scipy.io import loadmat
-import gym_turbine.utils.state_space as ss
-import gym_turbine.utils.state_space_pendulum as ss_p
+import gym_rl_mpc.utils.state_space as ss
+import gym_rl_mpc.utils.state_space_pendulum as ss_p
 
 from pandas import DataFrame
 
@@ -34,8 +34,8 @@ def simulate_episode(env, agent, max_time, lqr=False):
         Q[13, 13] = 4*2.7
         R = np.identity(4)
         # K, S, E = control.lqr(A, B, Q, R)  # NOT WORKING OMP error #15
-        # K = loadmat('gym_turbine\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
-        K = loadmat('gym_turbine\\utils\\lqr_params.mat')["K"]      # Use K calculated in matlab using own system matrices
+        # K = loadmat('gym_rl_mpc\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
+        K = loadmat('gym_rl_mpc\\utils\\lqr_params.mat')["K"]      # Use K calculated in matlab using own system matrices
 
     done = False
     env.reset()
@@ -72,8 +72,8 @@ def simulate_pendulum_episode(env, agent, max_time, lqr=False):
         Q = np.diag([100, 0, 0])
         R = np.identity(2)
         # K, S, E = control.lqr(A, B, Q, R)  # NOT WORKING OMP error #15
-        # K = loadmat('gym_turbine\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
-        K = loadmat('gym_turbine\\utils\\lqr_params_pendulum.mat')["K"]      # Use K calculated in matlab using own system matrices
+        # K = loadmat('gym_rl_mpc\\utils\\Ksys.mat')["Ksys_lqr"]     # Use K calculated in code from wiley paper
+        K = loadmat('gym_rl_mpc\\utils\\lqr_params_pendulum.mat')["K"]      # Use K calculated in matlab using own system matrices
 
     done = False
     env.reset()

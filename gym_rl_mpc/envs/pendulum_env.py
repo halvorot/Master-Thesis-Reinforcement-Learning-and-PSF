@@ -23,10 +23,10 @@ class PendulumEnv(gym.Env):
 
         # Legal limits for state observations
         high = np.array([   np.pi,                              # theta
-                            np.finfo(np.float32).max,           # x_1
-                            np.finfo(np.float32).max,           # x_2
                             np.finfo(np.float32).max,           # theta_dot
+                            np.finfo(np.float32).max,           # x_1
                             np.finfo(np.float32).max,           # x_1_dot
+                            np.finfo(np.float32).max,           # x_2
                             np.finfo(np.float32).max,           # x_2_dot
                         ])
 
@@ -102,8 +102,8 @@ class PendulumEnv(gym.Env):
         """
         Generates environment with a pendulum at random initial conditions
         """
-        init_pitch = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        self.pendulum = Pendulum(init_pitch, self.step_size)
+        init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
+        self.pendulum = Pendulum(init_angle, self.step_size)
 
     def calculate_reward(self, obs, action):
         """
@@ -111,13 +111,13 @@ class PendulumEnv(gym.Env):
         """
         done = False
 
-        x = self.pendulum.pitch
+        x = self.pendulum.angle
 
         step_reward = np.exp(-self.gamma*(np.abs(x)))
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
-        crash_cond = np.abs(self.pendulum.pitch) > self.crash_angle_condition
+        crash_cond = np.abs(self.pendulum.angle) > self.crash_angle_condition
 
         if end_cond_1 or end_cond_2 or crash_cond:
             done = True

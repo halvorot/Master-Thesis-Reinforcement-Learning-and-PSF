@@ -1,5 +1,5 @@
 import numpy as np
-import gym_rl_mpc.utils.state_space_pendulum as ss
+import gym_rl_mpc.utils.model_params as params
 import gym_rl_mpc.utils.geomutils as geom
 
 def odesolver45(f, y, h):
@@ -26,7 +26,7 @@ def odesolver45(f, y, h):
 
 class Pendulum():
     def __init__(self, init_angle, step_size):
-        self.state = np.zeros(2*ss.DoFs)                # Initialize states
+        self.state = np.zeros(2*params.DoFs)                # Initialize states
         self.state[0] = init_angle
         self.input = np.zeros(2)                        # Initialize control input
         self.step_size = step_size
@@ -49,13 +49,13 @@ class Pendulum():
         """
         state = [theta, theta_dot, x_1, x_1_dot, x_2, x_2_dot]
         """
-        l = ss.spoke_length
-        l_BG = ss.l_BG
-        J = ss.J
-        k_a = ss.k_a
-        c_a = ss.c_a
-        m_a = ss.m_a
-        g = ss.g
+        l = params.spoke_length
+        l_BG = params.l_BG
+        J = params.J
+        k_a = params.k_a
+        c_a = params.c_a
+        m_a = params.m_a
+        g = params.g
 
         state_dot = np.array([ state[1],
                                 (l*np.cos(state[0])*self.input[1] - l*np.cos(state[0])*self.input[0] - l_BG*np.sin(state[0])*self.input[0] - l_BG*np.sin(state[0])*self.input[1] + c_a*l*np.cos(state[0])*state[3] - c_a*l*np.cos(state[0])*state[5] + k_a*l*np.cos(state[0])*state[2] - k_a*l*np.cos(state[0])*state[4] + c_a*l_BG*np.sin(state[0])*state[3] + c_a*l_BG*np.sin(state[0])*state[5] + k_a*l_BG*np.sin(state[0])*state[2] + k_a*l_BG*np.sin(state[0])*state[4] + l**2*m_a*np.sin(2*state[0])*state[1]**2 - l_BG**2*m_a*np.sin(2*state[0])*state[1]**2 - 2*l**2*m_a*np.cos(state[0])*np.sin(state[0])*state[1]**2 + 2*l_BG**2*m_a*np.cos(state[0])*np.sin(state[0])*state[1]**2)/J,
@@ -68,9 +68,9 @@ class Pendulum():
         return state_dot
 
     @property
-    def pitch(self):
+    def angle(self):
         """
-        Returns the pitch angle of the pendulum
+        Returns the angle of the pendulum
         """
         return geom.ssa(self.state[0])
 
@@ -91,8 +91,8 @@ class Pendulum():
 
     @property
     def max_input(self):
-        return ss.max_input
+        return params.max_input
 
 def _un_normalize_dva_input(dva_input):
     dva_input = np.clip(dva_input, -1, 1)
-    return dva_input*ss.max_input
+    return dva_input*params.max_input

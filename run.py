@@ -10,15 +10,9 @@ import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser_group = parser.add_mutually_exclusive_group()
-    parser_group.add_argument(
+    parser.add_argument(
         '--agent',
         help='Path to agent .zip file.',
-    )
-    parser_group.add_argument(
-        '--lqr',
-        help='Use LQR controller',
-        action='store_true'
     )
     parser.add_argument(
         '--time',
@@ -35,53 +29,46 @@ if __name__ == "__main__":
 
     env = gym.make("TurbineStab-v0")
     env_id = env.unwrapped.spec.id
-    if args.lqr:
-        sim_df = utils.simulate_episode(env=env, agent=None, max_time=args.time, lqr=True)
-        LQR_dir = os.path.join("logs", env_id, "LQR_simulations")
-        os.makedirs(LQR_dir, exist_ok=True)
-        i = 0
-        while os.path.exists(os.path.join(LQR_dir, f"_simdata_lqr_{i}.csv")):
-            i += 1
-        sim_df.to_csv(os.path.join(LQR_dir, f"_simdata_lqr_{i}.csv"))
-    else:
-        agent_path = args.agent
-        agent = PPO.load(agent_path)
-        sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time, lqr=False)
-        agent_path_list = agent_path.split("\\")
-        simdata_dir = os.path.join("logs", env_id, agent_path_list[-3], "sim_data")
-        os.makedirs(simdata_dir, exist_ok=True)
 
-        # Save file to logs\env_id\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
-        i = 0
-        while os.path.exists(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
-            i += 1
-        sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))
+    agent_path = args.agent
+    agent = PPO.load(agent_path)
+    sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time, lqr=False)
+    agent_path_list = agent_path.split("\\")
+    simdata_dir = os.path.join("logs", env_id, agent_path_list[-3], "sim_data")
+    os.makedirs(simdata_dir, exist_ok=True)
+
+    # Save file to logs\env_id\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
+    i = 0
+    while os.path.exists(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
+        i += 1
+    sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))
 
     env.close()
 
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 
-        ax2.plot(sim_df['theta_p']*(180/np.pi), label='Pitch')
-        ax2.plot(sim_df['theta_r']*(180/np.pi), label='Roll')
-        ax2.set_ylabel('Degrees')
-        ax2.set_title('Angles')
+        ax1.plot(sim_df['theta']*(180/np.pi), label='theta')
+        ax1.set_ylabel('Degrees')
+        ax1.set_title('Angle')
+        ax1.legend()
+
+        ax2.plot(sim_df['x_1'], label='x_1')
+        ax2.plot(sim_df['x_2'], label='x_2')
+        ax2.set_ylabel('Meters')
+        ax2.set_title('DVA displacements')
         ax2.legend()
 
-        ax3.plot(sim_df['Fa_1'], label='Fa_1', linestyle='--')
+        ax3.plot(sim_df['Fa_1'], label='Fa_1')
         ax3.plot(sim_df['Fa_2'], label='Fa_2')
-        ax3.plot(sim_df['Fa_3'], label='Fa_3', linestyle='--')
-        ax3.plot(sim_df['Fa_4'], label='Fa_4')
         ax3.set_ylabel('[N]')
         ax3.set_title('Inputs')
         ax3.legend()
 
-        ax4.plot(sim_df['x_1'], label='x_1', linestyle='--')
-        ax4.plot(sim_df['x_2'], label='x_2')
-        ax4.plot(sim_df['x_3'], label='x_3', linestyle='--')
-        ax4.plot(sim_df['x_4'], label='x_4')
-        ax4.set_ylabel('Meters')
-        ax4.set_title('DVA displacements')
+        ax4.plot(sim_df['x_1_dot'], label='x_1_dot')
+        ax4.plot(sim_df['x_2_dot'], label='x_2_dot')
+        ax4.set_ylabel('m/s')
+        ax4.set_title('DVA velocities')
         ax4.legend()
 
         plt.show()

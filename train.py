@@ -128,8 +128,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Make environment (NUM_CPUs parallel envs)
-    env = make_vec_env('PendulumStab-v0', n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
-    env_id = env.unwrapped.spec.id
+    env_id = 'PendulumStab-v0'
+    env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
+    
 
     # Define necessary directories
     EXPERIMENT_ID = str(int(time())) + 'ppo'

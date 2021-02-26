@@ -53,7 +53,8 @@ def animate(frame):
                 action = np.array([1, 0])
             else:
                 action = np.array([0, 0])
-
+            action = np.array([0, 0])
+            
         _, _, done, _ = env.step(action)
         if done:
             print("Environment done")

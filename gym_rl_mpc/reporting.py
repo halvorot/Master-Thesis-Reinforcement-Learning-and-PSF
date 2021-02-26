@@ -13,17 +13,19 @@ def format_history(env, lastn=100):
     crashes = np.array([obj['crashed'] for obj in relevant_history])
     no_crashes = crashes == 0
     avg_abs_theta = np.array([obj['avg_abs_theta'] for obj in relevant_history])
+    std_theta = np.array([obj['std_theta'] for obj in relevant_history])
     rewards = np.array([obj['reward'] for obj in relevant_history])
     timesteps = np.array([obj['timesteps'] for obj in relevant_history])
     durations = np.array([obj['duration'] for obj in relevant_history])
 
-    labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"theta", r"timesteps", r"duration"])
+    labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"theta", r"std_theta", r"timesteps", r"duration"])
 
     episode_nums = episode_nums.reshape((len(relevant_history), 1))
     rewards = rewards.reshape((len(relevant_history), 1))
     crashes = crashes.reshape((len(relevant_history), 1))
     no_crashes = no_crashes.reshape((len(relevant_history), 1))
     avg_abs_theta = avg_abs_theta.reshape((len(relevant_history), 1))
+    std_theta = std_theta.reshape((len(relevant_history), 1))
     timesteps = timesteps.reshape((len(relevant_history), 1))
     durations = durations.reshape((len(relevant_history), 1))
 
@@ -32,6 +34,7 @@ def format_history(env, lastn=100):
                                 crashes,
                                 no_crashes,
                                 avg_abs_theta,
+                                std_theta,
                                 timesteps,
                                 durations
                             ])
@@ -64,6 +67,7 @@ def make_summary_file(data, report_dir, lastn=50):
     crashes = np.array(relevant_data['crash'])
     no_crashes = crashes == 0
     avg_abs_theta = np.array(relevant_data['theta'])
+    std_theta = np.array(relevant_data['std_theta'])
     rewards = np.array(relevant_data['reward'])
     timesteps = np.array(relevant_data['timesteps'])
     durations = np.array(relevant_data['duration'])
@@ -75,6 +79,7 @@ def make_summary_file(data, report_dir, lastn=50):
         f.write('{:<30}{:<30}\n'.format('Std. Reward', rewards.std()))
         f.write('{:<30}{:<30.2%}\n'.format('Avg. Crashes', crashes.mean()))
         f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
-        f.write('{:<30}{:<30}\n'.format('Avg. absolute theta_r [deg]', avg_abs_theta.mean()*(180/np.pi)))
+        f.write('{:<30}{:<30}\n'.format('Avg. Absolute theta [deg]', avg_abs_theta.mean()*(180/np.pi)))
+        f.write('{:<30}{:<30}\n'.format('Avg. Std. theta [deg]', std_theta.mean()*(180/np.pi)))
         f.write('{:<30}{:<30}\n'.format('Avg. Timesteps', timesteps.mean()))
         f.write('{:<30}{:<30}\n'.format('Avg. Duration', durations.mean()))

@@ -61,13 +61,13 @@ def animate(frame):
             raise SystemExit
         x_top = height*np.sin(env.pendulum.pitch)
         y_top = height*np.cos(env.pendulum.pitch)
-        recorded_states.append(env.pendulum.state[0:3])
+        recorded_states.append(np.array([env.pendulum.pitch, env.pendulum.dva_displacement]))
         recorded_inputs.append(env.pendulum.input)
         dva_displacement = env.pendulum.dva_displacement
 
     x = [0, x_top]
     y = [0, y_top]
-    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-0.2*height, 1.1*height))
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-2*ss.l_BG, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -79,14 +79,17 @@ def animate(frame):
     # Plot base
     base_thickness = 5
     base = Rectangle((-ss.spoke_length, -base_thickness/2), 2*ss.spoke_length, base_thickness)
-    base.set_transform(mpl.transforms.Affine2D().rotate_deg_around(0, 0, -env.pendulum.pitch*180/np.pi) + ax_ani.transData)
+    base.set_transform(mpl.transforms.Affine2D().translate(0, -ss.l_BG).rotate_deg_around(0, 0, -env.pendulum.pitch*180/np.pi) + ax_ani.transData)
     ax_ani.add_patch(base)
+    x_bottom = -ss.l_BG*np.sin(env.pendulum.pitch)
+    y_bottom = -ss.l_BG*np.cos(env.pendulum.pitch)
+    ax_ani.plot([0, x_bottom], [0, y_bottom], linewidth=10)
     # Plot line from neutral top position to current top position
-    ax_ani.plot([0, x_top], [0, y_top], color='k', linewidth=1)
+    ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
 
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = -spoke_length, y = 0, dx=0, dy=2*dva_displacement[0])
-    ax_ani.arrow(x = spoke_length, y = 0, dx=0, dy=2*dva_displacement[1])
+    ax_ani.arrow(x = -spoke_length, y = 0, dx=0, dy=dva_displacement[0])
+    ax_ani.arrow(x = spoke_length, y = 0, dx=0, dy=dva_displacement[1])
 
 
 if __name__ == "__main__":

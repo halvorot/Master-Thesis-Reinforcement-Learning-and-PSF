@@ -11,6 +11,7 @@ zero_2_4 = np.zeros((2, 4))
 # Turbine parameters
 J = 1e8                             # Rotational intertia of pendulum [kg*m^2]
 height = 100
+l_BG = 30
 m_a = 1e5                           # DVA mass
 k_a = 6e4                           # DVA stiffness [N/m]
 zeta_a = 0.6                        # DVA damping ratio

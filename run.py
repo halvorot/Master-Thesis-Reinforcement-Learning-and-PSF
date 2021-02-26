@@ -13,6 +13,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--agent',
         help='Path to agent .zip file.',
+        required=True
     )
     parser.add_argument(
         '--time',

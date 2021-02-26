@@ -96,8 +96,8 @@ if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111)
 
-    state_labels = np.array([r"theta", r"x_1", r"x_2"])
-    input_labels = [r"Fa_1", r"Fa_2"]
+    state_labels = [r"theta", r"theta_dot", r"x_1", r"x_1_dot", r"x_2", r"x_2_dot"]
+    input_labels = [r"F_1", r"F_2"]
     recorded_states = []
     recorded_inputs = []
 
@@ -128,12 +128,14 @@ if __name__ == "__main__":
         # If file specified, read data from file and animate
         data = pd.read_csv(args.data)
         data_angle = data['theta']
-        data_input = np.array([data['Fa_1'], data['Fa_2']])
+        data_input = np.array([data['F_1'], data['F_2']])
         data_dva_displacement = np.array([data['x_1'], data['x_2']])
         data_reward = np.array(data['reward'])
+        env_id = "PendulumStab-v0"
     else:
         done = False
         env = gym.make("PendulumStab-v0")
+        env_id = env.unwrapped.spec.id
         env.reset()
         if args.agent:
             agent = PPO.load(args.agent)
@@ -148,7 +150,7 @@ if __name__ == "__main__":
     plt.tight_layout()
     if args.save_video:
         agent_path_list = args.agent.split("\\")
-        video_dir = os.path.join("logs", "PendulumStab-v0", agent_path_list[-3], "videos")
+        video_dir = os.path.join("logs", env_id, agent_path_list[-3], "videos")
         os.makedirs(video_dir, exist_ok=True)
         i = 0
         video_path = os.path.join(video_dir, agent_path_list[-1][0:-4] + f"_animation_{i}.mp4")
@@ -162,21 +164,27 @@ if __name__ == "__main__":
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
         rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
 
-        ax1.plot(rec_data['theta']*(180/np.pi), label='angle')
+        ax1.plot(rec_data['theta']*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
-        ax1.set_title('Angles')
+        ax1.set_title('Angle')
         ax1.legend()
 
-        ax3.plot(rec_data['Fa_1'], label='Fa_1', linestyle='--')
-        ax3.plot(rec_data['Fa_2'], label='Fa_2')
+        ax2.plot(rec_data['x_1'], label='x_1')
+        ax2.plot(rec_data['x_2'], label='x_2')
+        ax2.set_ylabel('Meters')
+        ax2.set_title('DVA displacements')
+        ax2.legend()
+
+        ax3.plot(rec_data['F_1'], label='F_1')
+        ax3.plot(rec_data['F_2'], label='F_2')
         ax3.set_ylabel('[N]')
         ax3.set_title('Inputs')
         ax3.legend()
 
-        ax4.plot(rec_data['x_1'], label='x_1', linestyle='--')
-        ax4.plot(rec_data['x_2'], label='x_2')
-        ax4.set_ylabel('Meters')
-        ax4.set_title('DVA displacements')
+        ax4.plot(rec_data['x_1_dot'], label='x_1_dot')
+        ax4.plot(rec_data['x_2_dot'], label='x_2_dot')
+        ax4.set_ylabel('m/s')
+        ax4.set_title('DVA velocities')
         ax4.legend()
 
         plt.show()

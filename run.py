@@ -59,8 +59,8 @@ if __name__ == "__main__":
         ax2.set_title('DVA displacements')
         ax2.legend()
 
-        ax3.plot(sim_df['Fa_1'], label='Fa_1')
-        ax3.plot(sim_df['Fa_2'], label='Fa_2')
+        ax3.plot(sim_df['F_1'], label='F_1')
+        ax3.plot(sim_df['F_2'], label='F_2')
         ax3.set_ylabel('[N]')
         ax3.set_title('Inputs')
         ax3.legend()

@@ -4,7 +4,7 @@ from pandas import DataFrame
 def simulate_episode(env, agent, max_time, lqr=False):
     global input_labels, state_labels
     state_labels = [r"theta", r"theta_dot", r"x_1", r"x_1_dot", r"x_2", r"x_2_dot"]
-    input_labels = [r"Fa_1", r"Fa_2"]
+    input_labels = [r"F_1", r"F_2"]
     reward_labels = r"reward"
     labels = np.hstack(["time", state_labels, input_labels, reward_labels])
 

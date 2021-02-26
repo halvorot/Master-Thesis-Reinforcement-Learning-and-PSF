@@ -32,9 +32,9 @@ class Pendulum():
         self.step_size = step_size
 
     def step(self, action):
-        Fa_1 = _un_normalize_dva_input(action[0])
-        Fa_2 = _un_normalize_dva_input(action[1])
-        self.input = np.array([Fa_1, Fa_2])
+        F_1 = _un_normalize_dva_input(action[0])
+        F_2 = _un_normalize_dva_input(action[1])
+        self.input = np.array([F_1, F_2])
 
         self._sim()
 

@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {
     "crash_angle_condition": 7*(np.pi/180),
     "max_init_angle": 5*(np.pi/180),
     "reward_crash": -2000,
-    "gamma": 250,                              # Exponential coefficient for angle angle reward
+    "gamma": 50,                              # Exponential coefficient for angle angle reward
 }
 
 register(

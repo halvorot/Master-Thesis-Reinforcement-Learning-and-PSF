@@ -49,11 +49,10 @@ def animate(frame):
         if args.agent:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            if frame > 50:
+            if frame in range(30,50):
                 action = np.array([1, 0])
             else:
                 action = np.array([0, 0])
-            action = np.array([0, 0])
 
         _, _, done, _ = env.step(action)
         if done:
@@ -61,7 +60,7 @@ def animate(frame):
             raise SystemExit
         x_top = height*np.sin(env.pendulum.angle)
         y_top = height*np.cos(env.pendulum.angle)
-        recorded_states.append(np.array([env.pendulum.angle, env.pendulum.dva_displacement]))
+        recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
         dva_displacement = env.pendulum.dva_displacement
 
@@ -142,10 +141,10 @@ if __name__ == "__main__":
         else:
             pass
             # env.pendulum.state = np.zeros(6)
-        recorded_states.append(env.pendulum.state[0:3])
+        recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
 
-    ani = FuncAnimation(fig_ani, animate, interval=50, blit=False)
+    ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
 
     plt.tight_layout()
     if args.save_video:

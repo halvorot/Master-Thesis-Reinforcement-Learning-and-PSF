@@ -113,7 +113,7 @@ class PendulumEnv(gym.Env):
 
         x = self.pendulum.angle
 
-        step_reward = np.exp(-self.gamma*(np.abs(x)))
+        step_reward = np.exp(-self.gamma*(np.abs(x))) - self.gamma*x**2
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps

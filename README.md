@@ -3,6 +3,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulu
 
 ## Prerequisites
  - ffmpeg (has to be installed with conda, with pip does not work, conda install ffmpeg)
+ - PSF (from https://github.com/PerLunsj/PSF)
 
 ## Installation
 Install the package by running

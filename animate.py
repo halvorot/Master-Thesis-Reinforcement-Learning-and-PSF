@@ -35,12 +35,15 @@ def animate(frame):
             raise SystemExit
         x_top = height*np.sin(env.pendulum.angle)
         y_top = height*np.cos(env.pendulum.angle)
+        x_bottom = -params.L_P*np.sin(env.pendulum.angle)
+        y_bottom = -params.L_P*np.cos(env.pendulum.angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
+        recorded_disturbance.append(env.pendulum.disturbance_force)
 
-    x = [0, x_top]
-    y = [0, y_top]
-    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-0.2*params.L, 1.1*height))
+    x = [x_bottom, x_top]
+    y = [y_bottom, y_top]
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-1.1*params.L_P, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -51,18 +54,19 @@ def animate(frame):
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
-    # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = x_top, y = y_top, dx=30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    # Plot arrow proportional to input force
+    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.angle), y = -params.L_P*np.cos(env.pendulum.angle), dx=30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    # Plot arrow proportional to disturbance force
+    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.disturbance_force/params.max_input), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
 
 if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111)
 
-    state_labels = [r"theta", r"theta_dot"]
-    input_labels = [r"F"]
     recorded_states = []
     recorded_inputs = []
+    recorded_disturbance = []
 
     parser = argparse.ArgumentParser()
     parser_group = parser.add_mutually_exclusive_group()
@@ -106,6 +110,7 @@ if __name__ == "__main__":
             # env.pendulum.state = np.zeros(6)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
+        recorded_disturbance.append(env.pendulum.disturbance_force)
 
     ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
 
@@ -140,5 +145,10 @@ if __name__ == "__main__":
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()
+
+        ax4.plot(recorded_disturbance, label='F_d')
+        ax4.set_ylabel('[N]')
+        ax4.set_title('Disturbance force')
+        ax4.legend()
 
         plt.show()

@@ -30,12 +30,15 @@ class Pendulum():
         self.state[0] = init_angle
         self.input = 0                          # Initialize control input
         self.step_size = step_size
+        self.t_step = 0
+        self.F_d = 0
 
     def step(self, action):
         F = _un_normalize_input(action)
         self.input = float(F)
 
         self._sim()
+        self.t_step += 1
 
     def _sim(self):
 
@@ -49,14 +52,18 @@ class Pendulum():
         state = [theta, theta_dot]
         """
         L = params.L
+        L_P = params.L_P
         k = params.k
         c = params.c
         m = params.m
         g = params.g
         J = params.J
+
+        F_d = 0     # 1e7*np.min([self.t_step*self.step_size, 1])
+        self.F_d = F_d
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L*np.cos(state[0]))
+                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
                                 ])
 
         return state_dot
@@ -67,6 +74,13 @@ class Pendulum():
         Returns the angle of the pendulum
         """
         return geom.ssa(self.state[0])
+
+    @property
+    def disturbance_force(self):
+        """
+        Returns the magnitude of the disturbance force
+        """
+        return self.F_d
 
     @property
     def max_input(self):

@@ -123,15 +123,15 @@ if __name__ == "__main__":
     plt.show()
 
     if not args.data:
+        recorded_states = np.array(recorded_states)
+        recorded_inputs = np.array(recorded_inputs)
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        recorded_inputs = np.array(recorded_inputs).reshape((len(recorded_inputs), 1))
-        rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
-        ax1.plot(rec_data['theta']*(180/np.pi), label='theta')
+        ax1.plot(recorded_states[:,0]*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
         ax1.set_title('Angle')
         ax1.legend()
 
-        ax3.plot(rec_data['F'], label='F')
+        ax3.plot(recorded_inputs, label='F')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()

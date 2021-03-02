@@ -1,0 +1,4 @@
+name: null
+channels:
+  - defaults
+prefix: C:\path\to\your\anaconda\distribution>\envs\<env-name>\bin

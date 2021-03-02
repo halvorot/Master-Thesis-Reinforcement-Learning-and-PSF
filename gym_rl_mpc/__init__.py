@@ -10,6 +10,7 @@ DEFAULT_CONFIG = {
     "reward_crash": -2000,
     "gamma": 50,                                # Exponential coefficient for angle angle reward
     "reward_theta_dot": 1,                      # Coefficient for angular rate penalty
+    "reward_control": 1,                      # Coefficient for control input penalty
 }
 
 register(

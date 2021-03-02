@@ -32,6 +32,7 @@ class Pendulum():
         self.step_size = step_size
         self.t_step = 0
         self.F_d = 0
+        self.disturbance_phase_offset = np.random.normal(0,0.5*np.pi)
 
     def step(self, action):
         F = _un_normalize_input(action)
@@ -59,7 +60,8 @@ class Pendulum():
         g = params.g
         J = params.J
 
-        F_d = 0     # 1e7*np.min([self.t_step*self.step_size, 1])
+        time = self.t_step*self.step_size
+        F_d = 1e7*np.sin(params.omega_disturbance*time+self.disturbance_phase_offset)*np.random.normal(1,0.05)
         self.F_d = F_d
  
         state_dot = np.array([  state[1],

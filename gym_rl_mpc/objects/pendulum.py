@@ -26,13 +26,13 @@ def odesolver45(f, y, h):
 
 class Pendulum():
     def __init__(self, init_angle, step_size):
-        self.state = np.zeros(2*params.DoFs)                # Initialize states
+        self.state = np.zeros(2*params.DoFs)    # Initialize states
         self.state[0] = init_angle
-        self.input = np.zeros(1)                        # Initialize control input
+        self.input = 0                          # Initialize control input
         self.step_size = step_size
 
     def step(self, action):
-        F = _un_normalize_dva_input(action)
+        F = _un_normalize_input(action)
         self.input = F
 
         self._sim()
@@ -54,7 +54,7 @@ class Pendulum():
         m = params.m
         g = params.g
         J = params.J
-
+        print(state)
         state_dot = np.array([  state[1],
                                 (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0])-c*L*np.cos(state[0])*state[1]+self.input)
                                 ])
@@ -72,6 +72,6 @@ class Pendulum():
     def max_input(self):
         return params.max_input
 
-def _un_normalize_dva_input(dva_input):
-    dva_input = np.clip(dva_input, -1, 1)
-    return dva_input*params.max_input
+def _un_normalize_input(input):
+    input = np.clip(input, -1, 1)
+    return input*params.max_input

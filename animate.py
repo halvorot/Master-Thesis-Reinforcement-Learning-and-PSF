@@ -55,6 +55,7 @@ def animate(frame):
         _, _, done, _ = env.step(action)
         if done:
             print("Environment done")
+            raise SystemExit
         x_top = height*np.sin(env.pendulum.angle)
         y_top = height*np.cos(env.pendulum.angle)
         recorded_states.append(env.pendulum.state)

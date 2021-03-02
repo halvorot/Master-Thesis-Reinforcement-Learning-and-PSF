@@ -33,7 +33,7 @@ class Pendulum():
 
     def step(self, action):
         F = _un_normalize_input(action)
-        self.input = F
+        self.input = float(F)
 
         self._sim()
 
@@ -56,7 +56,7 @@ class Pendulum():
         J = params.J
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + float(self.input)*L*np.cos(state[0]))
+                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L*np.cos(state[0]))
                                 ])
 
         return state_dot

@@ -107,9 +107,13 @@ class PendulumEnv(gym.Env):
         """
         done = False
 
-        x = self.pendulum.angle
+        theta = self.pendulum.angle
+        theta_dot = self.pendulum.state[1]
 
-        step_reward = np.exp(-self.gamma*(np.abs(x))) - self.gamma*x**2
+        theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
+        theta_dot_reward = 0
+
+        step_reward = theta_reward + theta_dot_reward
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps

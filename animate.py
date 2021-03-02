@@ -11,29 +11,6 @@ import pandas as pd
 import argparse
 import os
 
-def plot_states(pendulum, sim_time):
-    step_size = 0.01
-    N = int(sim_time/step_size)
-    angle = np.array([])
-    dva_input = []
-
-    for i in range(N):
-        action = np.array([0, 0])
-        pendulum.step(action)
-        angle = np.append(angle, pendulum.angle)
-        dva_input.append(pendulum.input)
-
-    dva_input = np.asarray(dva_input)
-
-    fig, (ax1, ax2) = plt.subplots(nrows=2)
-    time = np.linspace(0, N*step_size, angle.size)
-    ax1.plot(time, angle*(180/np.pi), label='angle')
-    ax2.plot(time, dva_input[:, 0], label='DVA#1')
-    ax2.plot(time, dva_input[:, 1], label='DVA#2')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
 def animate(frame):
     plt.cla()
     height = params.L

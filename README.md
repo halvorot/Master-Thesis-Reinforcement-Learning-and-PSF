@@ -8,7 +8,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulu
 
 ## Installation
 
-###Conda env
+### Conda env
 For improved stability, env is recommend.
 Install in order given. 
 

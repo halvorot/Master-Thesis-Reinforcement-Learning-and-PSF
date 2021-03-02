@@ -114,7 +114,7 @@ class PendulumEnv(gym.Env):
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
 
-        control_reward = 0
+        control_reward = -self.reward_control*(float(action))**2
 
         step_reward = theta_reward + theta_dot_reward + control_reward
 

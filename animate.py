@@ -36,38 +36,33 @@ def plot_states(pendulum, sim_time):
 
 def animate(frame):
     plt.cla()
-    height = params.height
-    spoke_length = params.spoke_length
+    height = params.L
 
     if args.data:
         # If reading from file:
         x_top = height*np.sin(data_angle[frame])
         y_top = -(height*np.cos(data_angle[frame]))
-        action = np.array([data_input[0][frame]/params.max_input, data_input[1][frame]/params.max_input])
-        dva_displacement = data_dva_displacement
+        action = data_input[0][frame]/params.max_input
     else:
         if args.agent:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            if frame in range(30,50):
-                action = np.array([1, 0])
+            if frame in range(100,150):
+                action = 0
             else:
-                action = np.array([0, 0])
-            action = np.array([0, 0])
+                action = 0
             
         _, _, done, _ = env.step(action)
         if done:
             print("Environment done")
-            raise SystemExit
         x_top = height*np.sin(env.pendulum.angle)
         y_top = height*np.cos(env.pendulum.angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        dva_displacement = env.pendulum.dva_displacement
 
     x = [0, x_top]
     y = [0, y_top]
-    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-2*params.l_BG, 1.1*height))
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-0.2*params.L, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -76,28 +71,19 @@ def animate(frame):
 
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
-    # Plot base
-    base_thickness = 5
-    base = Rectangle((-params.spoke_length, -base_thickness/2), 2*params.spoke_length, base_thickness)
-    base.set_transform(mpl.transforms.Affine2D().translate(0, -params.l_BG).rotate_deg_around(0, 0, -env.pendulum.angle*180/np.pi) + ax_ani.transData)
-    ax_ani.add_patch(base)
-    x_bottom = -params.l_BG*np.sin(env.pendulum.angle)
-    y_bottom = -params.l_BG*np.cos(env.pendulum.angle)
-    ax_ani.plot([0, x_bottom], [0, y_bottom], linewidth=10)
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
 
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = -spoke_length, y = 0, dx=0, dy=dva_displacement[0])
-    ax_ani.arrow(x = spoke_length, y = 0, dx=0, dy=dva_displacement[1])
+    ax_ani.arrow(x = 0, y = height, dx=30*action, dy=0)
 
 
 if __name__ == "__main__":
     fig_ani = plt.figure()
     ax_ani = fig_ani.add_subplot(111)
 
-    state_labels = [r"theta", r"theta_dot", r"x_1", r"x_1_dot", r"x_2", r"x_2_dot"]
-    input_labels = [r"F_1", r"F_2"]
+    state_labels = [r"theta", r"theta_dot"]
+    input_labels = [r"F"]
     recorded_states = []
     recorded_inputs = []
 
@@ -128,8 +114,7 @@ if __name__ == "__main__":
         # If file specified, read data from file and animate
         data = pd.read_csv(args.data)
         data_angle = data['theta']
-        data_input = np.array([data['F_1'], data['F_2']])
-        data_dva_displacement = np.array([data['x_1'], data['x_2']])
+        data_input = np.array([data['F']])
         data_reward = np.array(data['reward'])
         env_id = "PendulumStab-v0"
     else:
@@ -162,29 +147,16 @@ if __name__ == "__main__":
 
     if not args.data:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        recorded_inputs = np.array(recorded_inputs).reshape((len(recorded_inputs), 1))
         rec_data = pd.DataFrame(np.hstack([recorded_states, recorded_inputs]), columns=np.hstack([state_labels, input_labels]))
-
         ax1.plot(rec_data['theta']*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
         ax1.set_title('Angle')
         ax1.legend()
 
-        ax2.plot(rec_data['x_1'], label='x_1')
-        ax2.plot(rec_data['x_2'], label='x_2')
-        ax2.set_ylabel('Meters')
-        ax2.set_title('DVA displacements')
-        ax2.legend()
-
-        ax3.plot(rec_data['F_1'], label='F_1')
-        ax3.plot(rec_data['F_2'], label='F_2')
+        ax3.plot(rec_data['F'], label='F')
         ax3.set_ylabel('[N]')
-        ax3.set_title('Inputs')
+        ax3.set_title('Input')
         ax3.legend()
-
-        ax4.plot(rec_data['x_1_dot'], label='x_1_dot')
-        ax4.plot(rec_data['x_2_dot'], label='x_2_dot')
-        ax4.set_ylabel('m/s')
-        ax4.set_title('DVA velocities')
-        ax4.legend()
 
         plt.show()

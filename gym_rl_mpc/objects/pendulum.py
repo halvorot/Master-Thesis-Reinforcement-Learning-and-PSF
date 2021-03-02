@@ -28,13 +28,12 @@ class Pendulum():
     def __init__(self, init_angle, step_size):
         self.state = np.zeros(2*params.DoFs)                # Initialize states
         self.state[0] = init_angle
-        self.input = np.zeros(2)                        # Initialize control input
+        self.input = np.zeros(1)                        # Initialize control input
         self.step_size = step_size
 
     def step(self, action):
-        F_1 = _un_normalize_dva_input(action[0])
-        F_2 = _un_normalize_dva_input(action[1])
-        self.input = np.array([F_1, F_2])
+        F = _un_normalize_dva_input(action)
+        self.input = F
 
         self._sim()
 
@@ -47,22 +46,17 @@ class Pendulum():
 
     def state_dot(self, state):
         """
-        state = [theta, theta_dot, x_1, x_1_dot, x_2, x_2_dot]
+        state = [theta, theta_dot]
         """
-        l = params.spoke_length
-        l_BG = params.l_BG
-        J = params.J
-        k_a = params.k_a
-        c_a = params.c_a
-        m_a = params.m_a
+        L = params.L
+        k = params.k
+        c = params.c
+        m = params.m
         g = params.g
+        J = params.J
 
         state_dot = np.array([  state[1],
-                                (l*np.cos(state[0])*self.input[1] - l*np.cos(state[0])*self.input[0] - l_BG*np.sin(state[0])*self.input[0] - l_BG*np.sin(state[0])*self.input[1] + c_a*l*np.cos(state[0])*state[3] - c_a*l*np.cos(state[0])*state[5] + k_a*l*np.cos(state[0])*state[2] - k_a*l*np.cos(state[0])*state[4] + c_a*l_BG*np.sin(state[0])*state[3] + c_a*l_BG*np.sin(state[0])*state[5] + k_a*l_BG*np.sin(state[0])*state[2] + k_a*l_BG*np.sin(state[0])*state[4] + l**2*m_a*np.sin(2*state[0])*state[1]**2 - l_BG**2*m_a*np.sin(2*state[0])*state[1]**2 - 2*l**2*m_a*np.cos(state[0])*np.sin(state[0])*state[1]**2 + 2*l_BG**2*m_a*np.cos(state[0])*np.sin(state[0])*state[1]**2)/J,
-                                state[3],
-                                -(J*k_a*state[2] - J*self.input[0] + J*g*m_a + J*c_a*state[3] - l_BG**2*m_a*np.sin(state[0])**2*self.input[0] - l_BG**2*m_a*np.sin(state[0])**2*self.input[1] - l**2*m_a*np.cos(state[0])**2*self.input[0] + l**2*m_a*np.cos(state[0])**2*self.input[1] + J*l_BG*m_a*np.cos(state[0])*state[1]**2 - J*l*m_a*np.sin(state[0])*state[1]**2 + l**3*m_a**2*np.cos(state[0])*np.sin(2*state[0])*state[1]**2 - 2*l**3*m_a**2*np.cos(state[0])**2*np.sin(state[0])*state[1]**2 + 2*l_BG**3*m_a**2*np.cos(state[0])*np.sin(state[0])**2*state[1]**2 - l_BG**3*m_a**2*np.sin(state[0])*np.sin(2*state[0])*state[1]**2 + c_a*l**2*m_a*np.cos(state[0])**2*state[3] - c_a*l**2*m_a*np.cos(state[0])**2*state[5] + k_a*l**2*m_a*np.cos(state[0])**2*state[2] - k_a*l**2*m_a*np.cos(state[0])**2*state[4] + c_a*l_BG**2*m_a*np.sin(state[0])**2*state[3] + c_a*l_BG**2*m_a*np.sin(state[0])**2*state[5] + k_a*l_BG**2*m_a*np.sin(state[0])**2*state[2] + k_a*l_BG**2*m_a*np.sin(state[0])**2*state[4] - 2*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*self.input[0] - l*l_BG**2*m_a**2*np.cos(state[0])*np.sin(2*state[0])*state[1]**2 + 2*l*l_BG**2*m_a**2*np.cos(state[0])**2*np.sin(state[0])*state[1]**2 - 2*l**2*l_BG*m_a**2*np.cos(state[0])*np.sin(state[0])**2*state[1]**2 + l**2*l_BG*m_a**2*np.sin(state[0])*np.sin(2*state[0])*state[1]**2 + 2*c_a*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*state[3] + 2*k_a*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*state[2])/(J*m_a),
-                                state[5],
-                                -(J*k_a*state[4] - J*self.input[1] + J*g*m_a + J*c_a*state[5] - l_BG**2*m_a*np.sin(state[0])**2*self.input[0] - l_BG**2*m_a*np.sin(state[0])**2*self.input[1] + l**2*m_a*np.cos(state[0])**2*self.input[0] - l**2*m_a*np.cos(state[0])**2*self.input[1] + J*l_BG*m_a*np.cos(state[0])*state[1]**2 + J*l*m_a*np.sin(state[0])*state[1]**2 - l**3*m_a**2*np.cos(state[0])*np.sin(2*state[0])*state[1]**2 + 2*l**3*m_a**2*np.cos(state[0])**2*np.sin(state[0])*state[1]**2 + 2*l_BG**3*m_a**2*np.cos(state[0])*np.sin(state[0])**2*state[1]**2 - l_BG**3*m_a**2*np.sin(state[0])*np.sin(2*state[0])*state[1]**2 - c_a*l**2*m_a*np.cos(state[0])**2*state[3] + c_a*l**2*m_a*np.cos(state[0])**2*state[5] - k_a*l**2*m_a*np.cos(state[0])**2*state[2] + k_a*l**2*m_a*np.cos(state[0])**2*state[4] + c_a*l_BG**2*m_a*np.sin(state[0])**2*state[3] + c_a*l_BG**2*m_a*np.sin(state[0])**2*state[5] + k_a*l_BG**2*m_a*np.sin(state[0])**2*state[2] + k_a*l_BG**2*m_a*np.sin(state[0])**2*state[4] + 2*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*self.input[1] + l*l_BG**2*m_a**2*np.cos(state[0])*np.sin(2*state[0])*state[1]**2 - 2*l*l_BG**2*m_a**2*np.cos(state[0])**2*np.sin(state[0])*state[1]**2 - 2*l**2*l_BG*m_a**2*np.cos(state[0])*np.sin(state[0])**2*state[1]**2 + l**2*l_BG*m_a**2*np.sin(state[0])*np.sin(2*state[0])*state[1]**2 - 2*c_a*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*state[5] - 2*k_a*l*l_BG*m_a*np.cos(state[0])*np.sin(state[0])*state[4])/(J*m_a)
+                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0])-c*L*np.cos(state[0])*state[1]+self.input)
                                 ])
 
         return state_dot
@@ -73,21 +67,6 @@ class Pendulum():
         Returns the angle of the pendulum
         """
         return geom.ssa(self.state[0])
-
-
-    @property
-    def dva_displacement(self):
-        """
-        Returns array of displacements of DVAs [x_1, x_2]
-        """
-        return np.array([self.state[2], self.state[4]])
-
-    @property
-    def dva_displacement_dot(self):
-        """
-        Returns array of time derivative of displacements of DVAs [x_1_dot, x_2_dot]
-        """
-        return np.array([self.state[3], self.state[5]])
 
     @property
     def max_input(self):

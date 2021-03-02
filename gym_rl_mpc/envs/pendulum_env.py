@@ -15,7 +15,7 @@ class PendulumEnv(gym.Env):
             setattr(self, key, env_config[key])
 
         self.config = env_config
-        self.n_actuators = 2
+        self.n_actuators = 1
 
         self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
                                            high=np.array([1]*self.n_actuators),
@@ -24,10 +24,6 @@ class PendulumEnv(gym.Env):
         # Legal limits for state observations
         high = np.array([   np.pi,                              # theta
                             np.finfo(np.float32).max,           # theta_dot
-                            np.finfo(np.float32).max,           # x_1
-                            np.finfo(np.float32).max,           # x_1_dot
-                            np.finfo(np.float32).max,           # x_2
-                            np.finfo(np.float32).max,           # x_2_dot
                         ])
 
         self.observation_space = gym.spaces.Box(low=-high,

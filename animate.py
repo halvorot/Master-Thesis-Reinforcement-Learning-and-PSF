@@ -24,7 +24,7 @@ def animate(frame):
         if args.agent:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            if frame in range(100,150):
+            if frame > 100:
                 action = 1
             else:
                 action = 0
@@ -51,9 +51,8 @@ def animate(frame):
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
-
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = 0, y = height, dx=30*action, dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = 0, y = height, dx=30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
 
 if __name__ == "__main__":

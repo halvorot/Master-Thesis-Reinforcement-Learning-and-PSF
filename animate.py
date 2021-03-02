@@ -52,7 +52,7 @@ def animate(frame):
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
     # Plot arrow proportional to DVA displacement
-    ax_ani.arrow(x = 0, y = height, dx=30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = x_top, y = y_top, dx=30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
 
 if __name__ == "__main__":

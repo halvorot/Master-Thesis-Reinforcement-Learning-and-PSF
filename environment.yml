@@ -1,4 +1,4 @@
-name: super
+name: gym-rl-mpc
 channels:
   - defaults
 dependencies:

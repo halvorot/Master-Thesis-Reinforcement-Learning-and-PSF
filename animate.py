@@ -131,6 +131,11 @@ if __name__ == "__main__":
         ax1.set_title('Angle')
         ax1.legend()
 
+        ax2.plot(recorded_states[:,1]*(180/np.pi), label='theta_dot')
+        ax2.set_ylabel('Degrees/sec')
+        ax2.set_title('Angluar velocity')
+        ax2.legend()
+
         ax3.plot(recorded_inputs, label='F')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')

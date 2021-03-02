@@ -54,11 +54,10 @@ class Pendulum():
         m = params.m
         g = params.g
         J = params.J
-        print(state)
-        state_dot = np.array([  state[1],
-                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0])-c*L*np.cos(state[0])*state[1]+self.input)
-                                ])
 
+        state_dot = np.array([  state[1],
+                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0])-c*L*np.cos(state[0])*state[1] + self.input)
+                                ])
         return state_dot
 
     @property

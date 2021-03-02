@@ -2,16 +2,36 @@
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulum using Reinforcement Learning and MPC
 
 ## Prerequisites
- - ffmpeg (has to be installed with conda, with pip does not work, conda install ffmpeg)
- - PSF (from https://github.com/PerLunsj/PSF)
+ - Matlab 2020b 
+ - MPT 3.2.1 w/dependencies 
+ - Mosek 9.2.37
 
 ## Installation
-Install the package by running
+
+### Conda env
+For improved stability, env is recommend.
+Install in order given. 
+
+Setup env and install conda and pip dependecies through:
 ```
-pip install -e ./gym-rl-mpc/
+conda env create [-n env_name] -f environment.yml
 ```
 
+Install the MPT3 toolbox and integrate with Matlab:  
+https://www.mpt3.org/Main/Installation
+
+Install mosek (opt: only for quicker solution) and integrate with Matlab/yalmip:
+https://www.mosek.com/downloads/
+
+
+Academic License Mosek
+https://www.mosek.com/products/academic-licenses/
+
+Install the Matlab engine for Python:
+https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
+
 ## Running the program
+
 
 ### Training
 To train an agent run:
@@ -60,3 +80,13 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
+
+### Test PSF dependencies
+```
+python PSF/py2matlab.py
+```
+
+
+## Based on
+
+https://arxiv.org/pdf/1812.05506.pdf

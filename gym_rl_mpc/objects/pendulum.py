@@ -61,11 +61,11 @@ class Pendulum():
         J = params.J
 
         time = self.t_step*self.step_size
-        F_d = 1e7*np.sin(params.omega_disturbance*time+self.disturbance_phase_offset)*np.random.normal(1,0.05)
+        F_d = 0 #1e7*np.sin(params.omega_disturbance*time+self.disturbance_phase_offset)*np.random.normal(1,0.05)
         self.F_d = F_d
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
+                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2-L_P)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
                                 ])
 
         return state_dot

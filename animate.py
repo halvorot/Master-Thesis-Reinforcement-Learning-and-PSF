@@ -106,8 +106,7 @@ if __name__ == "__main__":
         if args.agent:
             agent = PPO.load(args.agent)
         else:
-            pass
-            # env.pendulum.state = np.zeros(6)
+            env.pendulum.state[0] = 5*(np.pi/180)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
         recorded_disturbance.append(env.pendulum.disturbance_force)

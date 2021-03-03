@@ -54,6 +54,7 @@ class Pendulum():
         """
         L = params.L
         L_P = params.L_P
+        L_COM = params.L_COM
         k = params.k
         c = params.c
         m = params.m
@@ -65,7 +66,7 @@ class Pendulum():
         self.F_d = F_d
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L**2*np.sin(state[0])*np.cos(state[0]) + m*g*(L/2-L_P)*np.sin(state[0]) - c*L*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
+                                (1/J)*(-k*L_P**2*np.sin(state[0])*np.cos(state[0]) - m*g*(L_COM)*np.sin(state[0]) - c*L_P*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
                                 ])
 
         return state_dot

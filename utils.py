@@ -3,10 +3,11 @@ from pandas import DataFrame
 
 def simulate_episode(env, agent, max_time):
     global input_labels, state_labels
-    state_labels = [r"theta", r"theta_dot", r"x_1", r"x_1_dot", r"x_2", r"x_2_dot"]
-    input_labels = [r"F_1", r"F_2"]
+    state_labels = [r"theta", r"theta_dot"]
+    input_labels = [r"F"]
     reward_labels = r"reward"
-    labels = np.hstack(["time", state_labels, input_labels, reward_labels])
+    disturbance_labels = [r"F_d"]
+    labels = np.hstack(["time", state_labels, input_labels, reward_labels, disturbance_labels])
 
     done = False
     env.reset()
@@ -16,10 +17,14 @@ def simulate_episode(env, agent, max_time):
 
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))
     last_reward = np.array(env.episode_history['last_reward']).reshape((env.t_step, 1))
+    input = np.array(env.episode_history['input']).reshape((env.t_step, 1))
+    states = env.episode_history['states']
+    disturbance = np.array(env.episode_history['disturbance_force']).reshape((env.t_step, 1))
     sim_data = np.hstack([  time,
-                            env.episode_history['states'],
-                            env.episode_history['input'],
+                            states,
+                            input,
                             last_reward,
+                            disturbance
                         ])
     df = DataFrame(sim_data, columns=labels)
     return df

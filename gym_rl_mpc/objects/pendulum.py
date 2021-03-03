@@ -81,7 +81,7 @@ class Pendulum():
     @property
     def disturbance_force(self):
         """
-        Returns the magnitude of the disturbance force
+        Returns the disturbance force
         """
         return self.F_d
 

@@ -31,6 +31,7 @@ class Pendulum():
         self.input = np.zeros(2)            # Initialize control input
         self.step_size = step_size
         self.F_w = 0
+        self.Q_w = 0
         self.alpha_thr = self.step_size/(self.step_size + 1)
         self.alpha_blade_pitch = self.step_size/(self.step_size + 0.5)
 

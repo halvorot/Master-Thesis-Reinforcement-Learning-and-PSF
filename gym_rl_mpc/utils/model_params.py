@@ -31,4 +31,4 @@ J_t = 4e7                           # (table 5.1 Pedersen)
 max_thrust_force = 1e6              # maximum force input [N]
 blade_pitch_max = 40*(np.pi/180)    # maximum blade pitch angle (-+)
 omega_disturbance = 1
-max_wind_force = 1e7
+max_wind_force = 1e5

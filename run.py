@@ -44,36 +44,7 @@ if __name__ == "__main__":
             i += 1
         sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))
     else:
-        recorded_states = []
-        recorded_inputs = []
-        recorded_disturbance = []
-        state_labels = [r"theta", r"theta_dot", r"omega"]
-        input_labels = [r"F_thr", r"blade_pitch"]
-        disturbance_labels = [r"F_w"]
-        labels = np.hstack([state_labels, input_labels, disturbance_labels])
-
-        env = gym.make("PendulumStab-v1")
-        env_id = env.unwrapped.spec.id
-        env.reset()
-        env.pendulum.state[0] = 5*(np.pi/180)
-        recorded_states.append(env.pendulum.state)
-        recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.wind_force)
-        done = False
-        while not done and env.t_step < args.time/env.step_size:
-            action = 0
-            _, _, done, _ = env.step(action)
-            recorded_states.append(env.pendulum.state)
-            recorded_inputs.append(env.pendulum.input)
-            recorded_disturbance.append(env.pendulum.wind_force)
-
-        recorded_disturbance = np.array(recorded_disturbance).reshape((len(recorded_disturbance), 1))
-
-        sim_data = np.hstack([  recorded_states,
-                                recorded_inputs,
-                                recorded_disturbance,
-                            ])
-        sim_df = DataFrame(sim_data, columns=labels)
+        sim_df = utils.simulate_episode(env=env, agent=None, max_time=args.time)
 
     env.close()
 
@@ -83,23 +54,26 @@ if __name__ == "__main__":
         time = np.array(range(0, len(sim_df['theta'])))*env.step_size
 
         ax1.plot(time, sim_df['theta']*(180/np.pi), label='theta')
+        ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees')
         ax1.set_title('platform_angle')
         ax1.legend()
 
-        ax2.plot(time, sim_df['theta_dot']*(180/np.pi), label='theta_dot')
+        ax2.plot(time, sim_df['omega']*(180/np.pi), label='omega')
         ax2.set_ylabel('Degrees/sec')
-        ax2.set_title('Angluar velocity')
+        ax2.set_title('Angluar velocity turbine')
         ax2.legend()
 
         ax3.plot(time, sim_df['F_thr'], label='F_thr')
+        ax3.plot(time, sim_df['blade_pitch'], label='Blade pitch')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()
 
         ax4.plot(time, sim_df['F_w'], label='F_w')
-        ax4.set_ylabel('[N]')
-        ax4.set_title('Disturbance force')
+        ax4.plot(time, sim_df['Q_w'], label='Q_w')
+        ax4.set_ylabel('[N], [Nm]')
+        ax4.set_title('Wind')
         ax4.legend()
 
         plt.show()

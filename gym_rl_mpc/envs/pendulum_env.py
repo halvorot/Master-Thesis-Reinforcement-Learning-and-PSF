@@ -80,7 +80,7 @@ class PendulumEnv(gym.Env):
         """
         Simulates the environment one time-step.
         """
-        self.wind_speed = 0
+        self.wind_speed = 1
         
         self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
@@ -154,6 +154,7 @@ class PendulumEnv(gym.Env):
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
         self.episode_history.setdefault('wind_force',[]).append(self.pendulum.wind_force)
+        self.episode_history.setdefault('wind_torque',[]).append(self.pendulum.wind_torque)
 
     def save_latest_episode(self):
         self.history = {

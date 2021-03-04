@@ -24,10 +24,6 @@ def animate(frame):
         if args.agent:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            if frame > 100:
-                action = np.array([1,1])
-            else:
-                action = np.array([0,0])
             action = np.array([0,0])
             
         _, _, done, _ = env.step(action)
@@ -40,7 +36,7 @@ def animate(frame):
         y_bottom = -params.L_P*np.cos(env.pendulum.platform_angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.wind_force)
+        recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
@@ -110,7 +106,7 @@ if __name__ == "__main__":
             env.pendulum.state[0] = 5*(np.pi/180)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.wind_force)
+        recorded_disturbance.append([env.pendulum.wind_force, env.pendulum.wind_torque])
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)
@@ -131,6 +127,8 @@ if __name__ == "__main__":
     if not args.data:
         recorded_states = np.array(recorded_states)
         recorded_inputs = np.array(recorded_inputs)
+        recorded_disturbance = np.array(recorded_disturbance)
+
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
@@ -141,20 +139,21 @@ if __name__ == "__main__":
         ax1.set_title('platform_angle')
         ax1.legend()
 
-        ax2.plot(time, recorded_states[:,1]*(180/np.pi), label='theta_dot')
+        ax2.plot(time, recorded_states[:,2]*(180/np.pi), label='omega')
         ax2.set_ylabel('Degrees/sec')
-        ax2.set_title('Angluar velocity')
+        ax2.set_title('Angluar velocity turbine')
         ax2.legend()
 
-        ax3.plot(time, recorded_inputs[:,0], label=['F_thr'])
-        ax3.plot(time, recorded_inputs[:,1], label=['Blade pitch'])
+        ax3.plot(time, recorded_inputs[:,0], label='F_thr')
+        ax3.plot(time, recorded_inputs[:,1], label='Blade pitch')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()
 
-        ax4.plot(time, recorded_disturbance, label='F_w')
-        ax4.set_ylabel('[N]')
-        ax4.set_title('Disturbance force')
+        ax4.plot(time, recorded_disturbance[:,0], label='F_w')
+        ax4.plot(time, recorded_disturbance[:,1], label='Q_w')
+        ax4.set_ylabel('[N], [Nm]')
+        ax4.set_title('Wind')
         ax4.legend()
 
         plt.show()

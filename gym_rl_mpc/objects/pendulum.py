@@ -32,8 +32,8 @@ class Pendulum():
         self.step_size = step_size
         self.F_w = 0
         self.Q_w = 0
-        self.alpha_thr = self.step_size/(self.step_size + 50)
-        self.alpha_blade_pitch = self.step_size/(self.step_size + 20)
+        self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
+        self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
 
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
@@ -110,7 +110,7 @@ class Pendulum():
     @property
     def wind_torque(self):
         """
-        Returns the torque on the turbine from wind
+        Returns the torque on the rotor from wind
         """
         return self.Q_w
 

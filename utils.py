@@ -15,7 +15,7 @@ def simulate_episode(env, agent, max_time):
         if agent is not None:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0,0])
+            action = np.array([0,1])
         _, _, done, _ = env.step(action)
 
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))

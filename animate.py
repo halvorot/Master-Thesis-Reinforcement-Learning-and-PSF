@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
         ax2.plot(time, recorded_states[:,2]*(180/np.pi), label='omega')
         ax2.set_ylabel('Degrees/sec')
-        ax2.set_title('Angluar velocity turbine')
+        ax2.set_title('Angluar velocity Rotor')
         ax2.legend()
 
         ax3.plot(time, recorded_inputs[:,0], label='F_thr')

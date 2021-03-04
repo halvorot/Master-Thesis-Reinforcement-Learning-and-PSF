@@ -12,7 +12,7 @@ zeta = 1
 c = 2*zeta*np.sqrt(m*k)
 J = 2*1.2507E+10 + m*(L_COM)**2     # 2*J_COM + m*d^2
 
-# Turbine parameters
+# Rotor parameters
 B = 0.94                            # Tip loss parameter (table 5.1 Pedersen)
 lambda_star = 7.5                   # (table 5.1 Pedersen)
 C_P_star = 0.48                     # (table 5.1 Pedersen)
@@ -31,3 +31,5 @@ J_t = 4e7                           # (table 5.1 Pedersen)
 max_thrust_force = 1e6              # maximum force input [N]
 blade_pitch_max = 40*(np.pi/180)    # maximum blade pitch angle (-+)
 max_wind_force = 1e5
+tau_blade_pitch = 20                # Blade pitch time constant
+tau_thr = 50                        # Thrust force time constant

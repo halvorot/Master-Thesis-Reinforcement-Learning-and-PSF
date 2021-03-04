@@ -61,19 +61,32 @@ if __name__ == "__main__":
 
         ax2.plot(time, sim_df['omega']*(180/np.pi), label='omega')
         ax2.set_ylabel('Degrees/sec')
-        ax2.set_title('Angluar velocity turbine')
+        ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
 
-        ax3.plot(time, sim_df['F_thr'], label='F_thr')
-        ax3.plot(time, sim_df['blade_pitch'], label='Blade pitch')
-        ax3.set_ylabel('[N]')
+        color = 'tab:blue'
+        ax3.plot(time, sim_df['F_thr'], label='F_thr', color=color)
+        ax3.set_ylabel('F_thr [N]', color=color)
         ax3.set_title('Input')
         ax3.legend()
 
-        ax4.plot(time, sim_df['F_w'], label='F_w')
-        ax4.plot(time, sim_df['Q_w'], label='Q_w')
-        ax4.set_ylabel('[N], [Nm]')
+        color = 'tab:orange'
+        ax3_2 = ax3.twinx()
+        ax3_2.plot(time, sim_df['blade_pitch']*(180/np.pi), label='Blade pitch', color=color)
+        ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
+        ax3_2.legend()
+
+        color = 'tab:blue'
+        ax4.plot(time, sim_df['F_w'], label='F_w', color=color)
+        ax4.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
+        ax4.set_ylabel('F_w [N]', color=color)
         ax4.set_title('Wind')
         ax4.legend()
+
+        color = 'tab:orange'
+        ax4_2 = ax4.twinx()
+        ax4_2.plot(time, sim_df['Q_w'], label='Q_w', color=color)
+        ax4_2.set_ylabel('Q_w [Nm]', color=color)
+        ax4_2.legend()
 
         plt.show()

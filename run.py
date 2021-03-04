@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
         ax1.plot(time, sim_df['theta']*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
-        ax1.set_title('Angle')
+        ax1.set_title('platform_angle')
         ax1.legend()
 
         ax2.plot(time, sim_df['theta_dot']*(180/np.pi), label='theta_dot')

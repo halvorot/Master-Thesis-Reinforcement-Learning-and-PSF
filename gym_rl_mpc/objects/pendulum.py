@@ -50,7 +50,7 @@ class Pendulum():
 
     def state_dot(self, state):
         """
-        state = [theta, theta_dot]
+        state = [theta, theta_dot, omega]^T
         """
         L = params.L
         L_P = params.L_P
@@ -72,9 +72,9 @@ class Pendulum():
         return state_dot
 
     @property
-    def angle(self):
+    def platform_angle(self):
         """
-        Returns the angle of the pendulum
+        Returns the angle of the platform
         """
         return geom.ssa(self.state[0])
 

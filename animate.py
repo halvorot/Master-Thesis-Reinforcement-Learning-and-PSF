@@ -33,10 +33,10 @@ def animate(frame):
         if done:
             print("Environment done")
             raise SystemExit
-        x_top = height*np.sin(env.pendulum.angle)
-        y_top = height*np.cos(env.pendulum.angle)
-        x_bottom = -params.L_P*np.sin(env.pendulum.angle)
-        y_bottom = -params.L_P*np.cos(env.pendulum.angle)
+        x_top = height*np.sin(env.pendulum.platform_angle)
+        y_top = height*np.cos(env.pendulum.platform_angle)
+        x_bottom = -params.L_P*np.sin(env.pendulum.platform_angle)
+        y_bottom = -params.L_P*np.cos(env.pendulum.platform_angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
         recorded_disturbance.append(env.pendulum.disturbance_force)
@@ -55,7 +55,7 @@ def animate(frame):
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.angle), y = -params.L_P*np.cos(env.pendulum.angle), dx=-30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to disturbance force
     ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.disturbance_force/params.max_disturbance), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
         ax1.plot(recorded_states[:,0]*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
-        ax1.set_title('Angle')
+        ax1.set_title('platform_angle')
         ax1.legend()
 
         ax2.plot(recorded_states[:,1]*(180/np.pi), label='theta_dot')

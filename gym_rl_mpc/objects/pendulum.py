@@ -70,7 +70,7 @@ class Pendulum():
         J = params.J
         k_t = params.k_t
         l_t = params.l_t
-        b_d = params.b_d
+        b_d_t = params.b_d_t
         d_t = params.d_t
         J_t = params.J_t
 
@@ -81,7 +81,7 @@ class Pendulum():
         omega = state[2]
 
         F_w = d_t*np.abs(wind_speed)*wind_speed + k_t*np.cos(u)*wind_speed*omega - k_t*l_t*np.sin(u)*omega**2
-        Q_w = k_t*np.cos(u)*wind_speed**2 - k_t*np.sin(u)*omega*wind_speed*l_t - b_d*np.abs(omega)*omega
+        Q_w = k_t*np.cos(u)*wind_speed**2 - k_t*np.sin(u)*omega*wind_speed*l_t - b_d_t*np.abs(omega)*omega
 
         self.F_w = F_w
         self.Q_w = Q_w

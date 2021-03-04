@@ -28,7 +28,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    env = gym.make("PendulumStab-v0")
+    env = gym.make("PendulumStab-v1")
     env_id = env.unwrapped.spec.id
     if args.agent:
         agent_path = args.agent
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         disturbance_labels = [r"F_w"]
         labels = np.hstack([state_labels, input_labels, disturbance_labels])
 
-        env = gym.make("PendulumStab-v0")
+        env = gym.make("PendulumStab-v1")
         env_id = env.unwrapped.spec.id
         env.reset()
         env.pendulum.state[0] = 5*(np.pi/180)

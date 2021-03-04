@@ -19,7 +19,7 @@ def animate(frame):
         # If reading from file:
         x_top = height*np.sin(data_angle[frame])
         y_top = -(height*np.cos(data_angle[frame]))
-        action = data_input[0][frame]/params.max_input
+        action = data_input[0][frame]/params.max_thrust_force
     else:
         if args.agent:
             action, _states = agent.predict(env.observation, deterministic=True)
@@ -40,7 +40,7 @@ def animate(frame):
         y_bottom = -params.L_P*np.cos(env.pendulum.platform_angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.disturbance_force)
+        recorded_disturbance.append(env.pendulum.wind_force)
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
@@ -58,7 +58,7 @@ def animate(frame):
     # Plot arrow proportional to input force
     ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-30*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to disturbance force
-    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.disturbance_force/params.max_disturbance), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.wind_force/params.max_disturbance), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
 
 if __name__ == "__main__":
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             env.pendulum.state[0] = 5*(np.pi/180)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.disturbance_force)
+        recorded_disturbance.append(env.pendulum.wind_force)
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)
@@ -136,6 +136,7 @@ if __name__ == "__main__":
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
 
         ax1.plot(time, recorded_states[:,0]*(180/np.pi), label='theta')
+        ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees')
         ax1.set_title('platform_angle')
         ax1.legend()
@@ -145,7 +146,8 @@ if __name__ == "__main__":
         ax2.set_title('Angluar velocity')
         ax2.legend()
 
-        ax3.plot(time, recorded_inputs, label='F')
+        ax3.plot(time, recorded_inputs[:,0], label=['F_thr'])
+        ax3.plot(time, recorded_inputs[:,1], label=['Blade pitch'])
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()

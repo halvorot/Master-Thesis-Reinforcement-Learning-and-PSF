@@ -153,7 +153,7 @@ class PendulumEnv(gym.Env):
         self.episode_history.setdefault('observations', []).append(self.observation)
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
-        self.episode_history.setdefault('disturbance_force',[]).append(self.pendulum.disturbance_force)
+        self.episode_history.setdefault('wind_force',[]).append(self.pendulum.wind_force)
 
     def save_latest_episode(self):
         self.history = {

@@ -19,7 +19,7 @@ def simulate_episode(env, agent, max_time):
     last_reward = np.array(env.episode_history['last_reward']).reshape((env.t_step, 1))
     states = env.episode_history['states']
     input = env.episode_history['input']
-    disturbance = np.array(env.episode_history['disturbance_force']).reshape((env.t_step, 1))
+    disturbance = np.array(env.episode_history['wind_force']).reshape((env.t_step, 1))
     sim_data = np.hstack([  time,
                             states,
                             input,

@@ -58,14 +58,14 @@ if __name__ == "__main__":
         env.pendulum.state[0] = 5*(np.pi/180)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(env.pendulum.disturbance_force)
+        recorded_disturbance.append(env.pendulum.wind_force)
         done = False
         while not done and env.t_step < args.time/env.step_size:
             action = 0
             _, _, done, _ = env.step(action)
             recorded_states.append(env.pendulum.state)
             recorded_inputs.append(env.pendulum.input)
-            recorded_disturbance.append(env.pendulum.disturbance_force)
+            recorded_disturbance.append(env.pendulum.wind_force)
 
         recorded_disturbance = np.array(recorded_disturbance).reshape((len(recorded_disturbance), 1))
 

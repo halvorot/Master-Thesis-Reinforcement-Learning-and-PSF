@@ -27,7 +27,7 @@ b_d = 0.5*rho*A*(B**2*(16/27)-C_P_star)*(R/lambda_star)**3                      
 d_t = 0.5*rho*A*C_F                 # d in Force/Torque equations
 J_t = 4e7                           # (table 5.1 Pedersen)
 
-max_input = 1e6                     # maximum force input [N]
-blade_pitch_max = 90*(np.pi/180)    # maximum blade pitch angle (-+)
+max_thrust_force = 1e6                     # maximum force input [N]
+blade_pitch_max = 40*(np.pi/180)    # maximum blade pitch angle (-+)
 omega_disturbance = 1
 max_disturbance = 1e7

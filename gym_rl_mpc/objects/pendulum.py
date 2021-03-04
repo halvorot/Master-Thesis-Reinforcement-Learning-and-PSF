@@ -100,19 +100,26 @@ class Pendulum():
         return geom.ssa(self.state[0])
 
     @property
-    def disturbance_force(self):
+    def wind_force(self):
         """
-        Returns the disturbance force
+        Returns the force on the platform from wind
         """
         return self.F_w
 
     @property
-    def max_input(self):
-        return params.max_input
+    def wind_torque(self):
+        """
+        Returns the torque on the turbine from wind
+        """
+        return self.Q_w
+
+    @property
+    def max_thrust_force(self):
+        return params.max_thrust_force
 
 def _un_normalize_thrust_input(input):
     input = np.clip(input, -1, 1)
-    return input*params.max_input
+    return input*params.max_thrust_force
 
 def _un_normalize_blade_pitch_input(input):
     input = np.clip(input, -1, 1)

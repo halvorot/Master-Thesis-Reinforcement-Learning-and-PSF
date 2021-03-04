@@ -80,7 +80,7 @@ class PendulumEnv(gym.Env):
         """
         Simulates the environment one time-step.
         """
-        self.wind_speed = 1
+        self.wind_speed = 10
         
         self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()

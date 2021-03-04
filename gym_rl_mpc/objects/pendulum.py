@@ -26,20 +26,27 @@ def odesolver45(f, y, h, wind_speed):
 
 class Pendulum():
     def __init__(self, init_angle, step_size):
-        self.state = np.zeros(2*params.DoFs)    # Initialize states
+        self.state = np.zeros(3)            # Initialize states
         self.state[0] = init_angle
-        self.input = 0                          # Initialize control input
+        self.input = np.zeros(2)            # Initialize control input
         self.step_size = step_size
-        self.t_step = 0
-        self.F_d = 0
-        self.disturbance_phase_offset = np.random.normal(0,0.5*np.pi)
+        self.F_w = 0
+        self.alpha_thr = self.step_size/(self.step_size + 1)
+        self.alpha_blade_pitch = self.step_size/(self.step_size + 0.5)
 
     def step(self, action, wind_speed):
-        F = _un_normalize_input(action)
-        self.input = float(F)
+        prev_F_thr = self.input[0]
+        prev_blade_pitch = self.input[1]
+
+        commanded_F_thr = _un_normalize_thrust_input(action[0])
+        commanded_blade_pitch = _un_normalize_blade_pitch_input(action[1])
+        # Lowpass filter the thrust force and blade pitch angle
+        F_thr = self.alpha_thr*commanded_F_thr + (1-self.alpha_thr)*prev_F_thr
+        blade_pitch = self.alpha_blade_pitch*commanded_blade_pitch + (1-self.alpha_blade_pitch)*prev_blade_pitch
+
+        self.input = np.array([F_thr, blade_pitch])
 
         self._sim(wind_speed)
-        self.t_step += 1
 
     def _sim(self, wind_speed):
 
@@ -60,13 +67,27 @@ class Pendulum():
         m = params.m
         g = params.g
         J = params.J
+        k_t = params.k_t
+        l_t = params.l_t
+        b_d = params.b_d
+        d_t = params.d_t
+        J_t = params.J_t
 
-        time = self.t_step*self.step_size
-        F_d = 0 #1e7*np.sin(params.omega_disturbance*time+self.disturbance_phase_offset)*np.random.normal(1,0.05)
-        self.F_d = F_d
+        F_thr = self.input[0]
+        u = self.input[1]
+        theta = state[0]
+        theta_dot = state[1]
+        omega = state[2]
+
+        F_w = d_t*np.abs(wind_speed)*wind_speed + k_t*np.cos(u)*wind_speed*omega - k_t*l_t*np.sin(u)*omega**2
+        Q_w = k_t*np.cos(u)*wind_speed**2 - k_t*np.sin(u)*omega*wind_speed*l_t - b_d*np.abs(omega)*omega
+
+        self.F_w = F_w
+        self.Q_w = Q_w
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L_P**2*np.sin(state[0])*np.cos(state[0]) - m*g*(L_COM)*np.sin(state[0]) - c*L_P*np.cos(state[0])*state[1] + self.input*L_P*np.cos(state[0]) + F_d)
+                                (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P*np.cos(theta) + F_w),
+                                Q_w/J_t
                                 ])
 
         return state_dot
@@ -83,12 +104,16 @@ class Pendulum():
         """
         Returns the disturbance force
         """
-        return self.F_d
+        return self.F_w
 
     @property
     def max_input(self):
         return params.max_input
 
-def _un_normalize_input(input):
+def _un_normalize_thrust_input(input):
     input = np.clip(input, -1, 1)
     return input*params.max_input
+
+def _un_normalize_blade_pitch_input(input):
+    input = np.clip(input, -1, 1)
+    return input*params.blade_pitch_max

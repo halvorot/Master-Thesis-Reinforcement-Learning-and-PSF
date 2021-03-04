@@ -25,9 +25,10 @@ def animate(frame):
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
             if frame > 100:
-                action = 1
+                action = np.array([1,1])
             else:
-                action = 0
+                action = np.array([0,0])
+            action = np.array([0,0])
             
         _, _, done, _ = env.step(action)
         if done:
@@ -55,7 +56,7 @@ def animate(frame):
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-30*float(action), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-30*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to disturbance force
     ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.disturbance_force/params.max_disturbance), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
@@ -111,7 +112,8 @@ if __name__ == "__main__":
         recorded_inputs.append(env.pendulum.input)
         recorded_disturbance.append(env.pendulum.disturbance_force)
 
-    ani = FuncAnimation(fig_ani, animate, interval=10, blit=False)
+    animation_speed = 10
+    ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)
 
     plt.tight_layout()
     if args.save_video:
@@ -130,22 +132,25 @@ if __name__ == "__main__":
         recorded_states = np.array(recorded_states)
         recorded_inputs = np.array(recorded_inputs)
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        ax1.plot(recorded_states[:,0]*(180/np.pi), label='theta')
+
+        time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
+
+        ax1.plot(time, recorded_states[:,0]*(180/np.pi), label='theta')
         ax1.set_ylabel('Degrees')
         ax1.set_title('platform_angle')
         ax1.legend()
 
-        ax2.plot(recorded_states[:,1]*(180/np.pi), label='theta_dot')
+        ax2.plot(time, recorded_states[:,1]*(180/np.pi), label='theta_dot')
         ax2.set_ylabel('Degrees/sec')
         ax2.set_title('Angluar velocity')
         ax2.legend()
 
-        ax3.plot(recorded_inputs, label='F')
+        ax3.plot(time, recorded_inputs, label='F')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()
 
-        ax4.plot(recorded_disturbance, label='F_d')
+        ax4.plot(time, recorded_disturbance, label='F_w')
         ax4.set_ylabel('[N]')
         ax4.set_title('Disturbance force')
         ax4.legend()

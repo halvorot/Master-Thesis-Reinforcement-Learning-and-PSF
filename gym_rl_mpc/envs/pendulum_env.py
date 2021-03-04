@@ -15,16 +15,16 @@ class PendulumEnv(gym.Env):
             setattr(self, key, env_config[key])
 
         self.config = env_config
-        self.n_actuators = 1
+        self.n_actuators = 2
 
-        self.action_space = gym.spaces.Box(low=-1,
-                                           high=1,
-                                           shape=(1,),
+        self.action_space = gym.spaces.Box(low=np.array([-1]*self.n_actuators),
+                                           high=np.array([1]*self.n_actuators),
                                            dtype=np.float32)
 
         # Legal limits for state observations
         high = np.array([   np.pi,                              # theta
                             np.finfo(np.float32).max,           # theta_dot
+                            np.finfo(np.float32).max,           # omega
                         ])
 
         self.observation_space = gym.spaces.Box(low=-high,
@@ -80,8 +80,9 @@ class PendulumEnv(gym.Env):
         """
         Simulates the environment one time-step.
         """
-
-        self.pendulum.step(action)
+        self.wind_speed = 0
+        
+        self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
@@ -114,7 +115,7 @@ class PendulumEnv(gym.Env):
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
 
-        control_reward = -self.reward_control*(float(action))**2
+        control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 
         step_reward = theta_reward + theta_dot_reward + control_reward
 

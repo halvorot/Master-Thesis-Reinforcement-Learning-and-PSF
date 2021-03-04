@@ -47,9 +47,9 @@ if __name__ == "__main__":
         recorded_states = []
         recorded_inputs = []
         recorded_disturbance = []
-        state_labels = [r"theta", r"theta_dot"]
-        input_labels = [r"F"]
-        disturbance_labels = [r"F_d"]
+        state_labels = [r"theta", r"theta_dot", r"omega"]
+        input_labels = [r"F_thr", r"blade_pitch"]
+        disturbance_labels = [r"F_w"]
         labels = np.hstack([state_labels, input_labels, disturbance_labels])
 
         env = gym.make("PendulumStab-v0")
@@ -66,8 +66,7 @@ if __name__ == "__main__":
             recorded_states.append(env.pendulum.state)
             recorded_inputs.append(env.pendulum.input)
             recorded_disturbance.append(env.pendulum.disturbance_force)
-        
-        recorded_inputs = np.array(recorded_inputs).reshape((len(recorded_inputs), 1))
+
         recorded_disturbance = np.array(recorded_disturbance).reshape((len(recorded_disturbance), 1))
 
         sim_data = np.hstack([  recorded_states,
@@ -93,12 +92,12 @@ if __name__ == "__main__":
         ax2.set_title('Angluar velocity')
         ax2.legend()
 
-        ax3.plot(time, sim_df['F'], label='F')
+        ax3.plot(time, sim_df['F_thr'], label='F_thr')
         ax3.set_ylabel('[N]')
         ax3.set_title('Input')
         ax3.legend()
 
-        ax4.plot(time, sim_df['F_d'], label='F_d')
+        ax4.plot(time, sim_df['F_w'], label='F_w')
         ax4.set_ylabel('[N]')
         ax4.set_title('Disturbance force')
         ax4.legend()

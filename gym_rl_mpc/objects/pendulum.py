@@ -71,11 +71,11 @@ class Pendulum():
         m = params.m
         g = params.g
         J = params.J
-        k_t = params.k_t
-        l_t = params.l_t
-        b_d_t = params.b_d_t
-        d_t = params.d_t
-        J_t = params.J_t
+        k_r = params.k_r
+        l_r = params.l_r
+        b_d_r = params.b_d_r
+        d_r = params.d_r
+        J_r = params.J_r
 
         F_thr = self.input[0]
         u = self.input[1]
@@ -83,15 +83,15 @@ class Pendulum():
         theta_dot = state[1]
         omega = state[2]
 
-        F_w = d_t*np.abs(wind_speed)*wind_speed + k_t*np.cos(u)*wind_speed*omega - k_t*l_t*np.sin(u)*omega**2
-        Q_w = k_t*np.cos(u)*wind_speed**2 - k_t*np.sin(u)*omega*wind_speed*l_t - b_d_t*np.abs(omega)*omega
+        F_w = d_r*np.abs(wind_speed)*wind_speed + k_r*np.cos(u)*wind_speed*omega - k_r*l_r*np.sin(u)*omega**2
+        Q_w = k_r*np.cos(u)*wind_speed**2 - k_r*np.sin(u)*omega*wind_speed*l_r - b_d_r*np.abs(omega)*omega
 
         self.F_w = F_w
         self.Q_w = Q_w
  
         state_dot = np.array([  state[1],
                                 (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P + F_w),
-                                Q_w/J_t
+                                Q_w/J_r
                                 ])
 
         return state_dot

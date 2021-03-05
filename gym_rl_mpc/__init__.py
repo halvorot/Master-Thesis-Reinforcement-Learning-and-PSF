@@ -6,7 +6,7 @@ DEFAULT_CONFIG = {
     "min_reward": -1500,
     "max_t_steps": 3000,
     "crash_angle_condition": 7*(np.pi/180),
-    "max_init_angle": 3*(np.pi/180),
+    "max_init_angle": 0*3*(np.pi/180),
     "reward_crash": -2000,
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward
     "reward_theta_dot": 1,                      # Coefficient for angular rate penalty

@@ -26,15 +26,16 @@ def odesolver45(f, y, h, wind_speed):
 
 class Pendulum():
     def __init__(self, init_angle, step_size):
-        self.state = np.zeros(3)            # Initialize states
-        self.state[0] = init_angle          # Initialize theta
-        self.state[2] = 40*(np.pi/180)      # Initialize Omega
-        self.input = np.zeros(2)            # Initialize control input
+        self.state = np.zeros(3)                # Initialize states
+        self.state[0] = init_angle              # Initialize theta
+        self.state[2] = params.optimal_omega    # Initialize Omega
+        self.input = np.zeros(2)                # Initialize control input
         self.step_size = step_size
         self.F_w = 0
         self.Q_w = 0
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
+        self.optimal_omega = params.optimal_omega
 
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
@@ -45,7 +46,7 @@ class Pendulum():
         # Lowpass filter the thrust force and blade pitch angle
         F_thr = self.alpha_thr*commanded_F_thr + (1-self.alpha_thr)*prev_F_thr
         blade_pitch = self.alpha_blade_pitch*commanded_blade_pitch + (1-self.alpha_blade_pitch)*prev_blade_pitch
-        blade_pitch = prev_blade_pitch + min(abs(blade_pitch-prev_blade_pitch), params.max_blade_pitch_rate)*self.step_size
+        blade_pitch = prev_blade_pitch + np.sign(blade_pitch-prev_blade_pitch)*min(abs(blade_pitch-prev_blade_pitch), params.max_blade_pitch_rate)*self.step_size
 
         self.input = np.array([F_thr, blade_pitch])
 

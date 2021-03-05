@@ -90,7 +90,7 @@ class Pendulum():
         self.Q_w = Q_w
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P*np.cos(theta) + F_w),
+                                (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P + F_w),
                                 Q_w/J_t
                                 ])
 

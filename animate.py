@@ -52,9 +52,9 @@ def animate(frame):
     # Plot line from neutral top position to current top position
     ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-30*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
-    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = x_top, y = y_top, dx=100*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
 
 
 if __name__ == "__main__":
@@ -134,26 +134,40 @@ if __name__ == "__main__":
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
 
         ax1.plot(time, recorded_states[:,0]*(180/np.pi), label='theta')
+        ax1.plot(time, recorded_states[:,1]*(180/np.pi), label='theta_dot')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
-        ax1.set_ylabel('Degrees')
-        ax1.set_title('platform_angle')
+        ax1.set_ylabel('Degrees, deg/sec')
+        ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
         ax2.plot(time, recorded_states[:,2]*(180/np.pi), label='omega')
         ax2.set_ylabel('Degrees/sec')
-        ax2.set_title('Angluar velocity Rotor')
+        ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
 
-        ax3.plot(time, recorded_inputs[:,0], label='F_thr')
-        ax3.plot(time, recorded_inputs[:,1], label='Blade pitch')
-        ax3.set_ylabel('[N]')
+        color = 'tab:blue'
+        ax3.plot(time, recorded_inputs[:,0], label='F_thr', color=color)
+        ax3.set_ylabel('F_thr [N]', color=color)
         ax3.set_title('Input')
         ax3.legend()
 
-        ax4.plot(time, recorded_disturbance[:,0], label='F_w')
-        ax4.plot(time, recorded_disturbance[:,1], label='Q_w')
-        ax4.set_ylabel('[N], [Nm]')
+        color = 'tab:orange'
+        ax3_2 = ax3.twinx()
+        ax3_2.plot(time, recorded_inputs[:,1]*(180/np.pi), label='Blade pitch', color=color)
+        ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
+        ax3_2.legend()
+
+        color = 'tab:blue'
+        ax4.plot(time, recorded_disturbance[:,0], label='F_w', color=color)
+        ax4.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
+        ax4.set_ylabel('F_w [N]', color=color)
         ax4.set_title('Wind')
         ax4.legend()
+
+        color = 'tab:orange'
+        ax4_2 = ax4.twinx()
+        ax4_2.plot(time, recorded_disturbance[:,1], label='Q_w', color=color)
+        ax4_2.set_ylabel('Q_w [Nm]', color=color)
+        ax4_2.legend()
 
         plt.show()

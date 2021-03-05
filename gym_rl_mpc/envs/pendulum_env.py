@@ -114,13 +114,13 @@ class PendulumEnv(gym.Env):
 
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
-        omega_reward = -(omega-self.pendulum.optimal_omega)**2
+        omega_reward = -self.reward_omega*(omega-self.pendulum.optimal_omega)**2
 
         control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 
         step_reward = theta_reward + theta_dot_reward + omega_reward + control_reward
 
-        end_cond_1 = self.cumulative_reward < self.min_reward
+        end_cond_1 = False # self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
         crash_cond = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
 

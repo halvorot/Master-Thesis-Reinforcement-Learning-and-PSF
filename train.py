@@ -146,7 +146,7 @@ if __name__ == '__main__':
             file_object.write(args.note)
 
     # Callback to save model at checkpoints during training
-    checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=agents_dir)
+    checkpoint_callback = CheckpointCallback(save_freq=10000, save_path=agents_dir)
     # Callback to report training to file
     reporting_callback = ReportingCallback(report_dir=report_dir, verbose=True)
     # Callback to report additional values to tensorboard

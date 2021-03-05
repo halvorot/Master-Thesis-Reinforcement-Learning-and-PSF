@@ -26,7 +26,7 @@ k_t = (2*rho*A_p*R)/(3*lambda_star)     # k in Force/Torque equations
 l_t = (2/3)*R_p                         # l in Force/Torque equations
 b_d_t = 0.5*rho*A*(B**2*(16/27)-C_P_star)*(R/lambda_star)**3  # b_d in Force/Torque equations
 d_t = 0.5*rho*A*C_F                     # d in Force/Torque equations
-J_t = 4e7                               # (table 5.1 Pedersen)
+J_t = 4.068903574982517e+07             # From OpenFast
 
 max_thrust_force = 1e5                  # maximum force input [N]
 blade_pitch_max = 40*(np.pi/180)        # maximum blade pitch angle (-+)

@@ -50,7 +50,7 @@ class PendulumEnv(gym.Env):
         Resets environment to initial state.
         """
         # Set initial wind speed
-        self.wind_speed = 2
+        self.wind_speed = 5
 
         # Seeding
         if self.rand_num_gen is None:

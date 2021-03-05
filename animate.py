@@ -49,12 +49,16 @@ def animate(frame):
 
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
-    # Plot line from neutral top position to current top position
-    ax_ani.plot([0, x_top], [y_top, y_top], color='k', linewidth=1)
     # Plot arrow proportional to input force
     ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
     ax_ani.arrow(x = x_top, y = y_top, dx=100*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    # Plot wind arrow with wind number
+    ax_ani.arrow(x = -50, y = params.L, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -50, y = params.L-10, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.text(-49, params.L-7, f"{env.wind_speed} m/s", fontsize=10)
+    # Plot rotational speed
+    ax_ani.text(0, params.L+7, f"$\Omega$ = {env.pendulum.omega*(180/np.pi):.1f} deg/s", fontsize=10)
 
 
 if __name__ == "__main__":
@@ -103,10 +107,7 @@ if __name__ == "__main__":
         if args.agent:
             agent = PPO.load(args.agent)
         else:
-            env.pendulum.state[0] = 5*(np.pi/180)
-        recorded_states.append(env.pendulum.state)
-        recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append([env.pendulum.wind_force, env.pendulum.wind_torque])
+            env.pendulum.state[0] = 0*5*(np.pi/180)
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)

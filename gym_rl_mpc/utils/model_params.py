@@ -33,4 +33,5 @@ blade_pitch_max = 40*(np.pi/180)        # maximum blade pitch angle (-+)
 max_wind_force = 3e6                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 tau_blade_pitch = 0.1                   # Blade pitch time constant
-tau_thr = 50                            # Thrust force time constant
+tau_thr = 10                            # Thrust force time constant
+omega_setpoint = 1.25*0.6

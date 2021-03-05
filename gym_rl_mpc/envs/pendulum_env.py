@@ -50,7 +50,7 @@ class PendulumEnv(gym.Env):
         Resets environment to initial state.
         """
         # Set initial wind speed
-        self.wind_speed = 1
+        self.wind_speed = 2
 
         # Seeding
         if self.rand_num_gen is None:
@@ -117,7 +117,7 @@ class PendulumEnv(gym.Env):
 
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
-        omega_reward = -self.reward_omega*(omega-self.pendulum.optimal_omega)**2
+        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint)**2
 
         control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 

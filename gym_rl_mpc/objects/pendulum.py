@@ -26,16 +26,16 @@ def odesolver45(f, y, h, wind_speed):
 
 class Pendulum():
     def __init__(self, init_angle, init_wind_speed, step_size):
-        self.optimal_omega = (params.lambda_star/params.R)*init_wind_speed
         self.state = np.zeros(3)                # Initialize states
         self.state[0] = init_angle              # Initialize theta
-        self.state[2] = self.optimal_omega    # Initialize Omega
+        self.state[2] = params.omega_setpoint    # Initialize Omega
         self.input = np.zeros(2)                # Initialize control input
         self.step_size = step_size
         self.F_w = 0
         self.Q_w = 0
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
+        self.omega_setpoint = params.omega_setpoint
 
     def step(self, action, wind_speed):
         self.optimal_omega = (params.lambda_star/params.R)*wind_speed
@@ -103,6 +103,13 @@ class Pendulum():
         Returns the angle of the platform
         """
         return geom.ssa(self.state[0])
+
+    @property
+    def omega(self):
+        """
+        Returns the angle of the platform
+        """
+        return self.state[2]
 
     @property
     def wind_force(self):

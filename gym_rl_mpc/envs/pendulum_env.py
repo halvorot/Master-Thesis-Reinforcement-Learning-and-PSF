@@ -49,6 +49,9 @@ class PendulumEnv(gym.Env):
         """
         Resets environment to initial state.
         """
+        # Set initial wind speed
+        self.wind_speed = 1
+
         # Seeding
         if self.rand_num_gen is None:
             self.seed()
@@ -79,7 +82,6 @@ class PendulumEnv(gym.Env):
         """
         Simulates the environment one time-step.
         """
-        self.wind_speed = 10
         
         self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
@@ -100,7 +102,8 @@ class PendulumEnv(gym.Env):
         Generates environment with a pendulum at random initial conditions
         """
         init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        self.pendulum = Pendulum(init_angle, self.step_size)
+        init_wind_speed = self.wind_speed
+        self.pendulum = Pendulum(init_angle, init_wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
         """

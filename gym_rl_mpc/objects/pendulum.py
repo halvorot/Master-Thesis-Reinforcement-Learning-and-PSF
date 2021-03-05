@@ -25,19 +25,20 @@ def odesolver45(f, y, h, wind_speed):
 
 
 class Pendulum():
-    def __init__(self, init_angle, step_size):
+    def __init__(self, init_angle, init_wind_speed, step_size):
+        self.optimal_omega = (params.lambda_star/params.R)*init_wind_speed
         self.state = np.zeros(3)                # Initialize states
         self.state[0] = init_angle              # Initialize theta
-        self.state[2] = params.optimal_omega    # Initialize Omega
+        self.state[2] = self.optimal_omega    # Initialize Omega
         self.input = np.zeros(2)                # Initialize control input
         self.step_size = step_size
         self.F_w = 0
         self.Q_w = 0
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
-        self.optimal_omega = params.optimal_omega
 
     def step(self, action, wind_speed):
+        self.optimal_omega = (params.lambda_star/params.R)*wind_speed
         prev_F_thr = self.input[0]
         prev_blade_pitch = self.input[1]
 
@@ -90,7 +91,7 @@ class Pendulum():
         self.Q_w = Q_w
  
         state_dot = np.array([  state[1],
-                                (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P + F_w),
+                                (1/J)*(-k*L_P**2*np.sin(theta)*np.cos(theta) - m*g*(L_COM)*np.sin(theta) - c*L_P*np.cos(theta)*theta_dot + F_thr*L_P + L*F_w),
                                 Q_w/J_r
                                 ])
 

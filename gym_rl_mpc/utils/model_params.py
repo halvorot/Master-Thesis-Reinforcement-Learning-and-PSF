@@ -30,7 +30,7 @@ J_t = 4.068903574982517e+07             # From OpenFast
 
 max_thrust_force = 1e5                  # maximum force input [N]
 blade_pitch_max = 40*(np.pi/180)        # maximum blade pitch angle (-+)
-max_wind_force = 3e6
+max_wind_force = 3e6                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 tau_blade_pitch = 0.1                   # Blade pitch time constant
 tau_thr = 50                            # Thrust force time constant

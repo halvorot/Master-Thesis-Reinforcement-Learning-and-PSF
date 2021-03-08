@@ -1,22 +1,13 @@
 import numpy as np
 
-g = 9.81                                # Gravitational acceleration
-
 # Platform parameters
-L = 144.495
-L_P = 50
-L_COM = 6                               # Meters below rotation point
-m = 1.7838E+07 + 190000 + 507275        # Platform mass + Hub mass + Nacelle mass 
-k = 4.5e4
-zeta = 1
-c = 2*zeta*np.sqrt(m*k)
-J = 2*1.2507E+10 + m*(L_COM)**2         # 2*J_COM + m*d^2
+L_thr = 50
 
 # Rotor parameters
-B = 0.94                                # Tip loss parameter (table 5.1 Pedersen)
-lambda_star = 7.5                       # (table 5.1 Pedersen)
-C_P_star = 0.48                         # (table 5.1 Pedersen)
-C_F = 0.0145                            # (table 5.1 Pedersen)
+B = 0.97                                # Tip loss parameter (table 5.1 Pedersen)
+lambda_star = 9                       # (table 5.1 Pedersen)
+C_P_star = 0.489                         # (table 5.1 Pedersen)
+C_F = 0.8                            # (table 5.1 Pedersen)
 rho = 1.225                             # Air density (table 5.1 Pedersen)
 R = 120                                  # Blade length
 A = np.pi*R**2

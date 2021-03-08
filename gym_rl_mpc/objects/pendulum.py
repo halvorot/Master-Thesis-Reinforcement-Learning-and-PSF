@@ -64,14 +64,7 @@ class Pendulum():
         """
         state = [theta, theta_dot, omega]^T
         """
-        L = params.L
-        L_P = params.L_P
-        L_COM = params.L_COM
-        k = params.k
-        c = params.c
-        m = params.m
-        g = params.g
-        J = params.J
+        L_thr = params.L_thr
         k_r = params.k_r
         l_r = params.l_r
         b_d_r = params.b_d_r
@@ -91,7 +84,7 @@ class Pendulum():
         self.Q_w = Q_w
  
         state_dot = np.array([  state[1],
-                                4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot + F_thr*L_P + 0.000000000991589*F_w,
+                                4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot + F_thr*L_thr + 0.000000000991589*F_w,
                                 Q_w/J_r
                                 ])
 

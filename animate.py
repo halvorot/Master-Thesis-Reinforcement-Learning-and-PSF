@@ -50,13 +50,13 @@ def animate(frame):
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_thr*np.sin(env.pendulum.platform_angle), y = -params.L_thr*np.cos(env.pendulum.platform_angle), dx=-100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_thr*np.sin(env.pendulum.platform_angle), y = -params.L_thr*np.cos(env.pendulum.platform_angle), dx=100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
     ax_ani.arrow(x = x_top, y = y_top, dx=100*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot wind arrow with wind number
     ax_ani.arrow(x = -50, y = params.L, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
     ax_ani.arrow(x = -50, y = params.L-10, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
-    ax_ani.text(-49, params.L-7, f"{env.wind_speed} m/s", fontsize=10)
+    ax_ani.text(-49, params.L-7, f"{env.wind_speed:.1f} m/s", fontsize=10)
     # Plot rotational speed
     ax_ani.text(0, params.L+7, f"$\Omega$ = {env.pendulum.omega*(180/np.pi):.1f} deg/s", fontsize=10)
 
@@ -129,6 +129,7 @@ if __name__ == "__main__":
         recorded_disturbance = np.array(recorded_disturbance)
 
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
 
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
 

@@ -49,8 +49,6 @@ class PendulumEnv(gym.Env):
         """
         Resets environment to initial state.
         """
-        # Set initial wind speed
-        self.wind_speed = 5
 
         # Seeding
         if self.rand_num_gen is None:
@@ -102,7 +100,7 @@ class PendulumEnv(gym.Env):
         Generates environment with a pendulum at random initial conditions
         """
         init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        init_wind_speed = self.wind_speed
+        init_wind_speed = self.rand_num_gen.rand()*self.wind_speed
         self.pendulum = Pendulum(init_angle, init_wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
@@ -125,11 +123,12 @@ class PendulumEnv(gym.Env):
 
         end_cond_1 = False # self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_t_steps
-        crash_cond = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
+        crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
+        crash_cond_2 = np.abs(self.pendulum.omega) > self.crash_omega_condition
 
-        if end_cond_1 or end_cond_2 or crash_cond:
+        if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
             done = True
-        if crash_cond:
+        if crash_cond_1:
             step_reward = self.reward_crash
             self.crashed = True
 

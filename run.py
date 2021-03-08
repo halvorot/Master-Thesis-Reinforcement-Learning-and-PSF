@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        fig.suptitle(f"Wind speed: {env.wind_speed}")
 
         time = np.array(range(0, len(sim_df['theta'])))*env.step_size
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
         ax1.plot(time, sim_df['theta_dot']*(180/np.pi), label='theta_dot')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees')
-        ax1.set_title('platform_angle')
+        ax1.set_title('Platform Angle')
         ax1.legend()
 
         ax2.plot(time, sim_df['omega']*(180/np.pi), label='omega')

@@ -44,6 +44,10 @@ Optional arguments:
 - --note <Note with additional info about training, gets added to Note.txt>
 - --no_reporting <Skip reporting>
 
+To view the tensorboard logs run (in another cmd window):
+```
+tensorboard --logdir logs
+```
 
 ### Simulating with a trained agent
 To simulate the system with an agent run:

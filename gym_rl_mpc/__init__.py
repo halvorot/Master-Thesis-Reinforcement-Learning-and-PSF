@@ -13,7 +13,7 @@ DEFAULT_CONFIG = {
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward
     "reward_theta_dot": 10,                      # Coefficient for angular rate penalty
     "reward_omega": 1,                          # Coefficient for control input penalty
-    "reward_control": 1,                        # Coefficient for control input penalty
+    "reward_control": 0.5,                        # Coefficient for control input penalty
 }
 
 register(

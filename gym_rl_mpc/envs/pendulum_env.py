@@ -168,7 +168,8 @@ class PendulumEnv(gym.Env):
             'crashed': int(self.crashed),
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
-            'duration': self.t_step*self.step_size
+            'duration': self.t_step*self.step_size,
+            'wind_speed': self.wind_speed
         }
 
         self.total_history.append(self.history)

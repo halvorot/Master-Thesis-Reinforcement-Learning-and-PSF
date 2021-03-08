@@ -96,6 +96,7 @@ class TensorboardCallback(BaseCallback):
                 if done_array[env_idx]:
                     self.logger.record_mean('custom/reward', history[env_idx]['reward'])
                     self.logger.record_mean('custom/crashed', history[env_idx]['crashed'])
+                    self.logger.record_mean('custom/wind_speed', history[env_idx]['wind_speed'])
 
         return True
 

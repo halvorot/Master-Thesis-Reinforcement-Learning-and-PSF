@@ -100,8 +100,9 @@ class PendulumEnv(gym.Env):
         Generates environment with a pendulum at random initial conditions
         """
         init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        init_wind_speed = self.rand_num_gen.rand()*self.wind_speed
-        self.pendulum = Pendulum(init_angle, init_wind_speed, self.step_size)
+        self.wind_speed = self.rand_num_gen.rand()*self.max_wind_speed
+        print(f"wind: {self.wind_speed}")
+        self.pendulum = Pendulum(init_angle, self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
         """

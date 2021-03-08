@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        fig.suptitle(f"Wind speed: {env.wind_speed}")
+        fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
 
         time = np.array(range(0, len(sim_df['theta'])))*env.step_size
 

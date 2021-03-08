@@ -32,15 +32,15 @@ def animate(frame):
             raise SystemExit
         x_top = height*np.sin(env.pendulum.platform_angle)
         y_top = height*np.cos(env.pendulum.platform_angle)
-        x_bottom = -params.L_P*np.sin(env.pendulum.platform_angle)
-        y_bottom = -params.L_P*np.cos(env.pendulum.platform_angle)
+        x_bottom = -params.L_thr*np.sin(env.pendulum.platform_angle)
+        y_bottom = -params.L_thr*np.cos(env.pendulum.platform_angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
         recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
-    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-1.1*params.L_P, 1.1*height))
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-1.1*params.L_thr, 1.1*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -50,7 +50,7 @@ def animate(frame):
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_P*np.sin(env.pendulum.platform_angle), y = -params.L_P*np.cos(env.pendulum.platform_angle), dx=-100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_thr*np.sin(env.pendulum.platform_angle), y = -params.L_thr*np.cos(env.pendulum.platform_angle), dx=-100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
     ax_ani.arrow(x = x_top, y = y_top, dx=100*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot wind arrow with wind number
@@ -106,8 +106,6 @@ if __name__ == "__main__":
         env.reset()
         if args.agent:
             agent = PPO.load(args.agent)
-        else:
-            env.pendulum.state[0] = 0*5*(np.pi/180)
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)

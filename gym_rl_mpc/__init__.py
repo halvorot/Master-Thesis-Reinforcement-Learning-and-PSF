@@ -9,7 +9,7 @@ DEFAULT_CONFIG = {
     "crash_omega_condition": 300*(np.pi/180),
     "max_init_angle": 0*3*(np.pi/180),
     "reward_crash": -2000,
-    "wind_speed": 0,
+    "wind_speed": 5,
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward
     "reward_theta_dot": 10,                      # Coefficient for angular rate penalty
     "reward_omega": 1,                          # Coefficient for control input penalty

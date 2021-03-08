@@ -1,6 +1,7 @@
 import numpy as np
 
 # Platform parameters
+L = 144.45
 L_thr = 50
 
 # Rotor parameters

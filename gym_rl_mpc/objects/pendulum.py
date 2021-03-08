@@ -84,7 +84,7 @@ class Pendulum():
         self.Q_w = Q_w
         # TODO: Scaling of F_thr not right!
         state_dot = np.array([  state[1],
-                                4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot + 6.610593333358421e-11*F_thr*L_thr + 0.000000000991589*F_w,
+                                4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot - 6.610593333358421e-11*F_thr*L_thr + 0.000000000991589*F_w,
                                 Q_w/J_r
                                 ])
 

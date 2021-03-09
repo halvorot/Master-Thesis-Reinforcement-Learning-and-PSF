@@ -18,7 +18,7 @@ classdef IBSF
         % Please use the provided variables
         
         % Objective: Maximize ellipsoidal volume
-        objective = -logdet(E);
+        objective = -geomean(E);
 
         % Constraints
         % Positive Definite and Lyapunov Decrease
@@ -35,7 +35,7 @@ classdef IBSF
 % --------- End Modifying Code Here -----------
 
         % Solve
-        opts = sdpsettings('verbose',0,'solver','sedumi');
+        opts = sdpsettings('verbose',2,'solver','mosek');
         optimize(constraints, objective,opts);   
 
 % --------- Start Modifying Code Here -----------

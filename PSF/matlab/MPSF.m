@@ -45,8 +45,8 @@ classdef MPSF < handle
             end
 
             % Terminal constraint
-            %constraints_MPC=[constraints_MPC, x_i(:,obj.N+1)'*obj.P*x_i(:,obj.N+1)<=obj.alpha];
-            constraints_MPC=[constraints_MPC, norm(chol(obj.P)*x_i(:,obj.N+1),2)<=obj.alpha];
+            constraints_MPC=[constraints_MPC, x_i(:,obj.N+1)'*obj.P*x_i(:,obj.N+1)<=obj.alpha];
+            %constraints_MPC=[constraints_MPC, norm(chol(obj.P)*x_i(:,obj.N+1),2)<=obj.alpha];
 
             % soft constraints / slack
             objective_MPC = objective_MPC + 1e6*eps;

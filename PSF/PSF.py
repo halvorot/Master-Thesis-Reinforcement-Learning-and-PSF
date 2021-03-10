@@ -84,7 +84,8 @@ class PSF:
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                )
-        return solution["x"][self.nx:self.nx + self.nu]
+
+        return np.asarray(solution["x"][self.nx:self.nx + self.nu])
 
     def set_terminal_set(self):
 
@@ -109,8 +110,6 @@ class PSF:
 
     def _LP_set_sys(self, sys):
         args = ["A", "B"]
-        opt_min = ["umin", "xmin"]
-        opt_max = ["umax", "xmax"]
         opt_comp = ["Hx", "hx", "Hu", "hu"]
 
         for a in args:
@@ -183,4 +182,4 @@ if __name__ == '__main__':
 
     psf = PSF({'A': A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}, 20, P, 0.9, K)
 
-    print(psf.calc(x=[0, 0, 0, 0], u_L=[0, 3]))
+    print(psf.calc(x=np.asarray([0, 0, 0, 0]).T, u_L=np.asarray([0, 3]).T))

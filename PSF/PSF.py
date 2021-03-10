@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import SX, qpsol, norm_1, Function, vertcat, mtimes, nlpsol, inf, Opti
+from casadi import SX, qpsol, norm_1, Function, vertcat, mtimes, nlpsol, inf, Opti, norm_2
 import cvxpy as cp
 
 
@@ -29,7 +29,7 @@ class PSF:
         U = SX.sym('U', self.nu, self.N)
         u_L = SX.sym('u_L', self.nu)
 
-        objective = norm_1(u_L - U[:, 0])
+        objective = (u_L - U[:, 0]).T@(u_L - U[:, 0])
 
         w = []
 
@@ -45,40 +45,44 @@ class PSF:
         self.ubw += [inf] * self.nx
 
         g += [X0 - X[:, 0]]
+        self.lbg +=[0]  *self.nx
+        self.ubg += [0] * self.nx
 
         for i in range(self.N):
             # Direct Input constrain
 
             w += [U[:, i]]
-            self.lbw += [self.sys["umin"]]*self.nu
-            self.ubw += [self.sys["umax"]]*self.nu
 
             # Composite Input constrains
-            g += [SX(self.sys["Hu"]) @ w[-1]-SX(self.sys["hu"])]
+            g += [self.sys["Hu"] @ U[:, i]-self.sys["hu"]]
+            self.lbg += [-inf] * g[-1].shape[0]
+            self.ubg += [0] * g[-1].shape[0]
 
-            # State constrain
+
             w += [X[:, i + 1]]
-            self.lbw += [self.sys["xmin"]]*self.nx
-            self.ubw += [self.sys["xmax"]]*self.nx
 
             # Composite State constrains
-            g += [SX(self.sys["Hx"]) @ w[-1]-SX(self.sys["hx"])]
+            g += [self.sys["Hx"] @ X[:, i + 1]-self.sys["hx"]]
+            self.lbg += [-inf] * g[-1].shape[0]
+            self.ubg += [0] * g[-1].shape[0]
 
             # State propagation
-            g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i])['xf']]
-
+            g += [X[:, i + 1] - self.sys["A"]@X[:,i]-self.sys["B"]@U[:, i]]
+            self.lbg += [0] * self.nx
+            self.ubg += [0] * self.nx
 
         g += [X[:, self.N].T @ self.P @ X[:, self.N]-[self.alpha]]
+        self.lbg += [-inf]
+        self.ubg += [0]
+
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L)}
 
         self.solver = qpsol("solver", "qpoases", prob)
 
     def calc(self, x, u_L):
         solution = self.solver(p=vertcat(x, u_L),
-                               lbg=-inf,
-                               ubg=0,
-                               lbx=vertcat(*self.lbw),
-                               ubx=vertcat(*self.ubw),
+                               lbg=vertcat(*self.lbg),
+                               ubg=vertcat(*self.ubg),
                                )
         return solution["x"][self.nx:self.nx + self.nu]
 
@@ -133,7 +137,7 @@ class PSF:
     def _set_model_step(self):
         x0 = SX.sym('x0', self.nx)
         u = SX.sym('u', self.nu)
-        xf = (SX(self.sys["A"])@x0) + (SX(self.sys["B"])@ u)
+        xf = self.sys["A"]@x0 + self.sys["B"] @ u
         self.model_step = Function('f', [x0, u], [xf], ['x0', 'u'], ['xf'])
 
 
@@ -183,5 +187,6 @@ if __name__ == '__main__':
     K = np.asarray([[-0.9581, -0.8393, 0.0000, - 0.0000],
                     [0, 0, -0.3185, -0.8885]])
 
-    psf=PSF({'A': A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}, 20, P, 1, K)
-    print(psf.calc(x=[0, 0, 0, 0], u_L=[0, -1]))
+    psf = PSF({'A': A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}, 20, P, 0.9, K)
+
+    print(psf.calc(x=[0, 0, 0, 0], u_L=[0, 3]))

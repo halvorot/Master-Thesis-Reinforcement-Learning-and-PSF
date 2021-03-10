@@ -67,7 +67,7 @@ class PSF:
             self.ubg += [0] * g[-1].shape[0]
 
             # State propagation
-            g += [X[:, i + 1] - self.sys["A"]@X[:,i]-self.sys["B"]@U[:, i]]
+            g += [X[:, i + 1] - self.model_step(x0=X[:,i],u=U[:, i])['xf']]
             self.lbg += [0] * self.nx
             self.ubg += [0] * self.nx
 
@@ -115,12 +115,6 @@ class PSF:
 
         for a in args:
             self.sys[a] = sys[a]
-
-        for opt in opt_min:
-            self.sys[opt] = sys.get(opt, -inf)
-
-        for opt in opt_max:
-            self.sys[opt] = sys.get(opt, inf)
 
         for opt in opt_comp:
             self.sys[opt] = sys.get(opt, [])

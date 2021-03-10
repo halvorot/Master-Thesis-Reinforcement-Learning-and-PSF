@@ -39,6 +39,6 @@ def omega_setpoint(wind_speed):
     if wind_speed < 6.98:
         return 5*(2*np.pi/60)       # 5 rpm
     elif wind_speed < 10.59:
-        return ((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5
+        return (((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5)*(2*np.pi/60)
     else:
         return 7.55*(2*np.pi/60)    # 7.55 rpm

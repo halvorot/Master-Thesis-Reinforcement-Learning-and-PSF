@@ -36,7 +36,6 @@ class Pendulum():
         self.omega_setpoint = params.omega_setpoint
 
     def step(self, action, wind_speed):
-        self.optimal_omega = (params.lambda_star/params.R)*wind_speed
         prev_F_thr = self.input[0]
         prev_blade_pitch = self.input[1]
 
@@ -45,6 +44,7 @@ class Pendulum():
         # Lowpass filter the thrust force and blade pitch angle
         F_thr = self.alpha_thr*commanded_F_thr + (1-self.alpha_thr)*prev_F_thr
         blade_pitch = self.alpha_blade_pitch*commanded_blade_pitch + (1-self.alpha_blade_pitch)*prev_blade_pitch
+        # Saturate blade pitch rate
         blade_pitch = prev_blade_pitch + np.sign(blade_pitch-prev_blade_pitch)*min(abs(blade_pitch-prev_blade_pitch), params.max_blade_pitch_rate)*self.step_size
 
         self.input = np.array([F_thr, blade_pitch])

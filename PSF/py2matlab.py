@@ -27,7 +27,7 @@ class PSF:
 
             Parameters
             ----------
-            N: int
+            N: float
             A : np.ndarray
             B : np.ndarray
             Hx : np.ndarray
@@ -189,7 +189,7 @@ if __name__ == '__main__':
                      [2],
                      [2]])
 
-    psf = PSF(15, A, B, Hx, hx, Hu, hu)
+    psf = PSF(15.0, A, B, Hx, hx, Hu, hu)
 
     # No constrain violation
     x = np.asarray([[0],

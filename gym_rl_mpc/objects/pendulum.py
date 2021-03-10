@@ -28,7 +28,7 @@ class Pendulum():
     def __init__(self, init_angle, init_wind_speed, step_size):
         self.state = np.zeros(3)                # Initialize states
         self.state[0] = init_angle              # Initialize theta
-        self.state[2] = params.omega_setpoint    # Initialize Omega
+        self.state[2] = params.lambda_star*init_wind_speed/params.R    # Initialize Omega
         self.input = np.zeros(2)                # Initialize control input
         self.step_size = step_size
         self.F_w = 0

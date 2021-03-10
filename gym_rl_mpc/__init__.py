@@ -4,7 +4,7 @@ import numpy as np
 DEFAULT_CONFIG = {
     "step_size": 0.2,
     "min_reward": -1500,
-    "max_t_steps": 3000,
+    "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_angle_condition": 10*(np.pi/180),
     "crash_omega_condition": 180*(np.pi/180),
     "max_init_angle": 0,

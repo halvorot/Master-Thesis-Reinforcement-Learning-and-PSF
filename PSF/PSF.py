@@ -1,6 +1,6 @@
 import numpy as np
 from casadi import SX, qpsol, norm_1, Function, vertcat, mtimes, nlpsol, inf, Opti, norm_2
-import cvxpy as cp
+#import cvxpy as cp
 
 
 class PSF:

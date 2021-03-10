@@ -158,6 +158,7 @@ class PendulumEnv(gym.Env):
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
         self.episode_history.setdefault('wind_force',[]).append(self.pendulum.wind_force)
         self.episode_history.setdefault('wind_torque',[]).append(self.pendulum.wind_torque)
+        self.episode_history.setdefault('generator_torque',[]).append(self.pendulum.generator_torque)
 
     def save_latest_episode(self):
         self.history = {

@@ -79,13 +79,15 @@ class Pendulum():
 
         F_w = d_r*np.abs(wind_speed)*wind_speed + k_r*np.cos(u)*wind_speed*omega - k_r*l_r*np.sin(u)*omega**2
         Q_w = k_r*np.cos(u)*wind_speed**2 - k_r*np.sin(u)*omega*wind_speed*l_r - b_d_r*np.abs(omega)*omega
+        Q_g = params.power_regime(wind_speed)/omega
 
         self.F_w = F_w
         self.Q_w = Q_w
-        # TODO: Scaling of F_thr not right!
+        self.Q_g = Q_g
+
         state_dot = np.array([  state[1],
                                 4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot - 6.86458290065766e-12*L_thr*F_thr + 0.000000000991589*F_w,
-                                Q_w/J_r
+                                (Q_w - Q_g)/J_r
                                 ])
 
         return state_dot
@@ -117,6 +119,13 @@ class Pendulum():
         Returns the torque on the rotor from wind
         """
         return self.Q_w
+
+    @property
+    def generator_torque(self):
+        """
+        Returns the torque on the rotor from wind
+        """
+        return self.Q_g
 
     @property
     def max_thrust_force(self):

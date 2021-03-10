@@ -6,7 +6,7 @@ DEFAULT_CONFIG = {
     "min_reward": -1500,
     "max_t_steps": 3000,
     "crash_angle_condition": 10*(np.pi/180),
-    "crash_omega_condition": 300*(np.pi/180),
+    "crash_omega_condition": 180*(np.pi/180),
     "max_init_angle": 0,
     "reward_crash": -2000,
     "max_wind_speed": 10,

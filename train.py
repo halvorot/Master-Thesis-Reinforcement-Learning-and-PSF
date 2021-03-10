@@ -161,7 +161,7 @@ if __name__ == '__main__':
     if (args.agent is not None):
         agent = PPO.load(args.agent, env=env, verbose=True, tensorboard_log=tensorboard_log)
     else:
-        agent = PPO('MlpPolicy', env, verbose=True, tensorboard_log=tensorboard_log)
+        agent = PPO('MlpPolicy', env, verbose=True, tensorboard_log=tensorboard_log, **hyperparams)
 
     agent.learn(total_timesteps=args.timesteps, callback=callback)
 

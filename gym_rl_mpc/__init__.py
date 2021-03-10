@@ -5,9 +5,9 @@ DEFAULT_CONFIG = {
     "step_size": 0.2,
     "min_reward": -1500,
     "max_t_steps": 3000,
-    "crash_angle_condition": 100*(np.pi/180),
+    "crash_angle_condition": 10*(np.pi/180),
     "crash_omega_condition": 300*(np.pi/180),
-    "max_init_angle": 0*3*(np.pi/180),
+    "max_init_angle": 0,
     "reward_crash": -2000,
     "max_wind_speed": 10,
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward

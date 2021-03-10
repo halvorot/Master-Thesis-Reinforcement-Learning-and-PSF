@@ -17,12 +17,11 @@ from stable_baselines3.common.callbacks import BaseCallback, CallbackList, Check
 
 hyperparams = {
     'n_steps': 1024,
-    'nminibatches': 256,
     'learning_rate': 1e-5,
-    'lam': 0.95,
+    'gae_lambda': 0.95,
     'gamma': 0.99,
-    'noptepochs': 4,
-    'cliprange': 0.2,
+    'n_epochs': 4,
+    'clip_range': 0.2,
     'ent_coef': 0.01,
 }
 

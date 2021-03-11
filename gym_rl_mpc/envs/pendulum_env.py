@@ -141,7 +141,7 @@ class PendulumEnv(gym.Env):
         obs : np.ndarray
             The observation of the environment.
         """
-        obs = self.pendulum.state
+        obs = np.array([self.pendulum.state, self.wind_speed])
         return obs
 
     def seed(self, seed=None):

@@ -52,7 +52,7 @@ def animate(frame):
     # Plot arrow proportional to input force
     ax_ani.arrow(x = -params.L_thr*np.sin(env.pendulum.platform_angle), y = -params.L_thr*np.cos(env.pendulum.platform_angle), dx=100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
-    ax_ani.arrow(x = x_top, y = y_top, dx=100*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot wind arrow with wind number
     ax_ani.arrow(x = -50, y = params.L, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
     ax_ani.arrow(x = -50, y = params.L-10, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)

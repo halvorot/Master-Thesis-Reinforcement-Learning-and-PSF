@@ -49,7 +49,8 @@ class Pendulum():
 
         self.input = np.array([F_thr, blade_pitch])
 
-        self._sim(wind_speed)
+        w = wind_speed - params.L*np.cos(self.platform_angle)*self.state[1] # Relative axial flux w = w_0 - x_dot
+        self._sim(w)
 
     def _sim(self, wind_speed):
 
@@ -77,7 +78,7 @@ class Pendulum():
 
         F_w = d_r*np.abs(wind_speed)*wind_speed + k_r*np.cos(u)*wind_speed*omega - k_r*l_r*np.sin(u)*omega**2
         Q_w = k_r*np.cos(u)*wind_speed**2 - k_r*np.sin(u)*omega*wind_speed*l_r - b_d_r*np.abs(omega)*omega
-        Q_g = params.power_regime(wind_speed)/omega
+        Q_g = params.power_regime(wind_speed)/omega if omega != 0 else 0
 
         self.F_w = F_w
         self.Q_w = Q_w

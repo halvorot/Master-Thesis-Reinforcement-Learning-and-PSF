@@ -7,8 +7,15 @@ LARGE_NUM = 1e9
 
 
 class PSF:
-    def __init__(self, sys, N, params=[], P=None, alpha=None, K=None, NLP_flag=False):
+    def __init__(self, sys, N, lin_params=None, params=None, P=None, alpha=None, K=None, NLP_flag=False
+                 ):
+        if params is None:
+            params = []
+        if lin_params is None:
+            lin_params = []
         self.sys = {}
+        self.lin_params = lin_params
+        self.params = params
         if NLP_flag:
             raise NotImplemented("NLP mpc not implemented yet")
             # self._NLP_init(sys, N, P, alpha, K)
@@ -71,19 +78,19 @@ class PSF:
 
             # State propagation
             g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i])['xf']]
-            self.lbg += [0] * self.nx
-            self.ubg += [0] * self.nx
+            self.lbg += [0] * g[-1].shape[0]
+            self.ubg += [0] * g[-1].shape[0]
 
         # g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
-        self.lbg += [-inf]
-        self.ubg += [0]
+        # self.lbg += [-inf]
+        # self.ubg += [0]
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L)}
+        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_params, self.params)}
 
         self.solver = qpsol("solver", "qpoases", prob)
 
-    def calc(self, x, u_L):
-        solution = self.solver(p=vertcat(x, u_L),
+    def calc(self, x, u_L, lin_params, params):
+        solution = self.solver(p=vertcat(x, u_L,lin_params, params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                )
@@ -168,7 +175,7 @@ if __name__ == '__main__':
         [0, 0, 1]
     ])
 
-    hx = np.asarray([[ -10, 10, -LARGE_NUM, LARGE_NUM,5, 7.56]])
+    hx = np.asarray([[-10, 10, -LARGE_NUM, LARGE_NUM, 5, 7.56]]).T
 
     Hu = np.asarray([
         [-1, 0, 0],
@@ -178,8 +185,10 @@ if __name__ == '__main__':
         [0, 0, -1],
         [0, 0, 1]
     ])
-    hu = np.asarray([[-4, 20, 0, 15e6, -5e5, 5e5]])
+    hu = np.asarray([[-4, 20, 0, 15e6, -5e5, 5e5]]).T
 
-    sys = {'A': A, 'B': B, }
+    sys = {'A': A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}
 
-    PSF(sys, 20, params=vertcat(Omega, w, u, P_ref))
+    psf = PSF(sys, 20, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
+
+    psf.calc([0, 0, 10], [0, 15e6, 0], vertcat(5, 12, 0), vertcat(5))

@@ -21,12 +21,18 @@ class PendulumEnv(gym.Env):
                                            dtype=np.float32)
 
         # Legal limits for state observations
+        low = np.array([    -np.pi,                             # theta
+                            -np.finfo(np.float32).max,          # theta_dot
+                            -np.finfo(np.float32).max,          # omega
+                            0,                                  # wind speed
+                        ])
         high = np.array([   np.pi,                              # theta
                             np.finfo(np.float32).max,           # theta_dot
                             np.finfo(np.float32).max,           # omega
+                            self.max_wind_speed,                # wind speed
                         ])
 
-        self.observation_space = gym.spaces.Box(low=-high,
+        self.observation_space = gym.spaces.Box(low=low,
                                                 high=high,
                                                 dtype=np.float32)
 
@@ -141,7 +147,7 @@ class PendulumEnv(gym.Env):
         obs : np.ndarray
             The observation of the environment.
         """
-        obs = np.array([self.pendulum.state, self.wind_speed])
+        obs = np.hstack([self.pendulum.state, self.wind_speed])
         return obs
 
     def seed(self, seed=None):

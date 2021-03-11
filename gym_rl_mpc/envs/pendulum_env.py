@@ -16,7 +16,7 @@ class PendulumEnv(gym.Env):
 
         self.config = env_config
 
-        self.action_space = gym.spaces.Box(low=np.array([-1, -0.1]),
+        self.action_space = gym.spaces.Box(low=np.array([-1, -0.2]),
                                            high=np.array([1, 1]),
                                            dtype=np.float32)
 

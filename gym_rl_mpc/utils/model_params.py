@@ -21,7 +21,7 @@ d_r = 0.5*rho*A*C_F                     # d in Force/Torque equations
 J_r = 4.068903574982517e+07             # From OpenFast
 
 max_thrust_force = 5e5                  # maximum force input [N]
-blade_pitch_max = 20*(np.pi/180)        # maximum blade pitch angle (-+)
+blade_pitch_max = 20*(np.pi/180)        # maximum deviation from beta^*
 max_wind_force = 3e6                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 tau_blade_pitch = 0.1                   # Blade pitch time constant

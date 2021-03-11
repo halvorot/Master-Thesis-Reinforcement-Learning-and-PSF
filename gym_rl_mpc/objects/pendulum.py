@@ -29,12 +29,13 @@ class Pendulum():
         self.state = np.zeros(3)                                        # Initialize states
         self.state[0] = init_angle                                      # Initialize theta
         self.state[2] = params.omega_setpoint(init_wind_speed)          # Initialize Omega
-        self.input = np.zeros(3)                                        # Initialize control input
+        self.input = np.array([0,0,params.power_regime(init_wind_speed)*params.max_power_generation])  # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
+        self.adjusted_wind_speed = init_wind_speed
 
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
@@ -52,8 +53,11 @@ class Pendulum():
 
         self.input = np.array([F_thr, blade_pitch, power])
 
-        w = (2/3)*wind_speed - params.L*np.cos(self.platform_angle)*self.state[1] # Relative axial flux w = w_0 - x_dot
-        self._sim(w)
+        # Adjust wind speed based on inflow and structure
+        w = (2/3)*wind_speed - params.L*np.cos(self.platform_angle)*self.state[1] # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        self.adjusted_wind_speed = w
+
+        self._sim(self.adjusted_wind_speed)
 
     def _sim(self, wind_speed):
 
@@ -87,7 +91,6 @@ class Pendulum():
         self.F_w = F_w
         self.Q_w = Q_w
         self.Q_g = Q_g
-        self.adjusted_wind_speed = wind_speed
 
         state_dot = np.array([  state[1],
                                 4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot - 6.86458290065766e-12*L_thr*F_thr + 0.000000000991589*F_w,

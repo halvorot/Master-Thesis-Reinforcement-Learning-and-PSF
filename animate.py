@@ -27,10 +27,7 @@ def animate(frame):
             else:
                 action = np.array([0,0,0])
         else:
-            if frame*env.step_size > 0:
-                action = np.array([0,0,0])
-            else:
-                action = np.array([0,0,0])
+            action = np.array([0,0,params.power_regime(env.pendulum.adjusted_wind_speed)])
             
             
         _, _, done, _ = env.step(action)
@@ -175,11 +172,16 @@ if __name__ == "__main__":
         ax4_2.set_ylabel('Q_w [Nm]', color=color)
         ax4_2.legend()
 
+
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
         ax21.plot(time, recorded_disturbance[:,3], label='wind speed', color=color)
-        ax21.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
         ax21.set_ylabel('adjusted wind speed', color=color)
         ax21.set_title('Wind')
         ax21.legend()
+
+        ax22.plot(time, recorded_inputs[:,2], label='power')
+        ax22.set_ylabel('Power')
+        ax22.set_title('Power')
+        ax22.legend()
 
         plt.show()

@@ -121,8 +121,8 @@ class PendulumEnv(gym.Env):
 
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
-        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
-        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
+        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.pendulum.adjusted_wind_speed))**2
+        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.pendulum.adjusted_wind_speed))**2
 
         control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 

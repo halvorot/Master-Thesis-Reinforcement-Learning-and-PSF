@@ -28,12 +28,13 @@ class Pendulum():
     def __init__(self, init_angle, init_wind_speed, step_size):
         self.state = np.zeros(3)                                        # Initialize states
         self.state[0] = init_angle                                      # Initialize theta
-        self.state[2] = params.lambda_star*init_wind_speed/params.R     # Initialize Omega
-        self.input = np.zeros(2)                                        # Initialize control input
+        self.state[2] = params.omega_setpoint(init_wind_speed)          # Initialize Omega
+        self.input = np.zeros(3)                                        # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
         self.omega_setpoint = params.omega_setpoint
+        self.power_regime = params.power_regime
 
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
@@ -41,15 +42,17 @@ class Pendulum():
 
         commanded_F_thr = _un_normalize_thrust_input(action[0])
         commanded_blade_pitch = _un_normalize_blade_pitch_input(action[1])
+        power = _un_normalize_power_input(action[2])
+
         # Lowpass filter the thrust force and blade pitch angle
         F_thr = self.alpha_thr*commanded_F_thr + (1-self.alpha_thr)*prev_F_thr
         blade_pitch = self.alpha_blade_pitch*commanded_blade_pitch + (1-self.alpha_blade_pitch)*prev_blade_pitch
         # Saturate blade pitch rate
         blade_pitch = prev_blade_pitch + np.sign(blade_pitch-prev_blade_pitch)*min(abs(blade_pitch-prev_blade_pitch), params.max_blade_pitch_rate)*self.step_size
 
-        self.input = np.array([F_thr, blade_pitch])
+        self.input = np.array([F_thr, blade_pitch, power])
 
-        w = wind_speed - params.L*np.cos(self.platform_angle)*self.state[1] # Relative axial flux w = w_0 - x_dot
+        w = (2/3)*wind_speed - params.L*np.cos(self.platform_angle)*self.state[1] # Relative axial flux w = w_0 - x_dot
         self._sim(w)
 
     def _sim(self, wind_speed):
@@ -72,17 +75,19 @@ class Pendulum():
 
         F_thr = self.input[0]
         u = self.input[1]
+        power = self.input[2]
         theta = state[0]
         theta_dot = state[1]
         omega = state[2]
 
         F_w = d_r*np.abs(wind_speed)*wind_speed + k_r*np.cos(u)*wind_speed*omega - k_r*l_r*np.sin(u)*omega**2
         Q_w = k_r*np.cos(u)*wind_speed**2 - k_r*np.sin(u)*omega*wind_speed*l_r - b_d_r*np.abs(omega)*omega
-        Q_g = params.power_regime(wind_speed)/omega if omega != 0 else 0
+        Q_g = power/omega
 
         self.F_w = F_w
         self.Q_w = Q_w
         self.Q_g = Q_g
+        self.adjusted_wind_speed = wind_speed
 
         state_dot = np.array([  state[1],
                                 4.4500746068705328*np.sin(theta)*np.cos(theta) - 4.488263864070078*np.sin(theta) - 0.0055491593253495*np.cos(theta)*theta_dot - 6.86458290065766e-12*L_thr*F_thr + 0.000000000991589*F_w,
@@ -137,3 +142,7 @@ def _un_normalize_thrust_input(input):
 def _un_normalize_blade_pitch_input(input):
     input = np.clip(input, -0.2, 1)
     return input*params.blade_pitch_max
+
+def _un_normalize_power_input(input):
+    input = np.clip(input, 0, 1)
+    return input*params.max_power_generation

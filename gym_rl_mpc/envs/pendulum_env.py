@@ -16,8 +16,8 @@ class PendulumEnv(gym.Env):
 
         self.config = env_config
 
-        self.action_space = gym.spaces.Box(low=np.array([-1, -0.2]),
-                                           high=np.array([1, 1]),
+        self.action_space = gym.spaces.Box(low=np.array([-1, -0.2, 0]),
+                                           high=np.array([1, 1, 1]),
                                            dtype=np.float32)
 
         # Legal limits for state observations
@@ -86,7 +86,6 @@ class PendulumEnv(gym.Env):
         """
         Simulates the environment one time-step.
         """
-        
         self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
 
@@ -118,14 +117,16 @@ class PendulumEnv(gym.Env):
         theta = self.pendulum.platform_angle
         theta_dot = self.pendulum.state[1]
         omega = self.pendulum.state[2]
+        power = action[2]
 
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
         omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
+        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
 
         control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 
-        step_reward = theta_reward + theta_dot_reward + omega_reward + control_reward
+        step_reward = theta_reward + theta_dot_reward + omega_reward + control_reward + power_reward
 
         end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
@@ -165,6 +166,7 @@ class PendulumEnv(gym.Env):
         self.episode_history.setdefault('wind_force',[]).append(self.pendulum.wind_force)
         self.episode_history.setdefault('wind_torque',[]).append(self.pendulum.wind_torque)
         self.episode_history.setdefault('generator_torque',[]).append(self.pendulum.generator_torque)
+        self.episode_history.setdefault('adjusted_wind_speed',[]).append(self.pendulum.adjusted_wind_speed)
 
     def save_latest_episode(self):
         self.history = {

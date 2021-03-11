@@ -2,18 +2,19 @@ from gym.envs.registration import register
 import numpy as np
 
 DEFAULT_CONFIG = {
-    "step_size": 0.2,
-    "min_reward": -1500,
+    "step_size": 0.1,
+    "min_reward": -2000,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_angle_condition": 10*(np.pi/180),
     "crash_omega_condition": 180*(np.pi/180),
     "max_init_angle": 0,
-    "reward_crash": -2000,
-    "max_wind_speed": 20,
+    "reward_crash": -5000,
+    "max_wind_speed": 25,
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward
     "reward_theta_dot": 100,                      # Coefficient for angular rate penalty
     "reward_omega": 1,                          # Coefficient for control input penalty
-    "reward_control": 0.05,                        # Coefficient for control input penalty
+    "reward_control": 0,                        # Coefficient for control input penalty
+    "reward_power": 1,                          # Coefficient for control input penalty
 }
 
 register(

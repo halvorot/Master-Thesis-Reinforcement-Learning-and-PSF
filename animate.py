@@ -22,21 +22,25 @@ def animate(frame):
         action = data_input[0][frame]/params.max_thrust_force
     else:
         if args.agent:
-            action, _states = agent.predict(env.observation, deterministic=True)
+            if frame*env.step_size > 0:
+                action, _states = agent.predict(env.observation, deterministic=True)
+            else:
+                action = np.array([0,0,0])
         else:
-            action = np.array([0,0])
+            if frame*env.step_size > 0:
+                action = np.array([0,0,0])
+            else:
+                action = np.array([0,0,0])
+            
             
         _, _, done, _ = env.step(action)
-        if done:
-            print("Environment done")
-            raise SystemExit
         x_top = height*np.sin(env.pendulum.platform_angle)
         y_top = height*np.cos(env.pendulum.platform_angle)
         x_bottom = -params.L_thr*np.sin(env.pendulum.platform_angle)
         y_bottom = -params.L_thr*np.cos(env.pendulum.platform_angle)
         recorded_states.append(env.pendulum.state)
         recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque]))
+        recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque,env.pendulum.generator_torque, env.pendulum.adjusted_wind_speed]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
@@ -140,8 +144,8 @@ if __name__ == "__main__":
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, recorded_states[:,2]*(180/np.pi), label='omega')
-        ax2.set_ylabel('Degrees/sec')
+        ax2.plot(time, recorded_states[:,2]*(60/(2*np.pi)), label='omega')
+        ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
 
@@ -167,7 +171,15 @@ if __name__ == "__main__":
         color = 'tab:orange'
         ax4_2 = ax4.twinx()
         ax4_2.plot(time, recorded_disturbance[:,1], label='Q_w', color=color)
+        ax4_2.plot(time, recorded_disturbance[:,2], label='Q_gen', color='tab:red')
         ax4_2.set_ylabel('Q_w [Nm]', color=color)
         ax4_2.legend()
+
+        fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
+        ax21.plot(time, recorded_disturbance[:,3], label='wind speed', color=color)
+        ax21.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
+        ax21.set_ylabel('adjusted wind speed', color=color)
+        ax21.set_title('Wind')
+        ax21.legend()
 
         plt.show()

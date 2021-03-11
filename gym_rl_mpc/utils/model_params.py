@@ -24,6 +24,7 @@ max_thrust_force = 5e5                  # maximum force input [N]
 blade_pitch_max = 20*(np.pi/180)        # maximum deviation from beta^*
 max_wind_force = 1e7                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
+max_power_generation = 15e6
 tau_blade_pitch = 0.1                   # Blade pitch time constant
 tau_thr = 2                             # Thrust force time constant
 
@@ -31,9 +32,9 @@ def power_regime(wind_speed):
     if wind_speed < 3:
         return 0
     elif wind_speed < 10.59:
-        return (((wind_speed-3)/(10.59-3))**2)*15e6
+        return (((wind_speed-3)/(10.59-3))**2)
     else:
-        return 15e6
+        return 1
 
 def omega_setpoint(wind_speed):
     if wind_speed < 6.98:

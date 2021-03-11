@@ -191,4 +191,4 @@ if __name__ == '__main__':
 
     psf = PSF(sys, 20, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
 
-    psf.calc([0, 0, 10], [0, 15e6, 0], vertcat(5, 12, 0), vertcat(5))
+    psf.calc([0, 0, 6], [0, 15e6, 6], vertcat(5, 12, 0), vertcat(5))

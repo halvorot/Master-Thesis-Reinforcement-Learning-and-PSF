@@ -76,11 +76,11 @@ _numerical_Q_wind = Function("numerical_Q_wind", [Omega, u_p, w], [Q_wind], ["Om
 
 
 def numerical_F_wind(Omega, wind, blade_pitch):
-    return np.asarray(_numerical_Q_wind(Omega, blade_pitch, wind))[0]
+    return np.asarray(_numerical_Q_wind(Omega, blade_pitch, wind)).flatten()[0]
 
 
 def numerical_Q_wind(Omega, wind, blade_pitch):
-    return np.asarray(_numerical_F_wind(Omega, blade_pitch, wind))[0]
+    return np.asarray(_numerical_F_wind(Omega, blade_pitch, wind)).flatten()[0]
 
 
 def numerical_x_dot(state, blade_pitch, F_thr, P_ref, wind):

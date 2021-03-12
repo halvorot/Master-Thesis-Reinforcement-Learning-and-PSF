@@ -32,7 +32,7 @@ def animate(frame):
             
         _, _, done, _ = env.step(action)
         if done:
-            print("Environment DONE!")
+            return False
 
         x_top = height*np.sin(env.pendulum.platform_angle)
         y_top = height*np.cos(env.pendulum.platform_angle)

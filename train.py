@@ -93,9 +93,13 @@ class TensorboardCallback(BaseCallback):
 
             for env_idx in range(len(done_array)):
                 if done_array[env_idx]:
-                    self.logger.record_mean('custom/reward', history[env_idx]['reward'])
                     self.logger.record_mean('custom/crashed', history[env_idx]['crashed'])
                     self.logger.record_mean('custom/wind_speed', history[env_idx]['wind_speed'])
+                    self.logger.record_mean('custom/theta_reward', history[env_idx]['theta_reward'])
+                    self.logger.record_mean('custom/theta_dot_reward', history[env_idx]['theta_dot_reward'])
+                    self.logger.record_mean('custom/omega_reward', history[env_idx]['omega_reward'])
+                    self.logger.record_mean('custom/power_reward', history[env_idx]['power_reward'])
+                    self.logger.record_mean('custom/control_reward', history[env_idx]['control_reward'])
 
         return True
 

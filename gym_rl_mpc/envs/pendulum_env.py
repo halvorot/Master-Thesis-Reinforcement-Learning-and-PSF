@@ -119,14 +119,21 @@ class PendulumEnv(gym.Env):
         omega = self.pendulum.state[2]
         power = action[2]
 
-        theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
-        theta_dot_reward = -self.reward_theta_dot*theta_dot**2
-        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
-        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
+        self.theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
+        self.theta_dot_reward = -self.reward_theta_dot*theta_dot**2
 
-        control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
+        if omega > self.pendulum.omega_setpoint(self.min_wind_speed) and omega < self.pendulum.omega_setpoint(self.max_wind_speed):
+            self.omega_reward = max(0, -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2)
+        else:
+            self.omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
 
-        step_reward = theta_reward + theta_dot_reward + omega_reward + control_reward + power_reward
+        self.power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
+
+        self.control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
+
+        survival_reward = self.reward_survival
+
+        step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.control_reward + self.power_reward + survival_reward
 
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
         crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
@@ -168,6 +175,12 @@ class PendulumEnv(gym.Env):
         self.episode_history.setdefault('generator_torque',[]).append(self.pendulum.generator_torque)
         self.episode_history.setdefault('adjusted_wind_speed',[]).append(self.pendulum.adjusted_wind_speed)
 
+        self.episode_history.setdefault('theta_reward',[]).append(self.theta_reward)
+        self.episode_history.setdefault('theta_dot_reward',[]).append(self.theta_dot_reward)
+        self.episode_history.setdefault('omega_reward',[]).append(self.omega_reward)
+        self.episode_history.setdefault('power_reward',[]).append(self.power_reward)
+        self.episode_history.setdefault('control_reward',[]).append(self.control_reward)
+
     def save_latest_episode(self):
         self.history = {
             'episode_num': self.episode,
@@ -177,7 +190,12 @@ class PendulumEnv(gym.Env):
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
             'duration': self.t_step*self.step_size,
-            'wind_speed': self.wind_speed
+            'wind_speed': self.wind_speed,
+            'theta_reward': np.array(self.episode_history['theta_reward']).mean(),
+            'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),
+            'omega_reward': np.array(self.episode_history['omega_reward']).mean(),
+            'power_reward': np.array(self.episode_history['power_reward']).mean(),
+            'control_reward': np.array(self.episode_history['control_reward']).mean(),
         }
 
         self.total_history.append(self.history)

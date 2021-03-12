@@ -148,7 +148,7 @@ if __name__ == '__main__':
     # Constants
     w = SX.sym('w')
     theta = SX.sym('theta')
-    theta_dot = SX.sym('theta')
+    theta_dot = SX.sym('theta_dot')
     Omega = SX.sym('Omega')
     u_p = SX.sym('u')
     P_ref = SX.sym("P_ref")
@@ -163,6 +163,7 @@ if __name__ == '__main__':
                 w * Omega - u_p * Omega ** 2 * l_r)),
         1 / J_r * (k_r * (w ** 2 - u_p * Omega * w * l_r) - b_d_r * Omega ** 2 - 1 / Omega * P_ref)
     )
+
     A = jacobian(x_dot, x)
     B = jacobian(x_dot, u)
 
@@ -189,6 +190,22 @@ if __name__ == '__main__':
 
     sys = {'A': np.eye(3) + A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}
 
-    psf = PSF(sys, 10, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
+    #psf = PSF(sys, 10, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
 
-    sol = psf.calc(x=[0, 0, 6 * DEG2RAD], u_L=[0, 0, 0], lin_params=(6 * RPM2RAD, 5*DEG2RAD, 15e6), params=vertcat(15))
+    #sol = psf.calc(x=[0, 0, 6 * DEG2RAD], u_L=[0, 0, 0], lin_params=(6 * RPM2RAD, 5 * DEG2RAD, 15e6), params=vertcat(15))
+
+    objective = x_dot.T @ x_dot
+
+    g=[]
+
+    g += [Hx @ x - hx]
+
+    g += [Hu[:2, 0] @ u_p - hu[:2]]
+
+    prob = {'f': objective, 'x': vertcat(x,u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
+
+    solver = nlpsol("S", "ipopt", prob)
+
+    solver(x0=[ 1,1 ,1 ,1], p=vertcat(15e6, 15,0), lbg=-inf, ubg=0)
+
+

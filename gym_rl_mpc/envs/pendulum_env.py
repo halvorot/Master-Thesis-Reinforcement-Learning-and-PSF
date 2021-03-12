@@ -105,7 +105,7 @@ class PendulumEnv(gym.Env):
         Generates environment with a pendulum at random initial conditions
         """
         init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 20#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.pendulum = Pendulum(init_angle, self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
@@ -114,20 +114,19 @@ class PendulumEnv(gym.Env):
         """
         done = False
 
-        theta = self.pendulum.platform_angle
-        theta_dot = self.pendulum.state[1]
-        omega = self.pendulum.state[2]
-        power = action[2]
+        theta_deg = self.pendulum.platform_angle*(180/np.pi)
+        theta_dot_deg_s = self.pendulum.state[1]*(180/np.pi)
+        omega_rpm = self.pendulum.state[2]*(60/(2*np.pi))
+        power_MegaWatts = action[2]*(self.pendulum.max_power_generation/1e6)
 
-        self.theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
-        self.theta_dot_reward = -self.reward_theta_dot*theta_dot**2
+        omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
 
-        if omega > self.pendulum.omega_setpoint(self.min_wind_speed) and omega < self.pendulum.omega_setpoint(self.max_wind_speed):
-            self.omega_reward = max(0, -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2)
-        else:
-            self.omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
+        self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
+        self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
 
-        self.power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
+        self.omega_reward = np.exp(-self.gamma_omega*(np.abs(omega_rpm))) - self.gamma_omega*np.abs(omega_rpm)
+
+        self.power_reward = 2*np.exp(-self.gamma_power*np.abs(power_MegaWatts-self.pendulum.power_regime(self.wind_speed)))-1
 
         self.control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 

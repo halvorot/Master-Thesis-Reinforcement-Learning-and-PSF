@@ -35,6 +35,7 @@ class Pendulum():
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
+        self.max_power_generation = params.max_power_generation
         self.adjusted_wind_speed = init_wind_speed
 
     def step(self, action, wind_speed):

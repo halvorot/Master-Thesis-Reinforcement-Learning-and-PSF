@@ -11,12 +11,12 @@ DEFAULT_CONFIG = {
     "reward_crash": -10000,
     "max_wind_speed": 25,
     "min_wind_speed": 3,
-    "gamma": 20,                                # Exponential coefficient for platform_angle angle reward
-    "reward_theta_dot": 10,                     # Coefficient for angular rate penalty
-    "reward_omega": 10,                          # Coefficient for control input penalty
+    "gamma_theta": 0.04,                        # Exponential coefficient for platform_angle angle reward
+    "gamma_omega": 0.28,                        # Exponential coefficient for omega reward
+    "gamma_power": 0.17,                        # Exponential coefficient for power reward
+    "reward_theta_dot": 2,                      # Coefficient for angular rate penalty
     "reward_control": 0,                        # Coefficient for control input penalty
-    "reward_power": 0,                          # Coefficient for control input penalty
-    "reward_survival": 1,
+    "reward_survival": 0.1,
 }
 
 register(

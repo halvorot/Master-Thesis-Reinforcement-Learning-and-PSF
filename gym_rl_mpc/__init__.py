@@ -13,7 +13,7 @@ DEFAULT_CONFIG = {
     "min_wind_speed": 3,
     "gamma_theta": 0.04,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.11,                        # Exponential coefficient for omega reward
-    "gamma_power": 0.17,                        # Exponential coefficient for power reward
+    "gamma_power": 0.15,                        # Exponential coefficient for power reward
     "reward_theta_dot": 0.4,                      # Coefficient for angular rate penalty
     "reward_control": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,

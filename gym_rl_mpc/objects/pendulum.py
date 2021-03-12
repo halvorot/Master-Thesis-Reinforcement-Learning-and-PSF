@@ -29,7 +29,7 @@ def odesolver45(f, y, h, wind_speed):
 
 
 class Pendulum:
-    def __init__(self, init_angle=None, init_wind_speed=3, step_size=1):
+    def __init__(self, init_angle, init_wind_speed, step_size):
         self.state = np.zeros(3)    # Initialize states
         opt_state, blade_pitch = solve_initial_problem(wind=init_wind_speed,
                                                        power=params.power_regime(init_wind_speed) * 15e6,

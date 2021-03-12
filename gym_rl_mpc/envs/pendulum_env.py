@@ -124,7 +124,7 @@ class PendulumEnv(gym.Env):
         self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
         self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
 
-        self.omega_reward = np.exp(-self.gamma_omega*(np.abs(omega_rpm))) - self.gamma_omega*np.abs(omega_rpm)
+        self.omega_reward = np.exp(-self.gamma_omega*(np.abs(omega_rpm))) - self.gamma_omega*omega_rpm**2
 
         self.power_reward = 2*np.exp(-self.gamma_power*np.abs(power_MegaWatts-self.pendulum.power_regime(self.wind_speed)))-1
 

@@ -148,7 +148,7 @@ class PendulumEnv(gym.Env):
         if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
             done = True
         if crash_cond_1 or crash_cond_2 or crash_cond_3:
-            step_reward = self.reward_crash
+            step_reward += self.reward_crash
             self.crashed = True
 
         return done, step_reward

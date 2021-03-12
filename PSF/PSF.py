@@ -4,6 +4,9 @@ import cvxpy as cp
 from gym_rl_mpc.utils.model_params import J_r, k_r, l_r, b_d_r, C_1, C_2, C_3, C_5, C_4, d_r
 
 LARGE_NUM = 1e9
+RPM2RAD = 1 / 60 * 2 * np.pi
+DEG2RAD = 1 / 360 * 2 * np.pi
+
 
 class PSF:
     def __init__(self, sys, N, lin_params=None, params=None, P=None, alpha=None, K=None, NLP_flag=False
@@ -59,11 +62,9 @@ class PSF:
         self.ubg += [0] * self.nx
 
         for i in range(self.N):
-            # Direct Input constrain
-
             w += [U[:, i]]
-
             # Composite Input constrains
+
             g += [self.sys["Hu"] @ U[:, i] - self.sys["hu"]]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
@@ -86,10 +87,10 @@ class PSF:
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_params, self.params)}
 
-        self.solver = qpsol("solver", "qpoases", prob)
+        self.solver = qpsol("solver", "qpoases", prob, {"verbose": True})
 
     def calc(self, x, u_L, lin_params, params):
-        solution = self.solver(p=vertcat(x, u_L,lin_params, params),
+        solution = self.solver(p=vertcat(x, u_L, lin_params, params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                )
@@ -158,8 +159,8 @@ if __name__ == '__main__':
 
     x_dot = vertcat(
         theta_dot,
-        (C_1 + C_2) * theta + C_3 * theta_dot + C_4 * F_thr + C_5 * d_r * w ** 2 + k_r * (
-                w * Omega - u_p * Omega ** 2 * l_r),
+        (C_1 + C_2) * theta + C_3 * theta_dot + C_4 * F_thr + C_5 * (d_r * w ** 2 + k_r * (
+                w * Omega - u_p * Omega ** 2 * l_r)),
         1 / J_r * (k_r * (w ** 2 - u_p * Omega * w * l_r) - b_d_r * Omega ** 2 - 1 / Omega * P_ref)
     )
     A = jacobian(x_dot, x)
@@ -174,7 +175,7 @@ if __name__ == '__main__':
         [0, 0, 1]
     ])
 
-    hx = np.asarray([[-10, 10, -LARGE_NUM, LARGE_NUM, 5, 7.56]]).T
+    hx = np.asarray([[10 * DEG2RAD, 10 * DEG2RAD, LARGE_NUM, LARGE_NUM, -5 * RPM2RAD, 7.56 * RPM2RAD]]).T
 
     Hu = np.asarray([
         [-1, 0, 0],
@@ -184,10 +185,10 @@ if __name__ == '__main__':
         [0, 0, -1],
         [0, 0, 1]
     ])
-    hu = np.asarray([[-4, 20, 0, 15e6, -5e5, 5e5]]).T
+    hu = np.asarray([[4 * DEG2RAD, 20 * DEG2RAD, 0, 15.4e6, 5e5, 5e5]]).T
 
-    sys = {'A': A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}
+    sys = {'A': np.eye(3) + A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}
 
-    psf = PSF(sys, 20, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
+    psf = PSF(sys, 10, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
 
-    psf.calc([0, 0, 6], [0, 15e6, 6], vertcat(5, 12, 0), vertcat(15))
+    sol = psf.calc(x=[0, 0, 6 * DEG2RAD], u_L=[0, 0, 0], lin_params=(6 * RPM2RAD, 5*DEG2RAD, 15e6), params=vertcat(15))

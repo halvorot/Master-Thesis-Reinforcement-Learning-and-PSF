@@ -1,7 +1,7 @@
 import numpy as np
 import gym_rl_mpc.utils.model_params as params
 import gym_rl_mpc.utils.geomutils as geom
-from symbolic_model import solve_initial_problem, numerical_F_wind, numerical_Q_wind, numerical_x_dot
+from gym_rl_mpc.objects.symbolic_model import solve_initial_problem, numerical_F_wind, numerical_Q_wind, numerical_x_dot
 
 
 def odesolver45(f, y, h, wind_speed):
@@ -30,19 +30,20 @@ def odesolver45(f, y, h, wind_speed):
 
 class Pendulum:
     def __init__(self, init_angle=None, init_wind_speed=3, step_size=1):
+        self.state = np.zeros(3)    # Initialize states
         opt_state, blade_pitch = solve_initial_problem(wind=init_wind_speed,
                                                        power=params.power_regime(init_wind_speed) * 15e6,
                                                        # needs a param
                                                        thruster_force=0)
-        self.state = opt_state  # Initialize state to steady state
         if init_angle is not None:
             self.state[0] = init_angle
 
-        self.input = np.array(
-            [0, 0, params.power_regime(init_wind_speed) * params.max_power_generation])  # Initialize control input
+        self.state[0] = init_angle                                      # Initialize theta
+        self.state[2] = params.omega_setpoint(init_wind_speed)          # Initialize Omega
+        self.input = np.array([0, 0, params.power_regime(init_wind_speed)*params.max_power_generation])  # Initialize control input
         self.step_size = step_size
-        self.alpha_thr = self.step_size / (self.step_size + params.tau_thr)
-        self.alpha_blade_pitch = self.step_size / (self.step_size + params.tau_blade_pitch)
+        self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
+        self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation
@@ -96,7 +97,10 @@ class Pendulum:
         self.Q_w = Q_w
         self.Q_g = Q_g
 
-        return numerical_x_dot(state, u, F_thr, power, wind_speed)
+        state_dot = numerical_x_dot(state, u, F_thr, power, wind_speed)
+
+        return state_dot
+
 
     @property
     def platform_angle(self):

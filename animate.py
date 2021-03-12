@@ -27,10 +27,13 @@ def animate(frame):
             else:
                 action = np.array([0,0,0])
         else:
-            action = np.array([0,0,params.power_regime(env.pendulum.adjusted_wind_speed)])
+            action = np.array([0,BLADE_PITCH,params.power_regime(env.wind_speed)])
             
             
         _, _, done, _ = env.step(action)
+        if done:
+            print("Environment DONE!")
+
         x_top = height*np.sin(env.pendulum.platform_angle)
         y_top = height*np.cos(env.pendulum.platform_angle)
         x_bottom = -params.L_thr*np.sin(env.pendulum.platform_angle)
@@ -93,6 +96,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    BLADE_PITCH = 0
+
     if args.data:
         # If file specified, read data from file and animate
         data = pd.read_csv(args.data)
@@ -105,6 +110,7 @@ if __name__ == "__main__":
         env = gym.make("PendulumStab-v1")
         env_id = env.unwrapped.spec.id
         env.reset()
+        env.pendulum.input[1] = BLADE_PITCH*params.blade_pitch_max
         if args.agent:
             agent = PPO.load(args.agent)
 

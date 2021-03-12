@@ -105,7 +105,7 @@ class PendulumEnv(gym.Env):
         Generates environment with a pendulum at random initial conditions
         """
         init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        self.wind_speed = self.rand_num_gen.rand()*self.max_wind_speed
+        self.wind_speed = 9 # (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.pendulum = Pendulum(init_angle, self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
@@ -121,21 +121,21 @@ class PendulumEnv(gym.Env):
 
         theta_reward = np.exp(-self.gamma*(np.abs(theta))) - self.gamma*theta**2
         theta_dot_reward = -self.reward_theta_dot*theta_dot**2
-        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.pendulum.adjusted_wind_speed))**2
-        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.pendulum.adjusted_wind_speed))**2
+        omega_reward = -self.reward_omega*(omega-self.pendulum.omega_setpoint(self.wind_speed))**2
+        power_reward = -self.reward_power*(power-self.pendulum.power_regime(self.wind_speed))**2
 
         control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 
         step_reward = theta_reward + theta_dot_reward + omega_reward + control_reward + power_reward
 
-        end_cond_1 = self.cumulative_reward < self.min_reward
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
         crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
-        crash_cond_2 = np.abs(self.pendulum.omega) > self.crash_omega_condition
+        crash_cond_2 = self.pendulum.omega > self.crash_omega_max
+        crash_cond_3 = self.pendulum.omega < self.crash_omega_min
 
-        if end_cond_1 or end_cond_2 or crash_cond_1 or crash_cond_2:
+        if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
             done = True
-        if crash_cond_1:
+        if crash_cond_1 or crash_cond_2 or crash_cond_3:
             step_reward = self.reward_crash
             self.crashed = True
 

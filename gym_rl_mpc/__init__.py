@@ -3,18 +3,19 @@ import numpy as np
 
 DEFAULT_CONFIG = {
     "step_size": 0.1,
-    "min_reward": -2000,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_angle_condition": 10*(np.pi/180),
-    "crash_omega_condition": 180*(np.pi/180),
+    "crash_omega_max": 30*(2*np.pi/60),
+    "crash_omega_min": 1*(2*np.pi/60),
     "max_init_angle": 0,
     "reward_crash": -5000,
     "max_wind_speed": 25,
+    "min_wind_speed": 3,
     "gamma": 50,                                # Exponential coefficient for platform_angle angle reward
-    "reward_theta_dot": 100,                      # Coefficient for angular rate penalty
+    "reward_theta_dot": 10,                     # Coefficient for angular rate penalty
     "reward_omega": 1,                          # Coefficient for control input penalty
     "reward_control": 0,                        # Coefficient for control input penalty
-    "reward_power": 1,                          # Coefficient for control input penalty
+    "reward_power": 0,                          # Coefficient for control input penalty
 }
 
 register(

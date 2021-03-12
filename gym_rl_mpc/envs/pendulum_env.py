@@ -119,12 +119,18 @@ class PendulumEnv(gym.Env):
         omega_rpm = self.pendulum.state[2]*(60/(2*np.pi))
         power_error_MegaWatts = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))*(self.pendulum.max_power_generation/1e6)
 
+        if omega_rpm > 40:
+            print("Extreme omega!")
+        if theta_dot_deg_s > 10:
+            print("Extreme theta_dot!")
+
         omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
+        omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
 
         self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
         self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
 
-        self.omega_reward = np.exp(-self.gamma_omega*(np.abs(omega_rpm))) - self.gamma_omega*omega_rpm**2
+        self.omega_reward = np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm**2
 
         self.power_reward = np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
 

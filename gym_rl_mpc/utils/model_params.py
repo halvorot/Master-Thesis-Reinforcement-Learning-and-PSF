@@ -28,6 +28,13 @@ max_power_generation = 15e6
 tau_blade_pitch = 0.1                   # Blade pitch time constant
 tau_thr = 2                             # Thrust force time constant
 
+
+C_1 = 4.4500746068705328
+C_2 = -4.488263864070078
+C_3 = 0.0055491593253495
+C_4 = -6.86458290065766e-12*L_thr
+C_5 = 0.000000000991589
+
 def power_regime(wind_speed):
     if wind_speed < 3:
         return 0

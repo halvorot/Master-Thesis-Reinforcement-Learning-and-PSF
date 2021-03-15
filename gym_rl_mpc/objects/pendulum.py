@@ -151,7 +151,7 @@ def _un_normalize_thrust_input(input):
 
 def _un_normalize_blade_pitch_input(input):
     input = np.clip(input, -0.2, 1)
-    return input * params.blade_pitch_max
+    return input * params.max_blade_pitch
 
 
 def _un_normalize_power_input(input):

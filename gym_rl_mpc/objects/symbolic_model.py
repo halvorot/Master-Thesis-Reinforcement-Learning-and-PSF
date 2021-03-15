@@ -69,7 +69,7 @@ Hu = np.asarray([
     [0, 0, -1],
     [0, 0, 1]
 ])
-hu = np.asarray([[0.2*params.blade_pitch_max, params.blade_pitch_max, 0, params.max_power_generation, params.max_thrust_force, params.max_thrust_force]]).T
+hu = np.asarray([[0.2*params.max_blade_pitch, params.max_blade_pitch, 0, params.max_power_generation, params.max_thrust_force, params.max_thrust_force]]).T
 
 _numerical_x_dot = Function("numerical_x_dot",
                             [x, u_p, F_thr, P_ref, w_0],

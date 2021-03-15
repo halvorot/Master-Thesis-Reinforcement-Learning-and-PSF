@@ -27,7 +27,7 @@ def animate(frame):
             else:
                 action = np.array([0,0,0])
         else:
-            action = np.array([0,env.pendulum.input[1]/params.blade_pitch_max,params.power_regime(env.wind_speed) * params.max_power_generation])
+            action = np.array([0,env.pendulum.input[1]/params.max_blade_pitch,params.power_regime(env.wind_speed) * params.max_power_generation])
             
             
         _, _, done, _ = env.step(action)

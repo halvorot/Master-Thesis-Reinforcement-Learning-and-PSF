@@ -134,7 +134,7 @@ class PendulumEnv(gym.Env):
 
         omega_in_working_range = omega > self.pendulum.omega_setpoint(self.min_wind_speed) and omega < self.pendulum.omega_setpoint(self.max_wind_speed)
         theta_ok = np.abs(theta) < self.crash_angle_condition
-        power_in_working_range = power_error < self.pendulum.max_power_generation
+        power_in_working_range = power_error < 0.7*self.pendulum.max_power_generation
 
         survival_reward = self.reward_survival
 

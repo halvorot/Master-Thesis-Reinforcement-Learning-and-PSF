@@ -1,7 +1,11 @@
 import itertools
+import pickle
+import time
+from hashlib import sha1
+from pathlib import Path
 
 import numpy as np
-from casadi import SX, qpsol, norm_1, Function, vertcat, mtimes, nlpsol, inf, Opti, norm_2, horzcat, jacobian
+from casadi import SX, qpsol, Function, vertcat, inf,  jacobian
 import cvxpy as cp
 from cvxpy.atoms.affine.bmat import bmat
 import gym_rl_mpc.objects.symbolic_model as sym
@@ -9,6 +13,8 @@ import gym_rl_mpc.objects.symbolic_model as sym
 LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
+
+LEN_FILE_STR=20
 
 
 class PSF:
@@ -26,7 +32,7 @@ class PSF:
             params = []
 
         self.sys = sys
-        self.params = params
+        self.params = vertcat(*params)
         self.params_bounds = params_bounds
 
         self.nx = self.sys["A"].shape[1]
@@ -90,13 +96,13 @@ class PSF:
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
-        # g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
-        # self.lbg += [-inf]
-        # self.ubg += [0]
+        g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
+        self.lbg += [-inf]
+        self.ubg += [0]
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.params)}
 
-        self.solver = qpsol("solver", "qpoases", prob, {"verbose": True})
+        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
 
     def calc(self, x, u_L, lin_params, params):
         solution = self.solver(p=vertcat(x, u_L, lin_params, params),
@@ -107,17 +113,36 @@ class PSF:
         return np.asarray(solution["x"][self.nx:self.nx + self.nu])
 
     def set_terminal_set(self):
-
+        self.alpha = 0.9
         A_set, B_set = self.create_system_set()
 
+        b = pickle.dumps((A_set, B_set))
+        filename = sha1(b).hexdigest()[:LEN_FILE_STR]
+        path = Path("stored_KP", filename + ".dat")
+        try:
+            self.K, self.P = pickle.load(open(path, mode="rb"))
+        except FileNotFoundError:
+            import matlab.engine
+
+            Hx = matlab.double(self.sys["Hx"].tolist())
+            hx = matlab.double(self.sys["hx"].tolist())
+            Hu = matlab.double(self.sys["Hu"].tolist())
+            hu = matlab.double(self.sys["hu"].tolist())
+
+            m_A = matlab.double(np.hstack(A_set).tolist())
+            m_B = matlab.double(np.hstack(B_set).tolist())
+
+            eng = matlab.engine.start_matlab()
+            m_PK = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu)
+            PK = np.asarray(m_PK)
+            self.P = PK[:, :self.nx]
+            self.K = PK[:, : self.nx]
+            pickle.dump((self.K, self.P), open(path, "wb"))
+
+        """
         E = cp.Variable((self.nx, self.nx), symmetric=True)
         Y = cp.Variable((self.nx, self.nu))
-
-        Hx = self.sys["Hx"]
-        hx = self.sys["hx"]
-        Hu = self.sys["Hu"]
-        hu = self.sys["hu"]
-
+        
         objective = cp.Minimize(-cp.log_det(E))
         constraints = []
 
@@ -149,7 +174,7 @@ class PSF:
         problem.solve(verbose=True)
         self.P = np.linalg.inv(E.value)
         self.alpha = 1
-        self.K = Y.value * self.P
+        self.K = Y.value * self.P """
 
     def create_system_set(self):
         A_set = []
@@ -177,10 +202,18 @@ if __name__ == '__main__':
     A = jacobian(sym.symbolic_x_dot_simple, sym.x)
     B = jacobian(sym.symbolic_x_dot_simple, sym.u)
     free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
-    psf = PSF({"A": np.eye(3)+A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-              10,
+    psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
+              N=20,
               params=free_vars,
               params_bounds={"w": [3, 25],
                              "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})
+
+    print(psf.calc([0, 0, 6], [3, 15e6, 6], vertcat(5, 12, 0), vertcat(5)))
+    start = time.time()
+    for i in range(1000):
+        psf.calc([0, 0, 6], [3, 15e6-i*1e4, 6], vertcat(5, 12, 0), vertcat(5))
+
+    end = time.time()
+    print(end - start)

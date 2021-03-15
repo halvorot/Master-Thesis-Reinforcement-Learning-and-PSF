@@ -1,10 +1,14 @@
 from gym_rl_mpc.utils.model_params import C_1, C_4, C_2, C_3, C_5, d_r, k_r, l_r, J_r, b_d_r
 from casadi import SX, vertcat, jacobian, cos, sin, Function, nlpsol, inf
 import numpy as np
+from gym_rl_mpc import DEFAULT_CONFIG
+import gym_rl_mpc.utils.model_params as params
 
-LARGE_NUM = 1e9
+LARGE_NUM = np.finfo(np.float32).max
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
+
+config = DEFAULT_CONFIG
 
 # Constants
 w = SX.sym('w')
@@ -54,7 +58,7 @@ Hx = np.asarray([
     [0, 0, 1]
 ])
 
-hx = np.asarray([[10 * DEG2RAD, 10 * DEG2RAD, LARGE_NUM, LARGE_NUM, -5 * RPM2RAD, 7.56 * RPM2RAD]]).T
+hx = np.asarray([[config["crash_angle_condition"], config["crash_angle_condition"], LARGE_NUM, LARGE_NUM, -params.omega_setpoint(config["min_wind_speed"]), params.omega_setpoint(config["max_wind_speed"])]]).T
 
 Hu = np.asarray([
     [-1, 0, 0],
@@ -64,7 +68,7 @@ Hu = np.asarray([
     [0, 0, -1],
     [0, 0, 1]
 ])
-hu = np.asarray([[4 * DEG2RAD, 20 * DEG2RAD, 0, 15.4e6, 5e5, 5e5]]).T
+hu = np.asarray([[0.2*params.blade_pitch_max, params.blade_pitch_max, 0, params.max_power_generation, params.max_thrust_force, params.max_thrust_force]]).T
 
 _numerical_x_dot = Function("numerical_x_dot",
                             [x, u_p, F_thr, P_ref, w],

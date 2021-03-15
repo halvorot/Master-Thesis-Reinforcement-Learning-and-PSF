@@ -104,9 +104,8 @@ class PendulumEnv(gym.Env):
         """
         Generates environment with a pendulum at random initial conditions
         """
-        init_angle = (2*self.rand_num_gen.rand()-1)*self.max_init_angle     # random number in range (+- max_init_angle)
-        self.wind_speed = 20#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
-        self.pendulum = Pendulum(init_angle, self.wind_speed, self.step_size)
+        self.wind_speed = 10#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.pendulum = Pendulum(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
         """
@@ -122,11 +121,11 @@ class PendulumEnv(gym.Env):
         # omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
         # omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
 
-        # self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
-        # self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
-        # self.omega_reward = np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm**2
-        # self.power_reward = np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
-        # self.control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
+        self.theta_reward = 0 #np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
+        self.theta_dot_reward = 0 #-self.reward_theta_dot*theta_dot_deg_s**2
+        self.omega_reward = 0 #np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm**2
+        self.power_reward = 0 #np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
+        self.control_reward = 0 #-self.reward_control*(action[0]**2 + action[1]**2)
 
         theta = self.pendulum.platform_angle
         theta_dot = self.pendulum.state[1]
@@ -134,7 +133,7 @@ class PendulumEnv(gym.Env):
         power_error = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))
 
         omega_in_working_range = omega > self.pendulum.omega_setpoint(self.min_wind_speed) and omega < self.pendulum.omega_setpoint(self.max_wind_speed)
-        theta_ok = np.abs(self.pendulum.platform_angle) < self.crash_angle_condition
+        theta_ok = np.abs(theta) < self.crash_angle_condition
         power_in_working_range = power_error < self.pendulum.max_power_generation
 
         survival_reward = self.reward_survival

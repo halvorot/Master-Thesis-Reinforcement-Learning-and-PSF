@@ -29,7 +29,7 @@ def odesolver45(f, y, h, wind_speed):
 
 
 class Pendulum:
-    def __init__(self, init_angle=0, init_wind_speed=3, step_size=1):
+    def __init__(self, init_wind_speed=3, step_size=1):
         """
             state = [theta, theta_dot, omega]^T
         """
@@ -43,10 +43,7 @@ class Pendulum:
                                                        thruster_force=0)
 
         self.state = opt_state
-        if init_angle is not None:
-            self.state[0] = init_angle
-
-        self.input = np.array([0, blade_pitch/params.blade_pitch_max, init_power])  # Initialize control input
+        self.input = np.array([0, float(blade_pitch), init_power])  # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)

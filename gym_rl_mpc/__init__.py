@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
     "reward_theta_dot": 0.4,                      # Coefficient for angular rate penalty
     "reward_control": 0,                        # Coefficient for control input penalty
-    "reward_survival": 10,
+    "reward_survival": 1,
 }
 
 register(

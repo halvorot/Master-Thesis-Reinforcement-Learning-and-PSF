@@ -27,7 +27,7 @@ def animate(frame):
             else:
                 action = np.array([0,0,0])
         else:
-            action = np.array([0,env.pendulum.input[1]/params.blade_pitch_max,0])
+            action = np.array([0,env.pendulum.input[1]/params.blade_pitch_max,params.power_regime(env.wind_speed) * params.max_power_generation])
             
             
         _, _, done, _ = env.step(action)
@@ -158,6 +158,7 @@ if __name__ == "__main__":
         ax3_2.plot(time, recorded_inputs[:,1]*(180/np.pi), label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
+        ax3_2.set_ylim([-4,20])
 
         color = 'tab:blue'
         ax4.plot(time, recorded_disturbance[:,0], label='F_w', color=color)

@@ -41,7 +41,8 @@ class Pendulum:
                                                        power=init_power,
                                                        # needs a param
                                                        thruster_force=0)
-
+        print(float(blade_pitch))
+        print(opt_state)
         self.state = opt_state
         self.input = np.array([0, float(blade_pitch), init_power])  # Initialize control input
         self.step_size = step_size
@@ -70,7 +71,7 @@ class Pendulum:
         self.input = np.array([F_thr, blade_pitch, power])
 
         # Adjust wind speed based on inflow and structure
-        w = (2 / 3) * wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        w = wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
         self.adjusted_wind_speed = w
 
         self._sim(self.adjusted_wind_speed)
@@ -93,7 +94,7 @@ class Pendulum:
 
         F_w = numerical_F_wind(omega, wind_speed, u)
         Q_w = numerical_Q_wind(omega, wind_speed, u)
-        Q_g = power / omega
+        Q_g = min(power / omega, params.max_generator_torque)
 
         self.F_w = F_w
         self.Q_w = Q_w

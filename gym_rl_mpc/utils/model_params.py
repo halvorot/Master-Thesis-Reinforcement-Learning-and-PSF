@@ -1,5 +1,21 @@
 import numpy as np
 
+def power_regime(wind_speed):
+    if wind_speed < 3:
+        return 0
+    elif wind_speed < 10.59:
+        return (((wind_speed-3)/(10.59-3))**2)
+    else:
+        return 1
+
+def omega_setpoint(wind_speed):
+    if wind_speed < 6.98:
+        return 5*(2*np.pi/60)       # 5 rpm
+    elif wind_speed < 10.59:
+        return (((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5)*(2*np.pi/60)
+    else:
+        return 7.55*(2*np.pi/60)    # 7.55 rpm
+
 # Platform parameters
 L = 144.45
 L_thr = 50
@@ -25,6 +41,7 @@ blade_pitch_max = 10*(np.pi/180)        # maximum deviation from beta^*
 max_wind_force = 1e7                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 max_power_generation = 15e6
+max_generator_torque = max_power_generation/omega_setpoint(0)
 tau_blade_pitch = 0.1                   # Blade pitch time constant
 tau_thr = 2                             # Thrust force time constant
 
@@ -36,19 +53,3 @@ C_4 = -6.86458290065766e-12*L_thr
 C_5 = 0.000000000991589
 
 inflow_reduction_frac = 1/1 # 2/3
-
-def power_regime(wind_speed):
-    if wind_speed < 3:
-        return 0
-    elif wind_speed < 10.59:
-        return (((wind_speed-3)/(10.59-3))**2)
-    else:
-        return 1
-
-def omega_setpoint(wind_speed):
-    if wind_speed < 6.98:
-        return 5*(2*np.pi/60)       # 5 rpm
-    elif wind_speed < 10.59:
-        return (((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5)*(2*np.pi/60)
-    else:
-        return 7.55*(2*np.pi/60)    # 7.55 rpm

@@ -41,8 +41,7 @@ class Pendulum:
                                                        power=init_power,
                                                        # needs a param
                                                        thruster_force=0)
-        print(f"init blade pitch: {float(blade_pitch)}")
-        print(f"opt_state: {opt_state}")
+
         self.state = opt_state
         self.input = np.array([0, float(blade_pitch), init_power])  # Initialize control input
         self.step_size = step_size

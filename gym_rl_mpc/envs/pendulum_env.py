@@ -136,12 +136,10 @@ class PendulumEnv(gym.Env):
         theta_ok = np.abs(theta) < self.crash_angle_condition
         power_in_working_range = power_error < 0.7*self.pendulum.max_power_generation
 
-        survival_reward = self.reward_survival
-
         if omega_in_working_range and theta_ok and power_in_working_range:
-            step_reward = survival_reward * self.working_range_reward_multiplier
+            step_reward = self.reward_survival * self.working_range_reward_multiplier
         else:
-            step_reward = survival_reward
+            step_reward = self.reward_survival
 
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
         crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition

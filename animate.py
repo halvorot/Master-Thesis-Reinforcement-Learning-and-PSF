@@ -36,9 +36,10 @@ def animate(frame):
         y_top = height*np.cos(env.pendulum.platform_angle)
         x_bottom = -params.L_thr*np.sin(env.pendulum.platform_angle)
         y_bottom = -params.L_thr*np.cos(env.pendulum.platform_angle)
-        recorded_states.append(env.pendulum.state)
-        recorded_inputs.append(env.pendulum.input)
-        recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque,env.pendulum.generator_torque, env.pendulum.adjusted_wind_speed]))
+        if not done:
+            recorded_states.append(env.pendulum.state)
+            recorded_inputs.append(env.pendulum.input)
+            recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque,env.pendulum.generator_torque, env.pendulum.adjusted_wind_speed]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
@@ -61,6 +62,9 @@ def animate(frame):
     ax_ani.text(-49, params.L-7, f"{env.wind_speed:.1f} m/s", fontsize=10)
     # Plot rotational speed
     ax_ani.text(0, params.L+7, f"$\Omega$ = {env.pendulum.omega*(180/np.pi):.1f} deg/s", fontsize=10)
+
+    if done:
+        plt.stop()
 
 
 if __name__ == "__main__":

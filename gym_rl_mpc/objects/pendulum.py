@@ -69,7 +69,7 @@ class Pendulum:
         self.input = np.array([F_thr, blade_pitch, power])
 
         # Adjust wind speed based on inflow and structure
-        w = wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        w = (2/3)*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
         self.adjusted_wind_speed = w
 
         self._sim(self.adjusted_wind_speed)

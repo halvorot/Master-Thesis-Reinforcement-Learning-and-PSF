@@ -35,6 +35,8 @@ C_3 = 0.0055491593253495
 C_4 = -6.86458290065766e-12*L_thr
 C_5 = 0.000000000991589
 
+inflow_reduction_frac = 1/1 # 2/3
+
 def power_regime(wind_speed):
     if wind_speed < 3:
         return 0

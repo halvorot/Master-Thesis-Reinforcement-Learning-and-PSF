@@ -1,71 +1,37 @@
 import matplotlib.pyplot as plt
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 import argparse
 
-RAD2DEG = 180/np.pi
+import gym_rl_mpc.utils.model_params as params
 
-def rew_func(x, y, gamma):
-    # tmp = np.minimum(1, -np.log(gamma*np.abs(x)+1/gamma)) + np.minimum(1, -np.log(gamma*np.abs(y)+1/gamma))
-    # tmp = np.exp(-gamma*(x**2)) * np.exp(-gamma*(y**2))
-    r_p = np.exp(-gamma*(np.abs(x)))
-    r_r = np.exp(-gamma*(np.abs(y)))
-    tmp = r_p * r_r - 2*gamma*(x**2 + y**2)
-    return tmp
+def r_theta():
+    gamma_theta = 0.12
 
-def plot_r_stab_3d(gamma, save=False):
+    X = np.arange(-10, 10, 0.001)
+    Y = np.exp(-gamma_theta*(np.abs(X))) - gamma_theta*np.abs(X)
+    return X, Y 
 
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    # Make data.
-    X = np.arange(-0.1, 0.1, 0.001)
-    Y = np.arange(-0.1, 0.1, 0.001)
-    X, Y = np.meshgrid(X, Y)
-    Z = rew_func(X, Y, gamma)
+def r_theta_dot():
+    reward_theta_dot = 0.4
 
-    # Plot the surface.
-    surf = ax.plot_surface(X*RAD2DEG, Y*RAD2DEG, Z, cmap='magma',
-                           linewidth=0, antialiased=False)
+    X = np.arange(-2.5, 2.5, 0.001)
+    Y = -reward_theta_dot*X**2
+    return X, Y 
+    
+def r_omega():
+    gamma_omega = 0.285
 
-    # Customize the z axis.
-    # ax.set_zlim(0, 1.5)
-    ax.zaxis.set_major_locator(LinearLocator(10))   # Number or ticks on Z-axis
-    ax.zaxis.set_major_formatter(FormatStrFormatter('%.01f'))  # Format of numbers on Z-axis
+    X = np.arange(-10, 10, 0.001)
+    Y = np.exp(-gamma_omega*(np.abs(X))) - gamma_omega*np.abs(X)
+    return X, Y 
 
-    # Add a color bar which maps values to colors.
-    fig.colorbar(surf, shrink=0.5, aspect=10)
+def r_power():
+    gamma_power = 0.1
 
-    # Add axis labels
-    ax.set_xlabel(r'$\theta_p$ [deg]')
-    ax.set_ylabel(r'$\theta_r$ [deg]')
-    ax.set_zlabel('Reward')
-    ax.view_init(elev=30, azim=-71)
-    if save:
-        plt.savefig('plot_results/r_stab_alternative_plot_3d.pdf', bbox_inches='tight')
-
-def plot_r_stab_contour(gamma, save=False):
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    # Make data.
-    X = np.arange(-0.1, 0.1, 0.001)
-    Y = np.arange(-0.1, 0.1, 0.001)
-    X, Y = np.meshgrid(X, Y)
-    Z = rew_func(X, Y, gamma)
-
-    # Plot the surface.
-    reward_plot = ax.contourf(X*RAD2DEG, Y*RAD2DEG, Z, levels=20, cmap='magma')
-
-    cbar = fig.colorbar(reward_plot)
-    cbar.set_label(r'Reward')
-
-    # Add axis labels
-    ax.set_xlabel(r'$\theta_p$ [deg]')
-    ax.set_ylabel(r'$\theta_r$ [deg]')
-    if save:
-        plt.savefig('plot_results/r_stab_alternative_plot_contour.pdf', bbox_inches='tight')
-
+    X = np.arange(-15, 15, 0.001)
+    Y = np.exp(-gamma_power*np.abs(X)) - gamma_power*np.abs(X)
+    return X, Y 
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -76,7 +42,21 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    gamma = 20
-    plot_r_stab_3d(gamma, save=args.save)
-    plot_r_stab_contour(gamma, save=args.save)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    x, y = r_power()
+
+    ax.plot(x, y)
+
+    # Add axis labels
+    ax.set_xlabel(r'Power generation error [MW]')
+    ax.set_ylabel(r'Reward')
+    ax.set_xlim([-15,15])
+    ax.set_ylim([-1.1,1.1])
+    ax.grid(True)
+
+    if args.save:
+        plt.savefig('plots/r_power.pdf', bbox_inches='tight')
+
     plt.show()

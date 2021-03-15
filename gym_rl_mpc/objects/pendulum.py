@@ -39,7 +39,6 @@ class Pendulum:
 
         opt_state, blade_pitch = solve_initial_problem(wind=init_wind_speed,
                                                        power=init_power,
-                                                       # needs a param
                                                        thruster_force=0)
 
         self.state = opt_state

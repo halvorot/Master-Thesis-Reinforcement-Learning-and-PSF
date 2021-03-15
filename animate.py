@@ -100,10 +100,10 @@ if __name__ == "__main__":
         data_angle = data['theta']
         data_input = np.array([data['F']])
         data_reward = np.array(data['reward'])
-        env_id = "PendulumStab-v1"
+        env_id = "PendulumStab-v2"
     else:
         done = False
-        env = gym.make("PendulumStab-v1")
+        env = gym.make("PendulumStab-v2")
         env_id = env.unwrapped.spec.id
         env.reset()
         if args.agent:

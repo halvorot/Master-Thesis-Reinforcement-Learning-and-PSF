@@ -11,7 +11,8 @@ DEG2RAD = 1 / 360 * 2 * np.pi
 config = DEFAULT_CONFIG
 
 # Constants
-w = SX.sym('w')
+w_0 = SX.sym('w')
+w = 2/3 * w_0
 theta = SX.sym('theta')
 theta_dot = SX.sym('theta_dot')
 Omega = SX.sym('Omega')
@@ -71,12 +72,12 @@ Hu = np.asarray([
 hu = np.asarray([[0.2*params.blade_pitch_max, params.blade_pitch_max, 0, params.max_power_generation, params.max_thrust_force, params.max_thrust_force]]).T
 
 _numerical_x_dot = Function("numerical_x_dot",
-                            [x, u_p, F_thr, P_ref, w],
+                            [x, u_p, F_thr, P_ref, w_0],
                             [symbolic_x_dot],
-                            ["x", "u_p", "F_thr", "P_ref", "w"],
+                            ["x", "u_p", "F_thr", "P_ref", "w_0"],
                             ["x_dot"])
-_numerical_F_wind = Function("numerical_F_wind", [Omega, u_p, w], [F_wind], ["Omega", "u_p", "w"], ["F_wind"])
-_numerical_Q_wind = Function("numerical_Q_wind", [Omega, u_p, w], [Q_wind], ["Omega", "u_p", "w"], ["Q_wind"])
+_numerical_F_wind = Function("numerical_F_wind", [Omega, u_p, w_0], [F_wind], ["Omega", "u_p", "w_0"], ["F_wind"])
+_numerical_Q_wind = Function("numerical_Q_wind", [Omega, u_p, w_0], [Q_wind], ["Omega", "u_p", "w"], ["Q_wind"])
 
 
 def numerical_F_wind(Omega, wind, blade_pitch):
@@ -100,7 +101,7 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
 
     g += [Hu[:2, 0] @ u_p - hu[:2]]
 
-    prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
+    prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w_0, F_thr)}
     opts = {
         "verbose": False,
         "verbose_init": False,

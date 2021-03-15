@@ -6,7 +6,7 @@ DEFAULT_CONFIG = {
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_angle_condition": 10*(np.pi/180),
     "crash_omega_max": 30*(2*np.pi/60),
-    "crash_omega_min": 1*(2*np.pi/60),
+    "crash_omega_min": 3*(2*np.pi/60),
     "max_init_angle": 0,
     "reward_crash": -1e4,
     "max_wind_speed": 25,

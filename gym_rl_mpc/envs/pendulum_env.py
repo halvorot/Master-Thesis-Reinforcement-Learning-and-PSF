@@ -104,7 +104,7 @@ class PendulumEnv(gym.Env):
         """
         Generates environment with a pendulum at random initial conditions
         """
-        self.wind_speed = 25#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 20#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.pendulum = Pendulum(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
@@ -113,33 +113,21 @@ class PendulumEnv(gym.Env):
         """
         done = False
 
-        # theta_deg = self.pendulum.platform_angle*(180/np.pi)
-        # theta_dot_deg_s = self.pendulum.state[1]*(180/np.pi)
-        # omega_rpm = self.pendulum.state[2]*(60/(2*np.pi))
-        # power_error_MegaWatts = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))*(self.pendulum.max_power_generation/1e6)
+        theta_deg = self.pendulum.platform_angle*(180/np.pi)
+        theta_dot_deg_s = self.pendulum.state[1]*(180/np.pi)
+        omega_rpm = self.pendulum.state[2]*(60/(2*np.pi))
+        power_error_MegaWatts = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))*(self.pendulum.max_power_generation/1e6)
 
-        # omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
-        # omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
+        omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
+        omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
 
-        self.theta_reward = 0 #np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
-        self.theta_dot_reward = 0 #-self.reward_theta_dot*theta_dot_deg_s**2
-        self.omega_reward = 0 #np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm**2
-        self.power_reward = 0 #np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
-        self.control_reward = 0 #-self.reward_control*(action[0]**2 + action[1]**2)
+        self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*theta_deg**2
+        self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
+        self.omega_reward = np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm**2
+        self.power_reward = np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
+        self.control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
 
-        theta = self.pendulum.platform_angle
-        theta_dot = self.pendulum.state[1]
-        omega = self.pendulum.state[2]
-        power_error = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))
-
-        omega_in_working_range = omega > self.pendulum.omega_setpoint(self.min_wind_speed) and omega < self.pendulum.omega_setpoint(self.max_wind_speed)
-        theta_ok = np.abs(theta) < self.crash_angle_condition
-        power_in_working_range = power_error < 0.7*self.pendulum.max_power_generation
-
-        if omega_in_working_range and theta_ok and power_in_working_range:
-            step_reward = self.reward_survival * self.working_range_reward_multiplier
-        else:
-            step_reward = self.reward_survival
+        step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward
 
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
         crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition

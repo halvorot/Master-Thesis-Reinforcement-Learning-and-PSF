@@ -89,11 +89,6 @@ if __name__ == "__main__":
         color = 'tab:orange'
         ax4_2 = ax4.twinx()
         ax4_2.plot(time, sim_df['Q_w'], label='Q_w', color=color)
-        ax4_2.set_ylabel('Q_w [Nm]', color=color)
-        ax4_2.legend()
-        color = 'tab:orange'
-        ax4_2 = ax4.twinx()
-        ax4_2.plot(time, sim_df['Q_w'], label='Q_w', color=color)
         ax4_2.plot(time, sim_df['Q_gen'], label='Q_gen', color='tab:red')
         ax4_2.set_ylabel('Q [Nm]', color=color)
         ax4_2.legend()

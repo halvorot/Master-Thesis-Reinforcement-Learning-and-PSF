@@ -6,8 +6,6 @@ from pathlib import Path
 
 import numpy as np
 from casadi import SX, qpsol, Function, vertcat, inf, jacobian
-import cvxpy as cp
-from cvxpy.atoms.affine.bmat import bmat
 import gym_rl_mpc.objects.symbolic_model as sym
 
 LARGE_NUM = 1e9

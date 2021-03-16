@@ -3,11 +3,53 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulu
 
 ## Prerequisites
  - Python 3.7
+ - Yalmip 20200930
+ - Mosek 9.2
+ - MATLAB R2011a or later (Tested with 2020b)
+
+
+
+
 
 ## Installation
+### Mosek 
+Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
+
+Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interface.html)
+```
+addpath <MSKHOME>/mosek/9.2/toolbox/r2015aom
+```
+### Yalmip
+Yalmip is easily through the txbmananger http://tbxmanager.com/. 
+After installation, run the follow command in Matlab:
+```
+>> tbxmanager install yalmip
+```
+
+### Python dependencies and packages
+
+A virtual enviroment is highly recommended. Conda env was used to develop this project.
+
+```
+conda create -n <env_name>
+```
 Run
 ```
 pip install -e ./gym-rl-mpc
+```
+## Test
+Run all the test in gym-rl-mpc folder.
+Test Mosek in Matlab:
+```
+>> mosekdiag
+```
+Test yalmip in Matlab:
+```
+>> yalmiptest
+```
+Test PSF module:
+```
+>>> python PSF/PSF.p
 ```
 
 ## Running the program
@@ -67,10 +109,7 @@ Optional arguments:
 
 or 
 
-### Test PSF dependencies
-```
-python PSF/py2matlab.py
-```
+
 
 
 ## Based on

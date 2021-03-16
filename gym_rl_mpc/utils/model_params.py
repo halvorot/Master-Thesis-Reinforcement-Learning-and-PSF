@@ -21,7 +21,7 @@ d_r = 0.5*rho*A*C_F                     # d in Force/Torque equations
 J_r = 4.068903574982517e+07             # From OpenFast
 
 max_thrust_force = 5e5                  # maximum force input [N]
-blade_pitch_max = 10*(np.pi/180)        # maximum deviation from beta^*
+max_blade_pitch = 10*(np.pi/180)        # maximum deviation from beta^*
 max_wind_force = 1e7                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 max_power_generation = 15e6
@@ -35,7 +35,8 @@ C_3 = 0.0055491593253495
 C_4 = -6.86458290065766e-12*L_thr
 C_5 = 0.000000000991589
 
-inflow_reduction_frac = 1/1 # 2/3
+inflow_reduction_frac = 1/1  # 2/3
+
 
 def power_regime(wind_speed):
     if wind_speed < 3:
@@ -44,6 +45,7 @@ def power_regime(wind_speed):
         return (((wind_speed-3)/(10.59-3))**2)
     else:
         return 1
+
 
 def omega_setpoint(wind_speed):
     if wind_speed < 6.98:

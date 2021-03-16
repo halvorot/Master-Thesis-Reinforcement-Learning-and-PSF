@@ -1,40 +1,55 @@
+import itertools
+import pickle
+import time
+from hashlib import sha1
+from pathlib import Path
+
 import numpy as np
-from casadi import SX, qpsol, norm_1, Function, vertcat, mtimes, nlpsol, inf, Opti, norm_2, horzcat, jacobian
+from casadi import SX, qpsol, Function, vertcat, inf,  jacobian
 import cvxpy as cp
-from gym_rl_mpc.utils.model_params import J_r, k_r, l_r, b_d_r, C_1, C_2, C_3, C_5, C_4, d_r
+from cvxpy.atoms.affine.bmat import bmat
+import gym_rl_mpc.objects.symbolic_model as sym
 
 LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
+LEN_FILE_STR=20
+
 
 class PSF:
-    def __init__(self, sys, N, lin_params=None, params=None, P=None, alpha=None, K=None, NLP_flag=False
+    def __init__(self,
+                 sys,
+                 N,
+                 params=None,
+                 params_bounds=None,
+                 P=None,
+                 alpha=None,
+                 K=None,
+                 NLP_flag=False
                  ):
         if params is None:
             params = []
-        if lin_params is None:
-            lin_params = []
-        self.sys = {}
-        self.lin_params = lin_params
-        self.params = params
-        if NLP_flag:
-            raise NotImplemented("NLP mpc not implemented yet")
-            # self._NLP_init(sys, N, P, alpha, K)
-        else:
-            self._LP_init(sys, N, P, alpha, K)
 
-    def _LP_init(self, sys, N, P=None, alpha=None, K=None):
+        self.sys = sys
+        self.params = vertcat(*params)
+        self.params_bounds = params_bounds
 
-        self._LP_set_sys(sys)
+        self.nx = self.sys["A"].shape[1]
+        self.nu = self.sys["B"].shape[1]
 
-        if not P is None:
-            pass
+        if P is None:
             self.set_terminal_set()
         else:
             self.P = P
             self.alpha = alpha
             self.K = K
+
+        self._set_model_step()
+
+        self._LP_init(sys, N, P, alpha, K)
+
+    def _LP_init(self, sys, N, P=None, alpha=None, K=None):
 
         self.N = N
         X0 = SX.sym('X0', self.nx)
@@ -81,13 +96,13 @@ class PSF:
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
-        # g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
-        # self.lbg += [-inf]
-        # self.ubg += [0]
+        g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
+        self.lbg += [-inf]
+        self.ubg += [0]
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_params, self.params)}
+        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.params)}
 
-        self.solver = qpsol("solver", "qpoases", prob, {"verbose": True})
+        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
 
     def calc(self, x, u_L, lin_params, params):
         solution = self.solver(p=vertcat(x, u_L, lin_params, params),
@@ -98,44 +113,83 @@ class PSF:
         return np.asarray(solution["x"][self.nx:self.nx + self.nu])
 
     def set_terminal_set(self):
+        self.alpha = 0.9
+        A_set, B_set = self.create_system_set()
 
+        b = pickle.dumps((A_set, B_set))
+        filename = sha1(b).hexdigest()[:LEN_FILE_STR]
+        path = Path("stored_KP", filename + ".dat")
+        try:
+            self.K, self.P = pickle.load(open(path, mode="rb"))
+        except FileNotFoundError:
+            import matlab.engine
+
+            Hx = matlab.double(self.sys["Hx"].tolist())
+            hx = matlab.double(self.sys["hx"].tolist())
+            Hu = matlab.double(self.sys["Hu"].tolist())
+            hu = matlab.double(self.sys["hu"].tolist())
+
+            m_A = matlab.double(np.hstack(A_set).tolist())
+            m_B = matlab.double(np.hstack(B_set).tolist())
+
+            eng = matlab.engine.start_matlab()
+            m_PK = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu)
+            PK = np.asarray(m_PK)
+            self.P = PK[:, :self.nx]
+            self.K = PK[:, : self.nx]
+            pickle.dump((self.K, self.P), open(path, "wb"))
+
+        """
         E = cp.Variable((self.nx, self.nx), symmetric=True)
-        Y = cp.Variable((self.nu, self.nx))
-
+        Y = cp.Variable((self.nx, self.nu))
+        
         objective = cp.Minimize(-cp.log_det(E))
         constraints = []
 
-        constraints.append(
-            cp.vstack([
-                cp.hstack([E, (self.sys["A"] @ E + self.sys["B"] @ Y).T]),
-                cp.hstack([self.sys["A"] @ E + self.sys["B"] @ Y, E])
-            ]) >> 0
-        )
+        for A, B in zip(A_set, B_set):
+            constraints.append(
+                bmat([
+                    [E, (A @ E + B @ Y).T],
+                    [A @ E + B @ Y, E]
+                ]) >> 0
+            )
+
+        for i in range(self.nx):
+            constraints.append(
+                bmat([
+                    [hx[None, i] ** 2, Hx[None, i, :] @ E],
+                    [E @ Hx[None, i, :].T, E]
+                ]) >> 0
+            )
+
+        for j in range(self.nu):
+            constraints.append(
+                bmat([
+                    [hu[None, j] ** 2, Hu[None, j, :] @ E],
+                    [E @ Hu[None, j, :].T, E]
+                ]) >> 0
+            )
 
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=True)
         self.P = np.linalg.inv(E.value)
         self.alpha = 1
-        self.K = Y.value * self.P
+        self.K = Y.value * self.P """
 
-    def _LP_set_sys(self, sys):
-        args = ["A", "B"]
-        opt_comp = ["Hx", "hx", "Hu", "hu"]
+    def create_system_set(self):
+        A_set = []
+        B_set = []
 
-        for a in args:
-            self.sys[a] = sys[a]
+        free_vars = SX.get_free(Function("list_free_vars", [], [self.sys["A"], self.sys["B"]]))
+        bounds = [self.params_bounds[k.name()] for k in free_vars]  # relist as given above
+        eval_func = Function("eval_func", free_vars, [self.sys["A"], self.sys["B"]])
 
-        for opt in opt_comp:
-            self.sys[opt] = sys.get(opt, [])
+        for product in itertools.product(*bounds):  # creating maximum difference
+            AB_set = eval_func(*product)
+            A_set.append(np.asarray(AB_set[0]))
+            B_set.append(np.asarray(AB_set[1]))
 
-        if ("Hx" in self.sys) != ("hx" in self.sys):
-            raise ValueError("Both Hx and hx is mutually inclusive")
-        if ("Hu" in self.sys) != ("hu" in self.sys):
-            raise ValueError("Both Hu and hu is mutually inclusive")
-
-        self.nx = self.sys["A"].shape[1]
-        self.nu = self.sys["B"].shape[1]
-        self._set_model_step()
+        return A_set, B_set
 
     def _set_model_step(self):
         x0 = SX.sym('x0', self.nx)
@@ -145,67 +199,21 @@ class PSF:
 
 
 if __name__ == '__main__':
-    # Constants
-    w = SX.sym('w')
-    theta = SX.sym('theta')
-    theta_dot = SX.sym('theta_dot')
-    Omega = SX.sym('Omega')
-    u_p = SX.sym('u')
-    P_ref = SX.sym("P_ref")
-    F_thr = SX.sym('F_thr')
+    A = jacobian(sym.symbolic_x_dot_simple, sym.x)
+    B = jacobian(sym.symbolic_x_dot_simple, sym.u)
+    free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+    psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
+              N=20,
+              params=free_vars,
+              params_bounds={"w": [3, 25],
+                             "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
+                             "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
+                             "P_ref": [1e6, 15e6]})
 
-    x = vertcat(theta, theta_dot, Omega)
-    u = vertcat(u_p, P_ref, F_thr)
+    print(psf.calc([0, 0, 6], [3, 15e6, 6], vertcat(5, 12, 0), vertcat(5)))
+    start = time.time()
+    for i in range(1000):
+        psf.calc([0, 0, 6], [3, 15e6-i*1e4, 6], vertcat(5, 12, 0), vertcat(5))
 
-    x_dot = vertcat(
-        theta_dot,
-        (C_1 + C_2) * theta + C_3 * theta_dot + C_4 * F_thr + C_5 * (d_r * w ** 2 + k_r * (
-                w * Omega - u_p * Omega ** 2 * l_r)),
-        1 / J_r * (k_r * (w ** 2 - u_p * Omega * w * l_r) - b_d_r * Omega ** 2 - 1 / Omega * P_ref)
-    )
-
-    A = jacobian(x_dot, x)
-    B = jacobian(x_dot, u)
-
-    Hx = np.asarray([
-        [-1, 0, 0],
-        [1, 0, 0],
-        [0, -1, 0],
-        [0, 1, 0],
-        [0, 0, -1],
-        [0, 0, 1]
-    ])
-
-    hx = np.asarray([[10 * DEG2RAD, 10 * DEG2RAD, LARGE_NUM, LARGE_NUM, -5 * RPM2RAD, 7.56 * RPM2RAD]]).T
-
-    Hu = np.asarray([
-        [-1, 0, 0],
-        [1, 0, 0],
-        [0, -1, 0],
-        [0, 1, 0],
-        [0, 0, -1],
-        [0, 0, 1]
-    ])
-    hu = np.asarray([[4 * DEG2RAD, 20 * DEG2RAD, 0, 15.4e6, 5e5, 5e5]]).T
-
-    sys = {'A': np.eye(3) + A, 'B': B, "Hx": Hx, "hx": hx, "Hu": Hu, "hu": hu}
-
-    #psf = PSF(sys, 10, lin_params=vertcat(Omega, u_p, P_ref), params=vertcat(w))
-
-    #sol = psf.calc(x=[0, 0, 6 * DEG2RAD], u_L=[0, 0, 0], lin_params=(6 * RPM2RAD, 5 * DEG2RAD, 15e6), params=vertcat(15))
-
-    objective = x_dot.T @ x_dot
-
-    g=[]
-
-    g += [Hx @ x - hx]
-
-    g += [Hu[:2, 0] @ u_p - hu[:2]]
-
-    prob = {'f': objective, 'x': vertcat(x,u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
-
-    solver = nlpsol("S", "ipopt", prob)
-
-    solver(x0=[ 1,1 ,1 ,1], p=vertcat(15e6, 15,0), lbg=-inf, ubg=0)
-
-
+    end = time.time()
+    print(end - start)

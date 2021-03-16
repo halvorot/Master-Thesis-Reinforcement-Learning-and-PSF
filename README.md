@@ -2,33 +2,13 @@
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulum using Reinforcement Learning and MPC
 
 ## Prerequisites
- - Matlab 2020b 
- - MPT 3.2.1 w/dependencies 
- - Mosek 9.2.37
+ - Python 3.7
 
 ## Installation
-
-### Conda env
-For improved stability, env is recommend.
-Install in order given. 
-
-Setup env and install conda and pip dependecies through:
+Run
 ```
-conda env create [-n env_name] -f environment.yml
+pip install -e ./gym-rl-mpc
 ```
-
-Install the MPT3 toolbox and integrate with Matlab:  
-https://www.mpt3.org/Main/Installation
-
-Install mosek (opt: only for quicker solution) and integrate with Matlab/yalmip:
-https://www.mosek.com/downloads/
-
-
-Academic License Mosek
-https://www.mosek.com/products/academic-licenses/
-
-Install the Matlab engine for Python:
-https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
 
 ## Running the program
 

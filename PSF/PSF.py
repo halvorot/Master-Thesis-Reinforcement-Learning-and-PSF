@@ -104,8 +104,8 @@ class PSF:
 
         self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
 
-    def calc(self, x, u_L, lin_params, params):
-        solution = self.solver(p=vertcat(x, u_L, lin_params, params),
+    def calc(self, x, u_L, params):
+        solution = self.solver(p=vertcat(x, u_L, params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                )
@@ -205,15 +205,15 @@ if __name__ == '__main__':
     psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
               N=20,
               params=free_vars,
-              params_bounds={"w": [3, 25],
+              params_bounds={"w_0": [3, 25],
                              "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})
 
-    print(psf.calc([0, 0, 6], [3, 15e6, 6], vertcat(5, 12, 0), vertcat(5)))
+    print(psf.calc([0, 0, 6*RPM2RAD], [0, 15e6, 0], vertcat(0, 16, 6*RPM2RAD, 15e6)))
     start = time.time()
     for i in range(1000):
-        psf.calc([0, 0, 6], [3, 15e6-i*1e4, 6], vertcat(5, 12, 0), vertcat(5))
-
+        psf.calc([0, 0, 6*RPM2RAD], [0, 15e6, 0], vertcat(0, 16, 6*RPM2RAD, 15e6))
+        pass
     end = time.time()
     print(end - start)

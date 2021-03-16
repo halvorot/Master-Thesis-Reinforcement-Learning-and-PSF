@@ -18,7 +18,7 @@ P_ref = SX.sym("P_ref")
 F_thr = SX.sym('F_thr')
 
 x = vertcat(theta, theta_dot, Omega)
-u = vertcat(u_p, F_thr, P_ref)
+u = vertcat(F_thr, u_p, P_ref)
 
 g = params.k_r * (cos(u_p) * w - sin(u_p) * Omega * params.l_r)
 
@@ -59,7 +59,8 @@ Hx = np.asarray([
 hx = np.asarray([[
     CONFIG["crash_angle_condition"],
     CONFIG["crash_angle_condition"],
-    LARGE_NUM, LARGE_NUM,
+    LARGE_NUM, 
+    LARGE_NUM,
     -params.omega_setpoint(CONFIG["min_wind_speed"]),
     params.omega_setpoint(CONFIG["max_wind_speed"])
 ]]).T
@@ -73,12 +74,13 @@ Hu = np.asarray([
     [0, 0, 1]
 ])
 hu = np.asarray([[
-    0.2*params.max_blade_pitch,
-    params.max_blade_pitch,
+    params.max_thrust_force,
+    params.max_thrust_force, 
+    params.min_blade_pitch_ratio*params.max_blade_pitch,
+    params.max_blade_pitch, 
     0,
     params.max_power_generation,
-    params.max_thrust_force,
-    params.max_thrust_force]]).T
+]]).T
 
 _numerical_x_dot = Function("numerical_x_dot",
                             [x, u_p, F_thr, P_ref, w],

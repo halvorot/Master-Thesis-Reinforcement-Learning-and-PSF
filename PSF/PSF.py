@@ -213,9 +213,9 @@ if __name__ == '__main__':
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})
 
-    print(psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
+    print(psf.calc([0, 0, 6 * RPM2RAD], [0, 0, 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
     start = time.time()
     for i in range(1000):
-        psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15))
+        psf.calc([0, 0, 6 * RPM2RAD], [0, 0, 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15))
     end = time.time()
     print(end - start)

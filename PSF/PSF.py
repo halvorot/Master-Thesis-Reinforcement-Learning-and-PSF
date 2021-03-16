@@ -115,11 +115,12 @@ class PSF:
         A_set, B_set = self.create_system_set()
 
         b = pickle.dumps((A_set, B_set))
-        filename = sha1(b).hexdigest()[:LEN_FILE_STR]
-        path = Path("stored_KP", filename + ".dat")
+        filename = "11b22570b3cbcd40d3ad"
+        path = Path("PSF","stored_KP", filename + ".dat")
         try:
             self.K, self.P = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
+            print("Could not find stored KP, using MATLAB.")
             import matlab.engine
 
             Hx = matlab.double(self.sys["Hx"].tolist())
@@ -200,14 +201,14 @@ if __name__ == '__main__':
     A = jacobian(sym.symbolic_x_dot_simple, sym.x)
     B = jacobian(sym.symbolic_x_dot_simple, sym.u)
     free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
-    desired_seq = ["Omega", "u_p", "P_ref", "w_0"]
+    desired_seq = ["Omega", "u_p", "P_ref", "w"]
     current_seq = [a.name() for a in free_vars]
     change_to_seq = [current_seq.index(d) for d in desired_seq]
     free_vars = [free_vars[i] for i in change_to_seq]
     psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
               N=20,
               params=free_vars,
-              params_bounds={"w_0": [3, 25],
+              params_bounds={"w": [3, 25],
                              "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})

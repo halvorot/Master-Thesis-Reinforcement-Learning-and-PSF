@@ -4,6 +4,12 @@ from gym.utils import seeding
 from termcolor import colored
 
 from gym_rl_mpc.objects.pendulum import Pendulum
+import gym_rl_mpc.objects.symbolic_model as sym
+from casadi import SX, Function, jacobian
+from PSF.PSF import PSF
+
+RPM2RAD = 1 / 60 * 2 * np.pi
+DEG2RAD = 1 / 360 * 2 * np.pi
 
 class PendulumEnv(gym.Env):
     """
@@ -36,6 +42,22 @@ class PendulumEnv(gym.Env):
                                                 high=high,
                                                 dtype=np.float32)
 
+        ## PSF init ##
+        A = jacobian(sym.symbolic_x_dot_simple, sym.x)
+        B = jacobian(sym.symbolic_x_dot_simple, sym.u)
+        free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+        desired_seq = ["Omega", "u_p", "P_ref", "w"]
+        current_seq = [a.name() for a in free_vars]
+        change_to_seq = [current_seq.index(d) for d in desired_seq]
+        free_vars = [free_vars[i] for i in change_to_seq]
+        self.psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
+                N=20,
+                params=free_vars,
+                params_bounds={"w": [3, 25],
+                                "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
+                                "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
+                                "P_ref": [1e6, 15e6]})
+        ## END PSF init ##
 
         self.episode = 0
         self.total_t_steps = 0
@@ -104,7 +126,7 @@ class PendulumEnv(gym.Env):
         """
         Generates environment with a pendulum at random initial conditions
         """
-        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 20#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.pendulum = Pendulum(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):

@@ -12,7 +12,7 @@ def r_theta():
     return X, Y 
 
 def r_theta_dot():
-    reward_theta_dot = 0.4
+    reward_theta_dot = 3
 
     X = np.arange(-2.5, 2.5, 0.001)
     Y = -reward_theta_dot*X**2
@@ -45,18 +45,18 @@ if __name__ == '__main__':
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    x, y = r_power()
+    x, y = r_theta_dot()
 
     ax.plot(x, y)
 
     # Add axis labels
-    ax.set_xlabel(r'Power generation error [MW]')
+    ax.set_xlabel(r'$\dot{\theta}$ $[\frac{deg}{s}]$')
     ax.set_ylabel(r'Reward')
-    ax.set_xlim([-15,15])
-    ax.set_ylim([-1.1,1.1])
+    ax.set_xlim([-1.1,1.1])
+    ax.set_ylim([-1.1,0.1])
     ax.grid(True)
 
     if args.save:
-        plt.savefig('plots/r_power.pdf', bbox_inches='tight')
+        plt.savefig('plots/r_theta_dot.pdf', bbox_inches='tight')
 
     plt.show()

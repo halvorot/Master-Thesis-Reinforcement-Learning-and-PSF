@@ -57,12 +57,12 @@ if __name__ == "__main__":
         ax1.plot(time, sim_df['theta']*(180/np.pi), label='theta')
         ax1.plot(time, sim_df['theta_dot']*(180/np.pi), label='theta_dot')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
-        ax1.set_ylabel('Degrees')
-        ax1.set_title('Platform Angle')
+        ax1.set_ylabel('Degrees, deg/sec')
+        ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, sim_df['omega']*(180/np.pi), label='omega')
-        ax2.set_ylabel('Degrees/sec')
+        ax2.plot(time, sim_df['omega']*(60/(2*np.pi)), label='omega')
+        ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
 
@@ -77,6 +77,7 @@ if __name__ == "__main__":
         ax3_2.plot(time, sim_df['blade_pitch']*(180/np.pi), label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
+        ax3_2.set_ylim([-4,20])
 
         color = 'tab:blue'
         ax4.plot(time, sim_df['F_w'], label='F_w', color=color)
@@ -90,5 +91,23 @@ if __name__ == "__main__":
         ax4_2.plot(time, sim_df['Q_w'], label='Q_w', color=color)
         ax4_2.set_ylabel('Q_w [Nm]', color=color)
         ax4_2.legend()
+        color = 'tab:orange'
+        ax4_2 = ax4.twinx()
+        ax4_2.plot(time, sim_df['Q_w'], label='Q_w', color=color)
+        ax4_2.plot(time, sim_df['Q_gen'], label='Q_gen', color='tab:red')
+        ax4_2.set_ylabel('Q [Nm]', color=color)
+        ax4_2.legend()
+
+
+        fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
+        ax21.plot(time, sim_df['adjusted_wind_speed'], label='wind speed', color=color)
+        ax21.set_ylabel('adjusted wind speed', color=color)
+        ax21.set_title('Wind')
+        ax21.legend()
+
+        ax22.plot(time, sim_df['power'], label='power')
+        ax22.set_ylabel('Power')
+        ax22.set_title('Power')
+        ax22.legend()
 
         plt.show()

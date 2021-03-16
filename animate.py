@@ -22,10 +22,7 @@ def animate(frame):
         action = data_input[0][frame]/params.max_thrust_force
     else:
         if args.agent:
-            if frame*env.step_size > 0:
                 action, _states = agent.predict(env.observation, deterministic=True)
-            else:
-                action = np.array([0,0,0])
         else:
             action = np.array([0,env.pendulum.input[1]/params.max_blade_pitch,params.power_regime(env.wind_speed) * params.max_power_generation])
             
@@ -175,7 +172,7 @@ if __name__ == "__main__":
         ax4_2 = ax4.twinx()
         ax4_2.plot(time, recorded_disturbance[:,1], label='Q_w', color=color)
         ax4_2.plot(time, recorded_disturbance[:,2], label='Q_gen', color='tab:red')
-        ax4_2.set_ylabel('Q_w [Nm]', color=color)
+        ax4_2.set_ylabel('Q [Nm]', color=color)
         ax4_2.legend()
 
 

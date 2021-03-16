@@ -5,7 +5,7 @@ from hashlib import sha1
 from pathlib import Path
 
 import numpy as np
-from casadi import SX, qpsol, Function, vertcat, inf,  jacobian
+from casadi import SX, qpsol, Function, vertcat, inf, jacobian
 import cvxpy as cp
 from cvxpy.atoms.affine.bmat import bmat
 import gym_rl_mpc.objects.symbolic_model as sym
@@ -14,7 +14,7 @@ LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
-LEN_FILE_STR=20
+LEN_FILE_STR = 20
 
 
 class PSF:
@@ -202,6 +202,10 @@ if __name__ == '__main__':
     A = jacobian(sym.symbolic_x_dot_simple, sym.x)
     B = jacobian(sym.symbolic_x_dot_simple, sym.u)
     free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+    desired_seq = ["Omega", "u_p", "P_ref", "w_0"]
+    current_seq = [a.name() for a in free_vars]
+    change_to_seq = [current_seq.index(d) for d in desired_seq]
+    free_vars = [free_vars[i] for i in change_to_seq]
     psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
               N=20,
               params=free_vars,
@@ -210,10 +214,9 @@ if __name__ == '__main__':
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})
 
-    print(psf.calc([0, 0, 6*RPM2RAD], [0, 15e6, 0], vertcat(0, 16, 6*RPM2RAD, 15e6)))
+    print(psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
     start = time.time()
     for i in range(1000):
-        psf.calc([0, 0, 6*RPM2RAD], [0, 15e6, 0], vertcat(0, 16, 6*RPM2RAD, 15e6))
-        pass
+        psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15))
     end = time.time()
     print(end - start)

@@ -1,11 +1,14 @@
 import itertools
+import os
 import pickle
+import sys
 import time
 from hashlib import sha1
 from pathlib import Path
 
 import numpy as np
 from casadi import SX, qpsol, Function, vertcat, inf, jacobian
+
 import gym_rl_mpc.objects.symbolic_model as sym
 
 LARGE_NUM = 1e9
@@ -13,6 +16,16 @@ RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
 LEN_FILE_STR = 20
+
+
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 
 class PSF:
@@ -99,14 +112,15 @@ class PSF:
         self.ubg += [0]
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.params)}
-
-        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
+        opts = {"verbose": False, 'warm_start_primal': True,"warm_start_dual":True,"osqp": {"verbose": False, "polish": False}}
+        self.solver = qpsol("solver", "osqp", prob, opts)
 
     def calc(self, x, u_L, params):
-        solution = self.solver(p=vertcat(x, u_L, params),
-                               lbg=vertcat(*self.lbg),
-                               ubg=vertcat(*self.ubg),
-                               )
+        with HiddenPrints():
+            solution = self.solver(p=vertcat(x, u_L, params),
+                                   lbg=vertcat(*self.lbg),
+                                   ubg=vertcat(*self.ubg),
+                                   )
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu])
 
@@ -205,7 +219,7 @@ if __name__ == '__main__':
     change_to_seq = [current_seq.index(d) for d in desired_seq]
     free_vars = [free_vars[i] for i in change_to_seq]
     psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-              N=20,
+              N=1000,
               params=free_vars,
               params_bounds={"w_0": [3, 25],
                              "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
@@ -214,7 +228,7 @@ if __name__ == '__main__':
 
     print(psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
     start = time.time()
-    for i in range(1000):
+    for i in range(100):
         psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15))
     end = time.time()
     print(end - start)

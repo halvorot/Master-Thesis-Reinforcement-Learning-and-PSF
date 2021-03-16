@@ -43,7 +43,18 @@ Optional arguments:
 
 
 ### Animating
-To show an animation of the simulation run:
+To animate a simulation of an agent, run:
+```
+python animate.py
+```
+Required arguments:
+- --agent <path to agent .zip file>
+
+Optional arguments:
+- --save_video
+- --time <Max simulation time (seconds)>
+
+Or to show an animation of a simulation run (from file):
 ```
 python animate.py
 ```
@@ -54,16 +65,7 @@ Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
 
-or to animate a simulation of an agent directly run:
-```
-python animate.py
-```
-Required arguments:
-- --agent <path to agent .zip file>
-
-Optional arguments:
-- --save_video
-- --time <Max simulation time (seconds)>
+or 
 
 ### Test PSF dependencies
 ```

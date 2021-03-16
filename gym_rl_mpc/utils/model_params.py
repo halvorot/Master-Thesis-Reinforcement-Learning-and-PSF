@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def power_regime(wind_speed):
     if wind_speed < 3:
         return 0
@@ -7,6 +8,7 @@ def power_regime(wind_speed):
         return (((wind_speed-3)/(10.59-3))**2)
     else:
         return 1
+
 
 def omega_setpoint(wind_speed):
     if wind_speed < 6.98:
@@ -52,4 +54,7 @@ C_3 = 0.0055491593253495
 C_4 = -6.86458290065766e-12*L_thr
 C_5 = 0.000000000991589
 
-inflow_reduction_frac = 1/1 # 2/3
+inflow_reduction_frac = 1/1  # 2/3
+
+
+

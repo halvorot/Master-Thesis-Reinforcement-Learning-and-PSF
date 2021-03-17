@@ -1,5 +1,5 @@
 # gym-turbine
-A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulum using Reinforcement Learning and MPC
+A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a turbine using Reinforcement Learning and MPC
 
 ## Prerequisites
  - Python 3.7

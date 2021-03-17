@@ -24,19 +24,19 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0,env.pendulum.input[1]/params.max_blade_pitch,params.power_regime(env.wind_speed) * params.max_power_generation])
+            action = np.array([0,env.turbine.input[1]/params.max_blade_pitch,params.power_regime(env.wind_speed) * params.max_power_generation])
             
             
         _, _, done, _ = env.step(action)
 
-        x_top = height*np.sin(env.pendulum.platform_angle)
-        y_top = height*np.cos(env.pendulum.platform_angle)
-        x_bottom = -params.L_thr*np.sin(env.pendulum.platform_angle)
-        y_bottom = -params.L_thr*np.cos(env.pendulum.platform_angle)
+        x_top = height*np.sin(env.turbine.platform_angle)
+        y_top = height*np.cos(env.turbine.platform_angle)
+        x_bottom = -params.L_thr*np.sin(env.turbine.platform_angle)
+        y_bottom = -params.L_thr*np.cos(env.turbine.platform_angle)
         if not done:
-            recorded_states.append(env.pendulum.state)
-            recorded_inputs.append(env.pendulum.input)
-            recorded_disturbance.append(np.array([env.pendulum.wind_force, env.pendulum.wind_torque,env.pendulum.generator_torque, env.pendulum.adjusted_wind_speed]))
+            recorded_states.append(env.turbine.state)
+            recorded_inputs.append(env.turbine.input)
+            recorded_disturbance.append(np.array([env.turbine.wind_force, env.turbine.wind_torque,env.turbine.generator_torque, env.turbine.adjusted_wind_speed]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
@@ -50,15 +50,15 @@ def animate(frame):
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_thr*np.sin(env.pendulum.platform_angle), y = -params.L_thr*np.cos(env.pendulum.platform_angle), dx=100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_thr*np.sin(env.turbine.platform_angle), y = -params.L_thr*np.cos(env.turbine.platform_angle), dx=100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
-    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.pendulum.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.turbine.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot wind arrow with wind number
     ax_ani.arrow(x = -50, y = params.L, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
     ax_ani.arrow(x = -50, y = params.L-10, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
     ax_ani.text(-49, params.L-7, f"{env.wind_speed:.1f} m/s", fontsize=10)
     # Plot rotational speed
-    ax_ani.text(0, params.L+7, f"$\Omega$ = {env.pendulum.omega*(180/np.pi):.1f} deg/s", fontsize=10)
+    ax_ani.text(0, params.L+7, f"$\Omega$ = {env.turbine.omega*(180/np.pi):.1f} deg/s", fontsize=10)
 
     if done:
         plt.stop()

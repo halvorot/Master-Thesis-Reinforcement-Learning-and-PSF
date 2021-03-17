@@ -3,7 +3,7 @@ import numpy as np
 from gym.utils import seeding
 from termcolor import colored
 
-from gym_rl_mpc.objects.pendulum import Pendulum
+from gym_rl_mpc.objects.turbine import Turbine
 import gym_rl_mpc.utils.model_params as params
 import gym_rl_mpc.objects.symbolic_model as sym
 from casadi import SX, Function, jacobian
@@ -14,7 +14,7 @@ DEG2RAD = 1 / 360 * 2 * np.pi
 
 class TurbineEnv(gym.Env):
     """
-    Creates an environment with a pendulum.
+    Creates an environment with a turbine.
     """
     def __init__(self, env_config):
         print(colored('Debug: Initializing environment...', 'green'))
@@ -116,12 +116,12 @@ class TurbineEnv(gym.Env):
         action_blade_pitch = action[1]*params.max_blade_pitch
         action_power = action[2]*params.max_power_generation
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
-        linearization_point = [self.pendulum.omega, action_blade_pitch, action_power, self.pendulum.adjusted_wind_speed]
+        linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
 
-        #psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
+        #psf_corrected_action = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
 
-        #self.pendulum.step(psf_corrected_action, self.wind_speed)
-        self.pendulum.step(action, self.wind_speed)
+        #self.turbine.step(psf_corrected_action, self.wind_speed)
+        self.turbine.step(action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
@@ -137,10 +137,10 @@ class TurbineEnv(gym.Env):
 
     def generate_environment(self):
         """
-        Generates environment with a pendulum at random initial conditions
+        Generates environment with a turbine at random initial conditions
         """
         self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
-        self.pendulum = Pendulum(self.wind_speed, self.step_size)
+        self.turbine = Turbine(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
         """
@@ -148,12 +148,12 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        theta_deg = self.pendulum.platform_angle*(180/np.pi)
-        theta_dot_deg_s = self.pendulum.state[1]*(180/np.pi)
-        omega_rpm = self.pendulum.state[2]*(60/(2*np.pi))
-        power_error_MegaWatts = np.abs(action[2]-self.pendulum.power_regime(self.wind_speed))*(self.pendulum.max_power_generation/1e6)
+        theta_deg = self.turbine.platform_angle*(180/np.pi)
+        theta_dot_deg_s = self.turbine.state[1]*(180/np.pi)
+        omega_rpm = self.turbine.state[2]*(60/(2*np.pi))
+        power_error_MegaWatts = np.abs(action[2]-self.turbine.power_regime(self.wind_speed))*(self.turbine.max_power_generation/1e6)
 
-        omega_ref_rpm = self.pendulum.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
+        omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
         omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
 
         self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*np.abs(theta_deg)
@@ -165,9 +165,9 @@ class TurbineEnv(gym.Env):
         step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.reward_survival
 
         end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
-        crash_cond_1 = np.abs(self.pendulum.platform_angle) > self.crash_angle_condition
-        crash_cond_2 = self.pendulum.omega > self.crash_omega_max
-        crash_cond_3 = self.pendulum.omega < self.crash_omega_min
+        crash_cond_1 = np.abs(self.turbine.platform_angle) > self.crash_angle_condition
+        crash_cond_2 = self.turbine.omega > self.crash_omega_max
+        crash_cond_3 = self.turbine.omega < self.crash_omega_min
 
         if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
             done = True
@@ -183,7 +183,7 @@ class TurbineEnv(gym.Env):
         obs : np.ndarray
             The observation of the environment.
         """
-        obs = np.hstack([self.pendulum.state, self.wind_speed])
+        obs = np.hstack([self.turbine.state, self.wind_speed])
         return obs
 
     def seed(self, seed=None):
@@ -192,16 +192,16 @@ class TurbineEnv(gym.Env):
         return [seed]
 
     def save_latest_step(self):
-        self.episode_history.setdefault('states', []).append(np.copy(self.pendulum.state[0:3]))
-        self.episode_history.setdefault('states_dot', []).append(np.copy(self.pendulum.state[3:6]))
-        self.episode_history.setdefault('input', []).append(self.pendulum.input)
+        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:3]))
+        self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[3:6]))
+        self.episode_history.setdefault('input', []).append(self.turbine.input)
         self.episode_history.setdefault('observations', []).append(self.observation)
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
-        self.episode_history.setdefault('wind_force',[]).append(self.pendulum.wind_force)
-        self.episode_history.setdefault('wind_torque',[]).append(self.pendulum.wind_torque)
-        self.episode_history.setdefault('generator_torque',[]).append(self.pendulum.generator_torque)
-        self.episode_history.setdefault('adjusted_wind_speed',[]).append(self.pendulum.adjusted_wind_speed)
+        self.episode_history.setdefault('wind_force',[]).append(self.turbine.wind_force)
+        self.episode_history.setdefault('wind_torque',[]).append(self.turbine.wind_torque)
+        self.episode_history.setdefault('generator_torque',[]).append(self.turbine.generator_torque)
+        self.episode_history.setdefault('adjusted_wind_speed',[]).append(self.turbine.adjusted_wind_speed)
 
         self.episode_history.setdefault('theta_reward',[]).append(self.theta_reward)
         self.episode_history.setdefault('theta_dot_reward',[]).append(self.theta_dot_reward)

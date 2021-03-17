@@ -28,7 +28,7 @@ def odesolver45(f, y, h, wind_speed):
     return w, q
 
 
-class Pendulum:
+class Turbine:
     def __init__(self, init_wind_speed=3, step_size=1):
         """
             state = [theta, theta_dot, omega]^T

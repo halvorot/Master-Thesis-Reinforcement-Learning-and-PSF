@@ -34,10 +34,11 @@ class Pendulum:
             state = [theta, theta_dot, omega]^T
         """
 
-        init_power = params.power_regime(init_wind_speed) * params.max_power_generation
         self.state = np.zeros(3)    # Initialize states
+        self.adjusted_wind_speed = (2/3)*init_wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
+        init_power = params.power_regime(init_wind_speed) * params.max_power_generation
 
-        opt_state, blade_pitch = solve_initial_problem(wind=init_wind_speed,
+        opt_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
                                                        power=init_power,
                                                        thruster_force=0)
 
@@ -49,7 +50,6 @@ class Pendulum:
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation
-        self.adjusted_wind_speed = init_wind_speed
 
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
@@ -69,8 +69,7 @@ class Pendulum:
         self.input = np.array([F_thr, blade_pitch, power])
 
         # Adjust wind speed based on inflow and structure
-        w = (2/3)*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
-        self.adjusted_wind_speed = w
+        self.adjusted_wind_speed = (2/3)*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
 
         self._sim(self.adjusted_wind_speed)
 
@@ -149,7 +148,7 @@ def _un_normalize_thrust_input(input):
 
 
 def _un_normalize_blade_pitch_input(input):
-    input = np.clip(input, -0.2, 1)
+    input = np.clip(input, -params.min_blade_pitch_ratio, 1)
     return input * params.max_blade_pitch
 
 

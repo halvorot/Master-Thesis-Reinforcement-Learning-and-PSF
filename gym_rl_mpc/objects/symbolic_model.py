@@ -9,8 +9,7 @@ RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
 # Constants
-w_0 = SX.sym('w_0')
-w = 2 / 3 * w_0
+w = SX.sym('w')
 theta = SX.sym('theta')
 theta_dot = SX.sym('theta_dot')
 Omega = SX.sym('Omega')
@@ -19,7 +18,7 @@ P_ref = SX.sym("P_ref")
 F_thr = SX.sym('F_thr')
 
 x = vertcat(theta, theta_dot, Omega)
-u = vertcat(u_p, F_thr, P_ref)
+u = vertcat(F_thr, u_p, P_ref)
 
 g = params.k_r * (cos(u_p) * w - sin(u_p) * Omega * params.l_r)
 
@@ -60,8 +59,9 @@ Hx = np.asarray([
 hx = np.asarray([[
     CONFIG["crash_angle_condition"],
     CONFIG["crash_angle_condition"],
-    LARGE_NUM, LARGE_NUM,
-    -0.2*params.omega_setpoint(CONFIG["min_wind_speed"]),
+    LARGE_NUM,
+    LARGE_NUM,
+    -params.omega_setpoint(CONFIG["min_wind_speed"]),
     params.omega_setpoint(CONFIG["max_wind_speed"])
 ]]).T
 
@@ -74,20 +74,21 @@ Hu = np.asarray([
     [0, 0, 1]
 ])
 hu = np.asarray([[
-    0.2*params.max_blade_pitch,
+    params.max_thrust_force,
+    params.max_thrust_force,
+    params.min_blade_pitch_ratio*params.max_blade_pitch,
     params.max_blade_pitch,
     0,
     params.max_power_generation,
-    params.max_thrust_force,
-    params.max_thrust_force]]).T
+]]).T
 
 _numerical_x_dot = Function("numerical_x_dot",
-                            [x, u_p, F_thr, P_ref, w_0],
+                            [x, u_p, F_thr, P_ref, w],
                             [symbolic_x_dot],
-                            ["x", "u_p", "F_thr", "P_ref", "w_0"],
+                            ["x", "u_p", "F_thr", "P_ref", "w"],
                             ["x_dot"])
-_numerical_F_wind = Function("numerical_F_wind", [Omega, u_p, w_0], [F_wind], ["Omega", "u_p", "w_0"], ["F_wind"])
-_numerical_Q_wind = Function("numerical_Q_wind", [Omega, u_p, w_0], [Q_wind], ["Omega", "u_p", "w_0"], ["Q_wind"])
+_numerical_F_wind = Function("numerical_F_wind", [Omega, u_p, w], [F_wind], ["Omega", "u_p", "w"], ["F_wind"])
+_numerical_Q_wind = Function("numerical_Q_wind", [Omega, u_p, w], [Q_wind], ["Omega", "u_p", "w"], ["Q_wind"])
 
 
 def numerical_F_wind(rotation_speed, wind, blade_pitch):
@@ -111,7 +112,7 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
 
     g += [Hu[:2, 0] @ u_p - hu[:2]]
 
-    prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w_0, F_thr)}
+    prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
     opts = {
         "verbose": False,
         "verbose_init": False,
@@ -130,4 +131,4 @@ if __name__ == '__main__':
     numerical_F_wind(0, 0, 3)
     numerical_Q_wind(0, 0, 3)
     numerical_x_dot([0, 0, 3], 0.0, 0.0, 0.0, 0.0)
-    solve_initial_problem(15, power=15e6, thruster_force=0)
+    solve_initial_problem(wind=15, power=15e6, thruster_force=0)

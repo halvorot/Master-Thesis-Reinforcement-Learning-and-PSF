@@ -128,8 +128,6 @@ class TurbineEnv(gym.Env):
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]
 
-        print(action-psf_corrected_action)
-
         self.turbine.step(psf_corrected_action, self.wind_speed)
         self.observation = self.observe()
 

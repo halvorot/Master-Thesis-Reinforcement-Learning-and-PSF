@@ -2,12 +2,13 @@ import numpy as np
 import os
 from pandas import DataFrame
 
-def format_history(env, lastn=100):
+def format_history(env, lastn=-1):
 
     if lastn > -1:
         relevant_history = env.history[-min(lastn, len(env.history)):]
     else:
         relevant_history = env.history
+    print(f"len history: {len(relevant_history)}")
 
     episode_nums = np.array([obj['episode_num'] for obj in relevant_history])
     crashes = np.array([obj['crashed'] for obj in relevant_history])
@@ -76,11 +77,11 @@ def format_history(env, lastn=100):
 
     return df
 
-def report(env, report_dir, lastn=100):
+def report(env, report_dir):
     try:
         os.makedirs(report_dir, exist_ok=True)
 
-        df = format_history(env, lastn)
+        df = format_history(env)
 
         file_path = os.path.join(report_dir, "history_data.csv")
         if not os.path.isfile(file_path):

@@ -116,15 +116,15 @@ class PendulumEnv(gym.Env):
         Simulates the environment one time-step.
         """
 
-        action_F_thr = action[0] * params.max_thrust_force
-        action_blade_pitch = action[1] * params.max_blade_pitch
-        action_power = action[2]
-        action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
+       # action_F_thr = action[0] * params.max_thrust_force
+       # action_blade_pitch = action[1] * params.max_blade_pitch
+       # action_power = action[2]
+       # action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.pendulum.omega, action_blade_pitch, action_power, self.pendulum.adjusted_wind_speed]
-        print(linearization_point)
-        psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
 
-        self.pendulum.step(psf_corrected_action, self.wind_speed)
+       # psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
+
+        self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)

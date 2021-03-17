@@ -14,10 +14,12 @@ from PSF.PSF import PSF
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
+
 class TurbineEnv(gym.Env):
     """
     Creates an environment with a turbine.
     """
+
     def __init__(self, env_config):
         print(colored('Debug: Initializing environment...', 'green'))
         for key in env_config:
@@ -30,40 +32,42 @@ class TurbineEnv(gym.Env):
                                            dtype=np.float32)
 
         # Legal limits for state observations
-        low = np.array([    -np.pi,                             # theta
-                            -np.finfo(np.float32).max,          # theta_dot
-                            -np.finfo(np.float32).max,          # omega
-                            0,                                  # wind speed
+        low = np.array([-np.pi,  # theta
+                        -np.finfo(np.float32).max,  # theta_dot
+                        -np.finfo(np.float32).max,  # omega
+                        0,  # wind speed
                         ])
-        high = np.array([   np.pi,                              # theta
-                            np.finfo(np.float32).max,           # theta_dot
-                            np.finfo(np.float32).max,           # omega
-                            self.max_wind_speed,                # wind speed
-                        ])
+        high = np.array([np.pi,  # theta
+                         np.finfo(np.float32).max,  # theta_dot
+                         np.finfo(np.float32).max,  # omega
+                         self.max_wind_speed,  # wind speed
+                         ])
 
         self.observation_space = gym.spaces.Box(low=low,
                                                 high=high,
                                                 dtype=np.float32)
 
         ## PSF init ##
-        psf_Ts = 1 # NEEDS NEW variable
+        psf_Ts = 1  # NEEDS NEW variable
         A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
-        A_disc = np.eye(3) + A_cont*psf_Ts          # Euler discretization
+        A_disc = np.eye(3) + psf_Ts * A_cont  # Euler discretization
         B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
-        B_disc = B_cont *psf_Ts                     # Euler discretization
+        B_disc = psf_Ts * B_cont  # Euler discretization
         free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
         desired_seq = ["Omega", "u_p", "P_ref", "w"]
         current_seq = [a.name() for a in free_vars]
         change_to_seq = [current_seq.index(d) for d in desired_seq]
         free_vars = [free_vars[i] for i in change_to_seq]
         self.psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-                       N=100,
+                       N=30,
+                       R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
                        PK_path=Path("PSF", "stored_PK"),
                        lin_points=free_vars,
-                       lin_bounds={"w": [self.min_wind_speed, self.max_wind_speed],
-                                   "u_p": [-params.min_blade_pitch_ratio*params.max_blade_pitch, params.max_blade_pitch],
-                                   "Omega": [self.crash_omega_min, self.crash_omega_max],
-                                   "P_ref": [0, params.max_power_generation]})
+                       lin_bounds={"w": [3 * 2 / 3, 25 * 2 / 3],
+                                   "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
+                                   "Omega": [5 * RPM2RAD, 7.55 * RPM2RAD],
+                                   "P_ref": [0, 15e6]})
+
         ## END PSF init ##
 
         self.episode = 0
@@ -110,25 +114,25 @@ class TurbineEnv(gym.Env):
 
         return self.observation
 
-
     def step(self, action):
         """
         Simulates the environment one time-step.
         """
 
-        action_F_thr = action[0]*params.max_thrust_force
-        action_blade_pitch = action[1]*params.max_blade_pitch
-        action_power = action[2]*params.max_power_generation
+        action_F_thr = action[0] * params.max_thrust_force
+        action_blade_pitch = action[1] * params.max_blade_pitch
+        action_power = action[2] * params.max_power_generation
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
 
-        psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
+        psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized,
+                                                           linearization_point)
 
-        psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force, 
-                                psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
-                                psf_corrected_action_un_normalized[2]/params.max_power_generation]
+        psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
+                                psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
+                                psf_corrected_action_un_normalized[2] / params.max_power_generation]
 
-        print(action-psf_corrected_action)
+        print(action - psf_corrected_action)
 
         self.turbine.step(psf_corrected_action, self.wind_speed)
         self.observation = self.observe()
@@ -148,7 +152,7 @@ class TurbineEnv(gym.Env):
         """
         Generates environment with a turbine at random initial conditions
         """
-        self.wind_speed = 16 # (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 16  # (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):
@@ -157,23 +161,24 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        theta_deg = self.turbine.platform_angle*(180/np.pi)
-        theta_dot_deg_s = self.turbine.state[1]*(180/np.pi)
-        omega_rpm = self.turbine.state[2]*(60/(2*np.pi))
-        power_error_MegaWatts = np.abs(action[2]-self.turbine.power_regime(self.wind_speed))*(self.turbine.max_power_generation/1e6)
+        theta_deg = self.turbine.platform_angle * (180 / np.pi)
+        theta_dot_deg_s = self.turbine.state[1] * (180 / np.pi)
+        omega_rpm = self.turbine.state[2] * (60 / (2 * np.pi))
+        power_error_MegaWatts = np.abs(action[2] - self.turbine.power_regime(self.wind_speed)) * (
+                    self.turbine.max_power_generation / 1e6)
 
-        omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
-        omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
+        omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed) * (60 / (2 * np.pi))
+        omega_error_rpm = np.abs(omega_rpm - omega_ref_rpm)
 
-        self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*np.abs(theta_deg)
-        self.theta_dot_reward = -self.reward_theta_dot*theta_dot_deg_s**2
-        self.omega_reward = np.exp(-self.gamma_omega*omega_error_rpm) - self.gamma_omega*omega_error_rpm
-        self.power_reward = np.exp(-self.gamma_power*power_error_MegaWatts) - self.gamma_power*power_error_MegaWatts
-        self.control_reward = -self.reward_control*(action[0]**2 + action[1]**2)
+        self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
+        self.theta_dot_reward = -self.reward_theta_dot * theta_dot_deg_s ** 2
+        self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
+        self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
+        self.control_reward = -self.reward_control * (action[0] ** 2 + action[1] ** 2)
 
         step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.reward_survival
 
-        end_cond_2 = self.t_step >= self.max_episode_time/self.step_size
+        end_cond_2 = self.t_step >= self.max_episode_time / self.step_size
         crash_cond_1 = np.abs(self.turbine.platform_angle) > self.crash_angle_condition
         crash_cond_2 = self.turbine.omega > self.crash_omega_max
         crash_cond_3 = self.turbine.omega < self.crash_omega_min
@@ -205,18 +210,18 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[3:6]))
         self.episode_history.setdefault('input', []).append(self.turbine.input)
         self.episode_history.setdefault('observations', []).append(self.observation)
-        self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)
+        self.episode_history.setdefault('time', []).append(self.t_step * self.step_size)
         self.episode_history.setdefault('last_reward', []).append(self.last_reward)
-        self.episode_history.setdefault('wind_force',[]).append(self.turbine.wind_force)
-        self.episode_history.setdefault('wind_torque',[]).append(self.turbine.wind_torque)
-        self.episode_history.setdefault('generator_torque',[]).append(self.turbine.generator_torque)
-        self.episode_history.setdefault('adjusted_wind_speed',[]).append(self.turbine.adjusted_wind_speed)
+        self.episode_history.setdefault('wind_force', []).append(self.turbine.wind_force)
+        self.episode_history.setdefault('wind_torque', []).append(self.turbine.wind_torque)
+        self.episode_history.setdefault('generator_torque', []).append(self.turbine.generator_torque)
+        self.episode_history.setdefault('adjusted_wind_speed', []).append(self.turbine.adjusted_wind_speed)
 
-        self.episode_history.setdefault('theta_reward',[]).append(self.theta_reward)
-        self.episode_history.setdefault('theta_dot_reward',[]).append(self.theta_dot_reward)
-        self.episode_history.setdefault('omega_reward',[]).append(self.omega_reward)
-        self.episode_history.setdefault('power_reward',[]).append(self.power_reward)
-        self.episode_history.setdefault('control_reward',[]).append(self.control_reward)
+        self.episode_history.setdefault('theta_reward', []).append(self.theta_reward)
+        self.episode_history.setdefault('theta_dot_reward', []).append(self.theta_dot_reward)
+        self.episode_history.setdefault('omega_reward', []).append(self.omega_reward)
+        self.episode_history.setdefault('power_reward', []).append(self.power_reward)
+        self.episode_history.setdefault('control_reward', []).append(self.control_reward)
 
     def save_latest_episode(self):
         self.history = {
@@ -226,7 +231,7 @@ class TurbineEnv(gym.Env):
             'crashed': int(self.crashed),
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
-            'duration': self.t_step*self.step_size,
+            'duration': self.t_step * self.step_size,
             'wind_speed': self.wind_speed,
             'theta_reward': np.array(self.episode_history['theta_reward']).mean(),
             'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),

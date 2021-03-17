@@ -59,8 +59,8 @@ Hx = np.asarray([
 hx = np.asarray([[
     CONFIG["crash_angle_condition"],
     CONFIG["crash_angle_condition"],
-    LARGE_NUM,
-    LARGE_NUM,
+    45*DEG2RAD,
+    45*DEG2RAD,
     -params.omega_setpoint(CONFIG["min_wind_speed"]),
     params.omega_setpoint(CONFIG["max_wind_speed"])
 ]]).T
@@ -110,21 +110,21 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
 
     g += [Hx @ x - hx]
 
-    g += [Hu[:2, 0] @ u_p - hu[:2]]
+    g += [Hu[2:4, 1] @ u_p - hu[2:4]]
 
     prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
     opts = {
         "verbose": False,
         "verbose_init": False,
-        "ipopt": {"print_level": 0},
+        "ipopt": {"print_level": 1},
         "print_time": False,
     }
     solver = nlpsol("S", "ipopt", prob, opts)
 
     result = solver(x0=[1, 1, 1, 1], p=vertcat(power, wind, thruster_force), lbg=-inf, ubg=0)
-    state = np.asarray(result["x"])[:3]
-    blade_pitch = np.asarray(result["x"])[-1]
-    return state.flatten(), blade_pitch
+    state = np.asarray(result["x"])[:3].flatten()
+    blade_pitch = np.asarray(result["x"])[-1].flatten()
+    return state, blade_pitch
 
 
 if __name__ == '__main__':

@@ -8,9 +8,6 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulu
  - MATLAB R2011a or later (Tested with 2020b)
 
 
-
-
-
 ## Installation
 ### Mosek 
 Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
@@ -70,6 +67,8 @@ To view the tensorboard logs run (in another cmd window):
 ```
 tensorboard --logdir logs
 ```
+
+NOTE: The environment config is located in gym_rl_mpc/\_\_init\_\_.py
 
 ### Simulating with a trained agent
 To simulate the system with an agent run:

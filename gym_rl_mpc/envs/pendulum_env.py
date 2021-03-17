@@ -118,9 +118,10 @@ class PendulumEnv(gym.Env):
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.pendulum.omega, action_blade_pitch, action_power, self.pendulum.adjusted_wind_speed]
 
-        psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
+        #psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
 
-        self.pendulum.step(psf_corrected_action, self.wind_speed)
+        #self.pendulum.step(psf_corrected_action, self.wind_speed)
+        self.pendulum.step(action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
@@ -138,7 +139,7 @@ class PendulumEnv(gym.Env):
         """
         Generates environment with a pendulum at random initial conditions
         """
-        self.wind_speed = 7#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.pendulum = Pendulum(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):

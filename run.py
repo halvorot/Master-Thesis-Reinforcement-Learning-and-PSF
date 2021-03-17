@@ -28,7 +28,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    env = gym.make("PendulumStab-v2")
+    env = gym.make("TurbineStab-v0")
     env_id = env.unwrapped.spec.id
     if args.agent:
         agent_path = args.agent

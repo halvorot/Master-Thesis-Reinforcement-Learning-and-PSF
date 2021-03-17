@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
 }
 
 register(
-    id='PendulumStab-v2',
-    entry_point='gym_rl_mpc.envs:PendulumEnv',
+    id='TurbineStab-v0',
+    entry_point='gym_rl_mpc.envs:TurbineEnv',
     kwargs={'env_config': DEFAULT_CONFIG}
 )

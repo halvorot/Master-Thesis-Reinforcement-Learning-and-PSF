@@ -12,7 +12,7 @@ from PSF.PSF import PSF
 RPM2RAD = 1 / 60 * 2 * np.pi
 DEG2RAD = 1 / 360 * 2 * np.pi
 
-class PendulumEnv(gym.Env):
+class TurbineEnv(gym.Env):
     """
     Creates an environment with a pendulum.
     """

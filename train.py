@@ -132,7 +132,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Make environment (NUM_CPUs parallel envs)
-    env_id = 'PendulumStab-v2'
+    env_id = 'TurbineStab-v0'
     env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
     
 

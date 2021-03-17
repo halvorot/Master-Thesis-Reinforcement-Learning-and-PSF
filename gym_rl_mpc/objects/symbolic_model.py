@@ -59,9 +59,9 @@ Hx = np.asarray([
 hx = np.asarray([[
     CONFIG["crash_angle_condition"],
     CONFIG["crash_angle_condition"],
-    LARGE_NUM, 
     LARGE_NUM,
-    -params.omega_setpoint(CONFIG["min_wind_speed"]),
+    LARGE_NUM,
+    -0.2*params.omega_setpoint(CONFIG["min_wind_speed"]),
     params.omega_setpoint(CONFIG["max_wind_speed"])
 ]]).T
 
@@ -75,9 +75,9 @@ Hu = np.asarray([
 ])
 hu = np.asarray([[
     params.max_thrust_force,
-    params.max_thrust_force, 
+    params.max_thrust_force,
     params.min_blade_pitch_ratio*params.max_blade_pitch,
-    params.max_blade_pitch, 
+    params.max_blade_pitch,
     0,
     params.max_power_generation,
 ]]).T
@@ -131,4 +131,4 @@ if __name__ == '__main__':
     numerical_F_wind(0, 0, 3)
     numerical_Q_wind(0, 0, 3)
     numerical_x_dot([0, 0, 3], 0.0, 0.0, 0.0, 0.0)
-    solve_initial_problem(15, power=15e6, thruster_force=0)
+    solve_initial_problem(wind=15, power=15e6, thruster_force=0)

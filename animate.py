@@ -60,8 +60,7 @@ def animate(frame):
     # Plot rotational speed
     ax_ani.text(0, params.L+7, f"$\Omega$ = {env.turbine.omega*(180/np.pi):.1f} deg/s", fontsize=10)
 
-    if done:
-        plt.stop()
+
 
 
 if __name__ == "__main__":

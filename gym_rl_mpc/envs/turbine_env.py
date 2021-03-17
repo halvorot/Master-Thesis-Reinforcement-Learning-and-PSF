@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gym
 import numpy as np
 from gym.utils import seeding
@@ -44,22 +46,24 @@ class TurbineEnv(gym.Env):
                                                 dtype=np.float32)
 
         ## PSF init ##
+        psf_Ts = 1 # NEEDS NEW variable
         A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
-        A_disc = np.eye(3) + A_cont          # Euler discretization
+        A_disc = np.eye(3) + A_cont*psf_Ts          # Euler discretization
         B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
-        B_disc = B_cont                      # Euler discretization
+        B_disc = B_cont *psf_Ts                     # Euler discretization
         free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
         desired_seq = ["Omega", "u_p", "P_ref", "w"]
         current_seq = [a.name() for a in free_vars]
         change_to_seq = [current_seq.index(d) for d in desired_seq]
         free_vars = [free_vars[i] for i in change_to_seq]
         self.psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-                N=20,
-                params=free_vars,
-                params_bounds={"w": [3, 25],
-                                "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
-                                "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
-                                "P_ref": [1e6, 15e6]})
+                       N=100,
+                       PK_path=Path("PSF", "stored_PK"),
+                       lin_points=free_vars,
+                       lin_bounds={"w": [3, 25],
+                                   "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
+                                   "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
+                                   "P_ref": [1e6, 15e6]})
         ## END PSF init ##
 
         self.episode = 0
@@ -118,10 +122,7 @@ class TurbineEnv(gym.Env):
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
 
-        #psf_corrected_action = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
-
-        #self.turbine.step(psf_corrected_action, self.wind_speed)
-        self.turbine.step(action, self.wind_speed)
+        #psf_corrected_action = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)        self.turbine.step(action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)

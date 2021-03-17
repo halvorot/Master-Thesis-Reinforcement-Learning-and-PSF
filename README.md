@@ -34,6 +34,13 @@ Run
 ```
 pip install -e ./gym-rl-mpc
 ```
+#### Matlab API 
+This must be done in the virtual env, if used. (link: https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
+```
+>>> cd <matlabroot>\extern\engines\python
+>>> python setup.py install
+```
+
 ## Test
 Run all the test in gym-rl-mpc folder.
 Test Mosek in Matlab:

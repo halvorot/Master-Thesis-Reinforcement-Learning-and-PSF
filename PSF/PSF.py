@@ -19,19 +19,21 @@ class PSF:
     def __init__(self,
                  sys,
                  N,
-                 params=None,
-                 params_bounds=None,
+                 PK_path="",
+                 lin_points=None,
+                 lin_bounds=None,
                  P=None,
                  alpha=None,
-                 K=None,
-                 NLP_flag=False
+                 K=None
                  ):
-        if params is None:
-            params = []
+        if lin_points is None:
+            lin_points = []
 
         self.sys = sys
-        self.params = vertcat(*params)
-        self.params_bounds = params_bounds
+        self.N = N
+        self.PK_path = PK_path
+        self.lin_points = vertcat(*lin_points)
+        self.lin_bounds = lin_bounds
 
         self.nx = self.sys["A"].shape[1]
         self.nu = self.sys["B"].shape[1]
@@ -45,11 +47,10 @@ class PSF:
 
         self._set_model_step()
 
-        self._LP_init(sys, N, P, alpha, K)
+        self._LP_init(sys)
 
-    def _LP_init(self, sys, N, P=None, alpha=None, K=None):
+    def _LP_init(self, N):
 
-        self.N = N
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)
         U = SX.sym('U', self.nu, self.N)
@@ -98,25 +99,27 @@ class PSF:
         self.lbg += [-inf]
         self.ubg += [0]
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.params)}
+        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_points)}
+        opts = {"verbose": False, 'warm_start_primal': True, "warm_start_dual": True,
+                "osqp": {"verbose": False, "polish": False}}
+        self.solver = qpsol("solver", "osqp", prob, opts)
 
-        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
+    def calc(self, x, u_L, lin_dict):
 
-    def calc(self, x, u_L, params):
-        solution = self.solver(p=vertcat(x, u_L, params),
+        solution = self.solver(p=vertcat(x, u_L, lin_dict),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                )
 
-        return np.asarray(solution["x"][self.nx:self.nx + self.nu])
+        return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
     def set_terminal_set(self):
         self.alpha = 0.9
         A_set, B_set = self.create_system_set()
 
-        b = pickle.dumps((A_set, B_set))
-        filename = "11b22570b3cbcd40d3ad"
-        path = Path("PSF","stored_KP", filename + ".dat")
+        b = pickle.dumps((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
+        filename = sha1(b).hexdigest()[:LEN_FILE_STR]
+        path = Path(self.PK_path, filename + ".dat")
         try:
             self.K, self.P = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
@@ -132,7 +135,9 @@ class PSF:
             m_B = matlab.double(np.hstack(B_set).tolist())
 
             eng = matlab.engine.start_matlab()
+            eng.eval("addpath(genpath('./'))")
             m_PK = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu)
+            eng.quit()
             PK = np.asarray(m_PK)
             self.P = PK[:, :self.nx]
             self.K = PK[:, : self.nx]
@@ -180,7 +185,7 @@ class PSF:
         B_set = []
 
         free_vars = SX.get_free(Function("list_free_vars", [], [self.sys["A"], self.sys["B"]]))
-        bounds = [self.params_bounds[k.name()] for k in free_vars]  # relist as given above
+        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
         eval_func = Function("eval_func", free_vars, [self.sys["A"], self.sys["B"]])
 
         for product in itertools.product(*bounds):  # creating maximum difference
@@ -198,24 +203,28 @@ class PSF:
 
 
 if __name__ == '__main__':
-    A = jacobian(sym.symbolic_x_dot_simple, sym.x)
-    B = jacobian(sym.symbolic_x_dot_simple, sym.u)
-    free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+    A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
+    A_disc = np.eye(3) + A_cont  # Euler discretization
+    B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
+    B_disc = B_cont  # Euler discretization
+    free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
     desired_seq = ["Omega", "u_p", "P_ref", "w"]
     current_seq = [a.name() for a in free_vars]
     change_to_seq = [current_seq.index(d) for d in desired_seq]
     free_vars = [free_vars[i] for i in change_to_seq]
-    psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-              N=20,
-              params=free_vars,
-              params_bounds={"w": [3, 25],
-                             "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
-                             "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
-                             "P_ref": [1e6, 15e6]})
+    psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
+              N=100,
+              PK_path="stored_PK",
+              lin_points=free_vars,
+              lin_bounds={"w": [3, 25],
+                          "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
+                          "Omega": [4 * RPM2RAD, 8 * RPM2RAD],
+                          "P_ref": [0, 15e6]})
 
     print(psf.calc([0, 0, 6 * RPM2RAD], [0, 0, 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
+    number_of_iter = 100
     start = time.time()
-    for i in range(1000):
+    for i in range(number_of_iter):
         psf.calc([0, 0, 6 * RPM2RAD], [0, 0, 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15))
     end = time.time()
-    print(end - start)
+    print(f"Solved {number_of_iter} iterations in {end - start}, [{(end - start) / number_of_iter} s/step]")

@@ -128,10 +128,12 @@ class TurbineEnv(gym.Env):
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]
 
-        self.turbine.step(psf_corrected_action, self.wind_speed)
+        new_action = action
+
+        self.turbine.step(new_action, self.wind_speed)
         self.observation = self.observe()
 
-        done, reward = self.calculate_reward(self.observation, action)
+        done, reward = self.calculate_reward(self.observation, new_action)
 
         self.cumulative_reward += reward
         self.last_reward = reward
@@ -146,7 +148,7 @@ class TurbineEnv(gym.Env):
         """
         Generates environment with a turbine at random initial conditions
         """
-        self.wind_speed = 16 # (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):

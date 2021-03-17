@@ -33,10 +33,9 @@ def animate(frame):
         y_top = height*np.cos(env.turbine.platform_angle)
         x_bottom = -params.L_thr*np.sin(env.turbine.platform_angle)
         y_bottom = -params.L_thr*np.cos(env.turbine.platform_angle)
-        if not done:
-            recorded_states.append(env.turbine.state)
-            recorded_inputs.append(env.turbine.input)
-            recorded_disturbance.append(np.array([env.turbine.wind_force, env.turbine.wind_torque,env.turbine.generator_torque, env.turbine.adjusted_wind_speed]))
+        recorded_states.append(env.turbine.state)
+        recorded_inputs.append(env.turbine.input)
+        recorded_disturbance.append(np.array([env.turbine.wind_force, env.turbine.wind_torque,env.turbine.generator_torque, env.turbine.adjusted_wind_speed]))
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]

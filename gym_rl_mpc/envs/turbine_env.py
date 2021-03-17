@@ -60,10 +60,10 @@ class TurbineEnv(gym.Env):
                        N=100,
                        PK_path=Path("PSF", "stored_PK"),
                        lin_points=free_vars,
-                       lin_bounds={"w": [3, 25],
-                                   "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
-                                   "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
-                                   "P_ref": [1e6, 15e6]})
+                       lin_bounds={"w": [self.min_wind_speed, self.max_wind_speed],
+                                   "u_p": [-params.min_blade_pitch_ratio*params.max_blade_pitch, params.max_blade_pitch],
+                                   "Omega": [self.crash_omega_min, self.crash_omega_max],
+                                   "P_ref": [0, params.max_power_generation]})
         ## END PSF init ##
 
         self.episode = 0
@@ -122,7 +122,15 @@ class TurbineEnv(gym.Env):
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
 
-        #psf_corrected_action = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)        self.turbine.step(action, self.wind_speed)
+        psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
+
+        psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force, 
+                                psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
+                                psf_corrected_action_un_normalized[2]/params.max_power_generation]
+
+        print(action-psf_corrected_action)
+
+        self.turbine.step(psf_corrected_action, self.wind_speed)
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(self.observation, action)
@@ -140,7 +148,7 @@ class TurbineEnv(gym.Env):
         """
         Generates environment with a turbine at random initial conditions
         """
-        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 16 # (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):

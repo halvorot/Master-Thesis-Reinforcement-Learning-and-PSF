@@ -18,7 +18,27 @@ def format_history(env, lastn=100):
     timesteps = np.array([obj['timesteps'] for obj in relevant_history])
     durations = np.array([obj['duration'] for obj in relevant_history])
 
-    labels = np.array([r"episode", r"reward", r"crash", r"no_crash", r"theta", r"std_theta", r"timesteps", r"duration"])
+    wind_speeds = np.array([obj['wind_speed'] for obj in relevant_history])
+    theta_rewards = np.array([obj['theta_reward'] for obj in relevant_history])
+    theta_dot_rewards = np.array([obj['theta_dot_reward'] for obj in relevant_history])
+    omega_rewards = np.array([obj['omega_reward'] for obj in relevant_history])
+    power_rewards = np.array([obj['power_reward'] for obj in relevant_history])
+    control_rewards = np.array([obj['control_reward'] for obj in relevant_history])
+
+    labels = np.array([r"episode", 
+                        r"reward", 
+                        r"crash", 
+                        r"no_crash", 
+                        r"theta", 
+                        r"std_theta", 
+                        r"timesteps", 
+                        r"duration", 
+                        r"wind_speed", 
+                        r"theta_reward", 
+                        r"theta_dot_reward", 
+                        r"omega_reward", 
+                        r"power_reward", 
+                        r"control_reward"])
 
     episode_nums = episode_nums.reshape((len(relevant_history), 1))
     rewards = rewards.reshape((len(relevant_history), 1))
@@ -29,6 +49,13 @@ def format_history(env, lastn=100):
     timesteps = timesteps.reshape((len(relevant_history), 1))
     durations = durations.reshape((len(relevant_history), 1))
 
+    wind_speeds = wind_speeds.reshape((len(relevant_history), 1))
+    theta_rewards = theta_rewards.reshape((len(relevant_history), 1))
+    theta_dot_rewards = theta_dot_rewards.reshape((len(relevant_history), 1))
+    omega_rewards = omega_rewards.reshape((len(relevant_history), 1))
+    power_rewards = power_rewards.reshape((len(relevant_history), 1))
+    control_rewards = control_rewards.reshape((len(relevant_history), 1))
+
     report_data = np.hstack([   episode_nums,
                                 rewards,
                                 crashes,
@@ -36,7 +63,13 @@ def format_history(env, lastn=100):
                                 avg_abs_theta,
                                 std_theta,
                                 timesteps,
-                                durations
+                                durations,
+                                wind_speeds,
+                                theta_rewards,
+                                theta_dot_rewards,
+                                omega_rewards,
+                                power_rewards,
+                                control_rewards
                             ])
 
     df = DataFrame(report_data, columns=labels)
@@ -60,21 +93,20 @@ def report(env, report_dir, lastn=100):
     except OSError as e:
         print('Warning: Ignoring OSError: ' + str(repr(e)))
 
-def make_summary_file(data, report_dir, lastn=50):
+def make_summary_file(data, report_dir):
     os.makedirs(report_dir, exist_ok=True)
 
-    relevant_data = data[-min(lastn, data.shape[0]):]
-    crashes = np.array(relevant_data['crash'])
+    crashes = np.array(data['crash'])
     no_crashes = crashes == 0
-    avg_abs_theta = np.array(relevant_data['theta'])
-    std_theta = np.array(relevant_data['std_theta'])
-    rewards = np.array(relevant_data['reward'])
-    timesteps = np.array(relevant_data['timesteps'])
-    durations = np.array(relevant_data['duration'])
+    avg_abs_theta = np.array(data['theta'])
+    std_theta = np.array(data['std_theta'])
+    rewards = np.array(data['reward'])
+    timesteps = np.array(data['timesteps'])
+    durations = np.array(data['duration'])
 
     with open(os.path.join(report_dir, 'summary.txt'), 'w') as f:
         f.write('# TOTAL EPISODES TRAINED: {}\n'.format(data.shape[0]))
-        f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(min(lastn, data.shape[0])))
+        f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(data.shape[0]))
         f.write('{:<30}{:<30}\n'.format('Avg. Reward', rewards.mean()))
         f.write('{:<30}{:<30}\n'.format('Std. Reward', rewards.std()))
         f.write('{:<30}{:<30.2%}\n'.format('Avg. Crashes', crashes.mean()))

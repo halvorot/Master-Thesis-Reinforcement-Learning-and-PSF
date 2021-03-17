@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def power_regime(wind_speed):
     if wind_speed < 3:
         return 0

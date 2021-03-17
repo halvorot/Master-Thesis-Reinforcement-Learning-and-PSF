@@ -11,9 +11,6 @@ import gym_rl_mpc.objects.symbolic_model as sym
 from casadi import SX, Function, jacobian
 from PSF.PSF import PSF
 
-RPM2RAD = 1 / 60 * 2 * np.pi
-DEG2RAD = 1 / 360 * 2 * np.pi
-
 class TurbineEnv(gym.Env):
     """
     Creates an environment with a turbine.

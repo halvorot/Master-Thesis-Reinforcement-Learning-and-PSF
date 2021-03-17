@@ -24,7 +24,7 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0,env.turbine.input[1]/params.max_blade_pitch,params.power_regime(env.wind_speed) * params.max_power_generation])
+            action = np.array([0, env.turbine.input[1]/params.max_blade_pitch, params.power_regime(env.wind_speed)])
             
             
         _, _, done, _ = env.step(action)

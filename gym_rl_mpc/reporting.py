@@ -88,7 +88,7 @@ def report(env, report_dir):
             df.to_csv(file_path)
         else:
             df.to_csv(file_path, mode='a', header=False)
-
+        print("reported episode to file")
     except PermissionError as e:
         print('Warning: Report files are open - could not update report: ' + str(repr(e)))
     except OSError as e:

@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame
 
+from gym_rl_mpc import DEFAULT_CONFIG
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -26,9 +28,20 @@ if __name__ == "__main__":
         help='Show plot of states after simulation',
         action='store_true'
     )
+    parser.add_argument(
+        '--psf',
+        help='Use psf corrected action',
+        action='store_true'
+    )
     args = parser.parse_args()
 
-    env = gym.make("TurbineStab-v0")
+    if args.psf:
+        config = DEFAULT_CONFIG.copy()
+        config['use_psf'] = True
+        print("Using PSF corrected actions")
+    else:
+        config = DEFAULT_CONFIG
+    env = gym.make("TurbineStab-v0", env_config=config)
     env_id = env.unwrapped.spec.id
     if args.agent:
         agent_path = args.agent

@@ -113,24 +113,25 @@ class TurbineEnv(gym.Env):
         Simulates the environment one time-step.
         """
 
-        action_F_thr = action[0]*params.max_thrust_force
-        action_blade_pitch = action[1]*params.max_blade_pitch
-        action_power = action[2]*params.max_power_generation
-        action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
-        linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
+        if self.use_psf:
+            action_F_thr = action[0]*params.max_thrust_force
+            action_blade_pitch = action[1]*params.max_blade_pitch
+            action_power = action[2]*params.max_power_generation
+            action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
+            linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
 
-        psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
+            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
 
-        psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force, 
+            psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force, 
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]
+            self.turbine.step(psf_corrected_action, self.wind_speed)
+        else:
+            self.turbine.step(action, self.wind_speed)
 
-        new_action = action
-
-        self.turbine.step(new_action, self.wind_speed)
         self.observation = self.observe()
 
-        done, reward = self.calculate_reward(self.observation, new_action)
+        done, reward = self.calculate_reward(self.observation, action)
 
         self.cumulative_reward += reward
         self.last_reward = reward

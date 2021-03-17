@@ -2,6 +2,7 @@ import numpy as np
 import gym
 from stable_baselines3 import PPO
 from gym_rl_mpc.utils import model_params as params
+from gym_rl_mpc import DEFAULT_CONFIG
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -91,6 +92,11 @@ if __name__ == "__main__":
         help='Save animation as mp4 file',
         action='store_true'
     )
+    parser.add_argument(
+        '--psf',
+        help='Use psf corrected action',
+        action='store_true'
+    )
     args = parser.parse_args()
 
     if args.data:
@@ -102,7 +108,13 @@ if __name__ == "__main__":
         env_id = "TurbineStab-v0"
     else:
         done = False
-        env = gym.make("TurbineStab-v0")
+        if args.psf:
+            config = DEFAULT_CONFIG.copy()
+            config['use_psf'] = True
+            print("Using PSF corrected actions")
+        else:
+            config = DEFAULT_CONFIG
+        env = gym.make("TurbineStab-v0", env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()
         if args.agent:

@@ -2,6 +2,7 @@ from gym.envs.registration import register
 import numpy as np
 
 DEFAULT_CONFIG = {
+    "use_psf": False,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "working_range_reward_multiplier": 10,

@@ -8,7 +8,6 @@ def format_history(env, lastn=-1):
         relevant_history = env.history[-min(lastn, len(env.history)):]
     else:
         relevant_history = env.history
-    print(f"len history: {len(relevant_history)}")
 
     episode_nums = np.array([obj['episode_num'] for obj in relevant_history])
     crashes = np.array([obj['crashed'] for obj in relevant_history])

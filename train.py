@@ -8,6 +8,7 @@ import numpy as np
 import json
 
 from gym_rl_mpc import reporting
+from gym_rl_mpc import DEFAULT_CONFIG
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -127,11 +128,24 @@ if __name__ == '__main__':
         help='Skip reporting to increase framerate',
         action='store_true'
     )
+    parser.add_argument(
+        '--psf',
+        help='Use psf corrected action',
+        action='store_true'
+    )
     args = parser.parse_args()
 
     # Make environment (NUM_CPUs parallel envs)
     env_id = 'TurbineStab-v0'
-    env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv)
+    if args.psf:
+        customconfig = DEFAULT_CONFIG.copy()
+        customconfig['use_psf'] = True
+        env_kwargs = {'env_config': customconfig}
+        print("Using PSF corrected actions")
+    else:
+        env_kwargs = None
+
+    env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv, env_kwargs=env_kwargs)
     
 
     # Define necessary directories

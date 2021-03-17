@@ -19,6 +19,7 @@ class PSF:
     def __init__(self,
                  sys,
                  N,
+                 PK_path="",
                  lin_points=None,
                  lin_bounds=None,
                  P=None,
@@ -29,6 +30,8 @@ class PSF:
             lin_points = []
 
         self.sys = sys
+        self.N = N
+        self.PK_path = PK_path
         self.lin_points = vertcat(*lin_points)
         self.lin_bounds = lin_bounds
 
@@ -44,11 +47,10 @@ class PSF:
 
         self._set_model_step()
 
-        self._LP_init(sys, N, P, alpha, K)
+        self._LP_init(sys)
 
-    def _LP_init(self, sys, N, P=None, alpha=None, K=None):
+    def _LP_init(self, N):
 
-        self.N = N
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)
         U = SX.sym('U', self.nu, self.N)
@@ -109,7 +111,7 @@ class PSF:
                                ubg=vertcat(*self.ubg),
                                )
 
-        return np.asarray(solution["x"][self.nx:self.nx + self.nu])
+        return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
     def set_terminal_set(self):
         self.alpha = 0.9
@@ -117,7 +119,7 @@ class PSF:
 
         b = pickle.dumps((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
         filename = sha1(b).hexdigest()[:LEN_FILE_STR]
-        path = Path("stored_KP", filename + ".dat")
+        path = Path(self.PK_path, filename + ".dat")
         try:
             self.K, self.P = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
@@ -133,7 +135,9 @@ class PSF:
             m_B = matlab.double(np.hstack(B_set).tolist())
 
             eng = matlab.engine.start_matlab()
+            eng.eval("addpath(genpath('./'))")
             m_PK = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu)
+            eng.quit()
             PK = np.asarray(m_PK)
             self.P = PK[:, :self.nx]
             self.K = PK[:, : self.nx]
@@ -199,16 +203,18 @@ class PSF:
 
 
 if __name__ == '__main__':
-    A = jacobian(sym.symbolic_x_dot_simple, sym.x)
-    B = jacobian(sym.symbolic_x_dot_simple, sym.u)
-
-    free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+    A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
+    A_disc = np.eye(3) + A_cont  # Euler discretization
+    B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
+    B_disc = B_cont  # Euler discretization
+    free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
     desired_seq = ["Omega", "u_p", "P_ref", "w"]
     current_seq = [a.name() for a in free_vars]
     change_to_seq = [current_seq.index(d) for d in desired_seq]
     free_vars = [free_vars[i] for i in change_to_seq]
-    psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
+    psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
               N=100,
+              PK_path="stored_PK",
               lin_points=free_vars,
               lin_bounds={"w": [3, 25],
                           "u_p": [0 * DEG2RAD, 20 * DEG2RAD],

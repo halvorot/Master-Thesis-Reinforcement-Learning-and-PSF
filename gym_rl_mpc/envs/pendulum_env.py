@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gym
 import numpy as np
 from gym.utils import seeding
@@ -57,6 +59,7 @@ class PendulumEnv(gym.Env):
         free_vars = [free_vars[i] for i in change_to_seq]
         self.psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
                        N=100,
+                       PK_path=Path("PSF", "stored_PK"),
                        lin_points=free_vars,
                        lin_bounds={"w": [3, 25],
                                    "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
@@ -115,10 +118,10 @@ class PendulumEnv(gym.Env):
 
         action_F_thr = action[0] * params.max_thrust_force
         action_blade_pitch = action[1] * params.max_blade_pitch
-        action_power = action[2] * params.max_power_generation
+        action_power = action[2]
         action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
         linearization_point = [self.pendulum.omega, action_blade_pitch, action_power, self.pendulum.adjusted_wind_speed]
-
+        print(linearization_point)
         psf_corrected_action = self.psf.calc(self.pendulum.state, action_un_normalized, linearization_point)
 
         self.pendulum.step(psf_corrected_action, self.wind_speed)

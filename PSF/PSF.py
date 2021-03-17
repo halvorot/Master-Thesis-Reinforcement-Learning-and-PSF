@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 import pickle
 import sys
@@ -112,7 +113,8 @@ class PSF:
         self.ubg += [0]
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.params)}
-        opts = {"verbose": False, 'warm_start_primal': True,"warm_start_dual":True,"osqp": {"verbose": False, "polish": False}}
+        opts = {"verbose": False, 'warm_start_primal': True, "warm_start_dual": True,
+                "osqp": {"verbose": False, "polish": False}}
         self.solver = qpsol("solver", "osqp", prob, opts)
 
     def calc(self, x, u_L, params):
@@ -128,7 +130,7 @@ class PSF:
         self.alpha = 0.9
         A_set, B_set = self.create_system_set()
 
-        b = pickle.dumps((A_set, B_set))
+        b = pickle.dumps((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
         filename = sha1(b).hexdigest()[:LEN_FILE_STR]
         path = Path("stored_KP", filename + ".dat")
         try:
@@ -219,16 +221,16 @@ if __name__ == '__main__':
     change_to_seq = [current_seq.index(d) for d in desired_seq]
     free_vars = [free_vars[i] for i in change_to_seq]
     psf = PSF({"A": np.eye(3) + A, "B": B, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-              N=1000,
+              N=100,
               params=free_vars,
               params_bounds={"w_0": [3, 25],
                              "u_p": [5 * DEG2RAD, 6 * DEG2RAD],
                              "Omega": [5 * RPM2RAD, 8 * RPM2RAD],
                              "P_ref": [1e6, 15e6]})
 
-    print(psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
+    print(psf.calc([0, 0, 6 * RPM2RAD], [0,0 , 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15)))
     start = time.time()
     for i in range(100):
-        psf.calc([0, 0, 6 * RPM2RAD], [0, 15e6, 0], vertcat(6 * RPM2RAD, 0, 15e6, 15))
+        psf.calc([0, 0, 6 * RPM2RAD], [0, 0 , 15e6], vertcat(6 * RPM2RAD, 0, 15e6, 15))
     end = time.time()
     print(end - start)

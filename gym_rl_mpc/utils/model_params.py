@@ -1,5 +1,10 @@
 import numpy as np
 
+RAD2DEG = 180/np.pi
+DEG2RAD = np.pi/180
+RAD2RPM = 60/(2*np.pi)
+RPM2RAD = (2*np.pi/60)
+
 def power_regime(wind_speed):
     if wind_speed < 3:
         return 0
@@ -11,11 +16,11 @@ def power_regime(wind_speed):
 
 def omega_setpoint(wind_speed):
     if wind_speed < 6.98:
-        return 5*(2*np.pi/60)       # 5 rpm
+        return 5*RPM2RAD       # 5 rpm
     elif wind_speed < 10.59:
-        return (((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5)*(2*np.pi/60)
+        return (((7.55-5)/(10.59-6.98))*(wind_speed-6.98)+5)*RPM2RAD
     else:
-        return 7.55*(2*np.pi/60)    # 7.55 rpm
+        return 7.55*RPM2RAD    # 7.55 rpm
 
 # Platform parameters
 L = 144.45

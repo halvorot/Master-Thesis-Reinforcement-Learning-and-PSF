@@ -1,14 +1,15 @@
 from gym.envs.registration import register
 import numpy as np
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {
     "use_psf": False,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "working_range_reward_multiplier": 10,
-    "crash_angle_condition": 10*(np.pi/180),
-    "crash_omega_max": 10*(2*np.pi/60),
-    "crash_omega_min": 3*(2*np.pi/60),
+    "crash_angle_condition": 10*DEG2RAD,
+    "crash_omega_max": 10*RPM2RAD,
+    "crash_omega_min": 3*RPM2RAD,
     "max_init_angle": 0,
     "max_wind_speed": 25,
     "min_wind_speed": 5,

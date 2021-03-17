@@ -3,6 +3,7 @@ import numpy as np
 import gym
 from stable_baselines3 import PPO
 from gym_rl_mpc.utils import model_params as params
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 from gym_rl_mpc import DEFAULT_CONFIG
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -62,11 +63,11 @@ def animate(frame):
     ax_ani.text(0.35*height, 1.11*height, f"$\Omega$ = {env.turbine.omega*(60/(2*np.pi)):.2f} rpm", fontsize=10)
     # Plot blad pitch bar
     bar_length_multiplier = 2
-    min_blade_pitch = -params.min_blade_pitch_ratio*params.max_blade_pitch*(180/np.pi)*bar_length_multiplier
-    max_blade_pitch = params.max_blade_pitch*(180/np.pi)*bar_length_multiplier
-    blade_pitch_input = env.turbine.blade_pitch*(180/np.pi)*bar_length_multiplier
+    min_blade_pitch = -params.min_blade_pitch_ratio*params.max_blade_pitch*RAD2DEG*bar_length_multiplier
+    max_blade_pitch = params.max_blade_pitch*RAD2DEG*bar_length_multiplier
+    blade_pitch_input = env.turbine.blade_pitch*RAD2DEG*bar_length_multiplier
     ax_ani.broken_barh([(min_blade_pitch, max_blade_pitch), (0, blade_pitch_input)], [1.1*height, 9], facecolors=('blue','red'))
-    ax_ani.text(-0.5*height, 1.11*height, f"Blade pitch = {env.turbine.blade_pitch*(180/np.pi):.2f} deg", fontsize=10)
+    ax_ani.text(-0.5*height, 1.11*height, f"Blade pitch = {env.turbine.blade_pitch*RAD2DEG:.2f} deg", fontsize=10)
     # Plot power bar
     bar_length_multiplier = 2e-6
     max_power = params.max_power_generation*bar_length_multiplier
@@ -131,9 +132,6 @@ if __name__ == "__main__":
         env = gym.make("TurbineStab-v0", env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()
-        recorded_states.append(env.turbine.state)
-        recorded_inputs.append(env.turbine.input)
-        recorded_disturbance.append(np.array([env.turbine.wind_force, env.turbine.wind_torque,env.turbine.generator_torque, env.turbine.adjusted_wind_speed]))
         if args.agent:
             agent = PPO.load(args.agent)
 
@@ -163,8 +161,8 @@ if __name__ == "__main__":
 
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
 
-        ax1.plot(time, recorded_states[:,0]*(180/np.pi), label='theta')
-        ax1.plot(time, recorded_states[:,1]*(180/np.pi), label='theta_dot')
+        ax1.plot(time, recorded_states[:,0]*RAD2DEG, label='theta')
+        ax1.plot(time, recorded_states[:,1]*RAD2DEG, label='theta_dot')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees, deg/sec')
         ax1.set_title('platform angle and angular velocity')
@@ -183,7 +181,7 @@ if __name__ == "__main__":
 
         color = 'tab:orange'
         ax3_2 = ax3.twinx()
-        ax3_2.plot(time, recorded_inputs[:,1]*(180/np.pi), label='Blade pitch', color=color)
+        ax3_2.plot(time, recorded_inputs[:,1]*RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
         #ax3_2.set_ylim([-4,20])
@@ -213,5 +211,11 @@ if __name__ == "__main__":
         ax22.set_ylabel('Power')
         ax22.set_title('Power')
         ax22.legend()
+
+        ax23.plot(time, np.array(env.episode_history['agent_actions'])[:,1]*params.max_blade_pitch*RAD2DEG, label='agent blade pitch')
+        ax23.plot(time, np.array(env.episode_history['psf_actions'])[:,1]*params.max_blade_pitch*RAD2DEG, label='PSF blade pitch')
+        ax23.set_ylabel('Blade pitch [deg]')
+        ax23.set_title('Commanded blade pitch')
+        ax23.legend()
 
         plt.show()

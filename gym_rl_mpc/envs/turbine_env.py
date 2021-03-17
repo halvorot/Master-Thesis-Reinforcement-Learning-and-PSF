@@ -7,6 +7,7 @@ from termcolor import colored
 
 from gym_rl_mpc.objects.turbine import Turbine
 import gym_rl_mpc.utils.model_params as params
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 import gym_rl_mpc.objects.symbolic_model as sym
 from casadi import SX, Function, jacobian
 from PSF.PSF import PSF
@@ -81,7 +82,7 @@ class TurbineEnv(gym.Env):
         """
         Resets environment to initial state.
         """
-
+        
         # Seeding
         if self.rand_num_gen is None:
             self.seed()
@@ -126,8 +127,12 @@ class TurbineEnv(gym.Env):
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]
             self.turbine.step(psf_corrected_action, self.wind_speed)
+            self.psf_action = psf_corrected_action
         else:
             self.turbine.step(action, self.wind_speed)
+            self.psf_action = [0]*len(action)
+        
+        self.agent_action = action
 
         self.observation = self.observe()
 
@@ -155,12 +160,12 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
-        theta_deg = self.turbine.platform_angle*(180/np.pi)
-        theta_dot_deg_s = self.turbine.state[1]*(180/np.pi)
-        omega_rpm = self.turbine.state[2]*(60/(2*np.pi))
+        theta_deg = self.turbine.platform_angle*RAD2DEG
+        theta_dot_deg_s = self.turbine.state[1]*RAD2DEG
+        omega_rpm = self.turbine.state[2]*RAD2RPM
         power_error_MegaWatts = np.abs(action[2]-self.turbine.power_regime(self.wind_speed))*(self.turbine.max_power_generation/1e6)
 
-        omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed)*(60/(2*np.pi))
+        omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed)*RAD2RPM
         omega_error_rpm = np.abs(omega_rpm-omega_ref_rpm)
 
         self.theta_reward = np.exp(-self.gamma_theta*(np.abs(theta_deg))) - self.gamma_theta*np.abs(theta_deg)
@@ -215,6 +220,9 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('omega_reward',[]).append(self.omega_reward)
         self.episode_history.setdefault('power_reward',[]).append(self.power_reward)
         self.episode_history.setdefault('control_reward',[]).append(self.control_reward)
+
+        self.episode_history.setdefault('agent_actions',[]).append(self.agent_action)
+        self.episode_history.setdefault('psf_actions',[]).append(self.psf_action)
 
     def save_latest_episode(self):
         self.history = {

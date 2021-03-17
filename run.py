@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
         time = np.array(range(0, len(sim_df['theta'])))*env.step_size
 
-        ax1.plot(time, sim_df['theta']*(180/np.pi), label='theta')
-        ax1.plot(time, sim_df['theta_dot']*(180/np.pi), label='theta_dot')
+        ax1.plot(time, sim_df['theta']*RAD2DEG, label='theta')
+        ax1.plot(time, sim_df['theta_dot']*RAD2DEG, label='theta_dot')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees, deg/sec')
         ax1.set_title('platform angle and angular velocity')
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
         color = 'tab:orange'
         ax3_2 = ax3.twinx()
-        ax3_2.plot(time, sim_df['blade_pitch']*(180/np.pi), label='Blade pitch', color=color)
+        ax3_2.plot(time, sim_df['blade_pitch']*RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
         ax3_2.set_ylim([-4,20])

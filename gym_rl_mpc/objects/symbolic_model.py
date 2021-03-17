@@ -110,7 +110,7 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
 
     g += [Hx @ x - hx]
 
-    g += [Hu[:2, 0] @ u_p - hu[:2]]
+    g += [Hu[2:4, 1] @ u_p - hu[2:4]]
 
     prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
     opts = {

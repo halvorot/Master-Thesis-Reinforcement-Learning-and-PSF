@@ -1,3 +1,4 @@
+from casadi.casadi import offset
 import numpy as np
 import gym
 from stable_baselines3 import PPO
@@ -40,7 +41,7 @@ def animate(frame):
 
     x = [x_bottom, x_top]
     y = [y_bottom, y_top]
-    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-1.1*params.L_thr, 1.1*height))
+    ax_ani.set(xlim=(-0.7*height, 0.7*height), ylim=(-1.1*params.L_thr, 1.2*height))
     ax_ani.set_xlabel('$X$')
     ax_ani.set_ylabel('$Y$')
 
@@ -58,7 +59,20 @@ def animate(frame):
     ax_ani.arrow(x = -50, y = params.L-10, dx=20, dy=0, head_width=2, head_length=2, length_includes_head=True)
     ax_ani.text(-49, params.L-7, f"{env.wind_speed:.1f} m/s", fontsize=10)
     # Plot rotational speed
-    ax_ani.text(0, params.L+7, f"$\Omega$ = {env.turbine.omega*(180/np.pi):.1f} deg/s", fontsize=10)
+    ax_ani.text(0.35*height, 1.11*height, f"$\Omega$ = {env.turbine.omega*(60/(2*np.pi)):.2f} rpm", fontsize=10)
+    # Plot blad pitch bar
+    bar_length_multiplier = 2
+    min_blade_pitch = -params.min_blade_pitch_ratio*params.max_blade_pitch*(180/np.pi)*bar_length_multiplier
+    max_blade_pitch = params.max_blade_pitch*(180/np.pi)*bar_length_multiplier
+    blade_pitch_input = env.turbine.blade_pitch*(180/np.pi)*bar_length_multiplier
+    ax_ani.broken_barh([(min_blade_pitch, max_blade_pitch), (0, blade_pitch_input)], [1.1*height, 9], facecolors=('blue','red'))
+    ax_ani.text(-0.5*height, 1.11*height, f"Blade pitch = {env.turbine.blade_pitch*(180/np.pi):.2f} deg", fontsize=10)
+    # Plot power bar
+    bar_length_multiplier = 2e-6
+    max_power = params.max_power_generation*bar_length_multiplier
+    power_input = env.turbine.input[2]*bar_length_multiplier
+    ax_ani.broken_barh([(30, max_power), (30, power_input)], [0.5*height, 9], facecolors=('blue','red'))
+    ax_ani.text(0.2*height, 0.57*height, f"Power = {env.turbine.input[2]/1e6:.2f} MW", fontsize=10)
 
 
 
@@ -117,6 +131,9 @@ if __name__ == "__main__":
         env = gym.make("TurbineStab-v0", env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()
+        recorded_states.append(env.turbine.state)
+        recorded_inputs.append(env.turbine.input)
+        recorded_disturbance.append(np.array([env.turbine.wind_force, env.turbine.wind_torque,env.turbine.generator_torque, env.turbine.adjusted_wind_speed]))
         if args.agent:
             agent = PPO.load(args.agent)
 

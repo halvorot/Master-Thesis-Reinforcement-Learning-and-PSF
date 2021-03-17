@@ -51,6 +51,10 @@ class Turbine:
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation
 
+        self.F_w = numerical_F_wind(self.omega, self.adjusted_wind_speed, self.input[1])
+        self.Q_w = numerical_Q_wind(self.omega, self.adjusted_wind_speed, self.input[1])
+        self.Q_g = max(0, min(init_power / self.omega, params.max_generator_torque))
+
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
         prev_blade_pitch = self.input[1]
@@ -114,6 +118,13 @@ class Turbine:
         Returns the angle of the platform
         """
         return self.state[2]
+
+    @property
+    def blade_pitch(self):
+        """
+        Returns the blade pitch u = beta - beta*
+        """
+        return self.input[1]
 
     @property
     def wind_force(self):

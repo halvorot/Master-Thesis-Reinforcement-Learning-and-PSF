@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from pandas import DataFrame
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 def format_history(env, lastn=-1):
 
@@ -93,7 +94,7 @@ def report(env, report_dir):
     except OSError as e:
         print('Warning: Ignoring OSError: ' + str(repr(e)))
 
-def make_summary_file(data, report_dir):
+def make_summary_file(data, report_dir, total_num_episodes):
     os.makedirs(report_dir, exist_ok=True)
 
     crashes = np.array(data['crash'])
@@ -105,7 +106,7 @@ def make_summary_file(data, report_dir):
     durations = np.array(data['duration'])
 
     with open(os.path.join(report_dir, 'summary.txt'), 'w') as f:
-        f.write('# TOTAL EPISODES TRAINED: {}\n'.format(data.shape[0]))
+        f.write('# TOTAL EPISODES TRAINED: {}\n'.format(total_num_episodes))
         f.write('# PERFORMANCE METRICS (LAST {} EPISODES AVG.)\n'.format(data.shape[0]))
         f.write('{:<30}{:<30}\n'.format('Avg. Reward', rewards.mean()))
         f.write('{:<30}{:<30}\n'.format('Std. Reward', rewards.std()))

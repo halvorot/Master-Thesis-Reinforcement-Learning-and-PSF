@@ -60,10 +60,10 @@ class TurbineEnv(gym.Env):
                        R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
                        PK_path=Path("PSF", "stored_PK"),
                        lin_points=free_vars,
-                       lin_bounds={"w": [3 * params.wind_inflow_ratio, 25 * params.wind_inflow_ratio],
-                                   "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
-                                   "Omega": [5 * RPM2RAD, 7.55 * RPM2RAD],
-                                   "P_ref": [0, 15e6]})
+                       lin_bounds={"w": [self.min_wind_speed*params.wind_inflow_ratio, self.max_wind_speed*params.wind_inflow_ratio],
+                                   "u_p": [0*params.max_blade_pitch, params.max_blade_pitch],
+                                   "Omega": [params.omega_setpoint(self.min_wind_speed), params.omega_setpoint(self.max_wind_speed)],
+                                   "P_ref": [0, params.max_power_generation]})
 
         ## END PSF init ##
 
@@ -153,7 +153,7 @@ class TurbineEnv(gym.Env):
         """
         Generates environment with a turbine at random initial conditions
         """
-        self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
+        self.wind_speed = 18#(self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
     def calculate_reward(self, obs, action):

@@ -17,6 +17,11 @@ import os
 def animate(frame):
     plt.cla()
     height = params.L
+    print(env.turbine.state)
+    if frame == 0:
+        blade_pitch = init_blade_pitch
+    else:
+        blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/params.max_blade_pitch
 
     if args.data:
         # If reading from file:
@@ -27,7 +32,7 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0, env.turbine.input[1]/params.max_blade_pitch, params.power_regime(env.wind_speed)])
+            action = np.array([0, blade_pitch, params.power_regime(env.wind_speed)])
             
             
         _, _, done, _ = env.step(action)
@@ -134,6 +139,7 @@ if __name__ == "__main__":
         env.reset()
         if args.agent:
             agent = PPO.load(args.agent)
+        init_blade_pitch = env.turbine.input[1]/params.max_blade_pitch
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)

@@ -16,7 +16,7 @@ Y = sdpvar(nx,nu);
 % Please use the provided variables
 
 % Objective: Maximize ellipsoidal volume
-objective = -geomean(E);
+objective = -logdet(E);
 
 constraints = [];
 % Constraints
@@ -38,13 +38,32 @@ end
 % --------- End Modifying Code Here -----------
 
 % Solve
-opts = sdpsettings('verbose',0,'solver','mosek');
+opts = sdpsettings('verbose',0,'solver','SDPT3');
 optimize(constraints, objective,opts);   
 
 % --------- Start Modifying Code Here -----------
-P = inv(value(E))
-K = value(Y)*P
-
+P = inv(value(E));
+K = value(Y)*P;
 PK =[P,K];
+
+Px = Polyhedron(Hx, hx);
+
+xplot = sdpvar(3,1);
+Pproj1 = YSet(xplot,xplot'*P*xplot <= 1);
+
+
+figure()
+hold off
+plot(Px,'alpha',0.1);
+hold on
+plot(Pproj1,'alpha',0.1);
+savefig(gcf,'Ellips.fig');
+save("LastPK",'P','K',"Px");
+u = PolyUnion([Pproj1.outerApprox,Px]);
+if not(u.isConnected())
+     disp()
+     disp("WARNING")
+     disp("The Ellipse Outer Approx is not connected to constrain polyhedron")
+     disp()
 end
 

@@ -16,6 +16,7 @@ class TurbineEnv(gym.Env):
     """
     Creates an environment with a turbine.
     """
+
     def __init__(self, env_config):
         print(colored('Debug: Initializing environment...', 'green'))
         for key in env_config:
@@ -28,40 +29,42 @@ class TurbineEnv(gym.Env):
                                            dtype=np.float32)
 
         # Legal limits for state observations
-        low = np.array([    -np.pi,                             # theta
-                            -np.finfo(np.float32).max,          # theta_dot
-                            -np.finfo(np.float32).max,          # omega
-                            0,                                  # wind speed
+        low = np.array([-np.pi,  # theta
+                        -np.finfo(np.float32).max,  # theta_dot
+                        -np.finfo(np.float32).max,  # omega
+                        0,  # wind speed
                         ])
-        high = np.array([   np.pi,                              # theta
-                            np.finfo(np.float32).max,           # theta_dot
-                            np.finfo(np.float32).max,           # omega
-                            self.max_wind_speed,                # wind speed
-                        ])
+        high = np.array([np.pi,  # theta
+                         np.finfo(np.float32).max,  # theta_dot
+                         np.finfo(np.float32).max,  # omega
+                         self.max_wind_speed,  # wind speed
+                         ])
 
         self.observation_space = gym.spaces.Box(low=low,
                                                 high=high,
                                                 dtype=np.float32)
 
         ## PSF init ##
-        psf_Ts = 1 # NEEDS NEW variable
+        psf_Ts = 1  # NEEDS NEW variable
         A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
-        A_disc = np.eye(3) + A_cont*psf_Ts          # Euler discretization
+        A_disc = np.eye(3) + psf_Ts * A_cont  # Euler discretization
         B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
-        B_disc = B_cont *psf_Ts                     # Euler discretization
+        B_disc = psf_Ts * B_cont  # Euler discretization
         free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
         desired_seq = ["Omega", "u_p", "P_ref", "w"]
         current_seq = [a.name() for a in free_vars]
         change_to_seq = [current_seq.index(d) for d in desired_seq]
         free_vars = [free_vars[i] for i in change_to_seq]
         self.psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-                       N=100,
+                       N=30,
+                       R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
                        PK_path=Path("PSF", "stored_PK"),
                        lin_points=free_vars,
-                       lin_bounds={"w": [self.min_wind_speed, self.max_wind_speed],
-                                   "u_p": [-params.min_blade_pitch_ratio*params.max_blade_pitch, params.max_blade_pitch],
-                                   "Omega": [self.crash_omega_min, self.crash_omega_max],
-                                   "P_ref": [0, params.max_power_generation]})
+                       lin_bounds={"w": [3 * 2 / 3, 25 * 2 / 3],
+                                   "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
+                                   "Omega": [5 * RPM2RAD, 7.55 * RPM2RAD],
+                                   "P_ref": [0, 15e6]})
+
         ## END PSF init ##
 
         self.episode = 0
@@ -82,7 +85,7 @@ class TurbineEnv(gym.Env):
         """
         Resets environment to initial state.
         """
-        
+
         # Seeding
         if self.rand_num_gen is None:
             self.seed()
@@ -108,7 +111,6 @@ class TurbineEnv(gym.Env):
 
         return self.observation
 
-
     def step(self, action):
         """
         Simulates the environment one time-step.
@@ -123,15 +125,15 @@ class TurbineEnv(gym.Env):
 
             psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
 
-            psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force, 
-                                psf_corrected_action_un_normalized[1]/params.max_blade_pitch, 
+            psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force,
+                                psf_corrected_action_un_normalized[1]/params.max_blade_pitch,
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]
             self.turbine.step(psf_corrected_action, self.wind_speed)
             self.psf_action = psf_corrected_action
         else:
             self.turbine.step(action, self.wind_speed)
             self.psf_action = [0]*len(action)
-        
+
         self.agent_action = action
 
         self.observation = self.observe()
@@ -232,7 +234,7 @@ class TurbineEnv(gym.Env):
             'crashed': int(self.crashed),
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
-            'duration': self.t_step*self.step_size,
+            'duration': self.t_step * self.step_size,
             'wind_speed': self.wind_speed,
             'theta_reward': np.array(self.episode_history['theta_reward']).mean(),
             'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),

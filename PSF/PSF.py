@@ -43,12 +43,12 @@ class PSF:
         else:
             self.R = R
 
-        if P is None:
-            self.set_terminal_set()
-        else:
-            self.P = P
-            self.alpha = alpha
-            self.K = K
+        #if P is None:
+        #    self.set_terminal_set()
+        #else:
+        #     self.P = P
+        #    self.alpha = alpha
+        #    self.K = K
 
         self._set_model_step()
 
@@ -94,7 +94,7 @@ class PSF:
             w += [X[:, i + 1]]
 
             # Composite State constrains
-            g += [self.sys["Hx"] @ X[:, i + 1] ]
+            g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
 
@@ -103,15 +103,15 @@ class PSF:
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
-        g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
-        self.lbg += [-inf]
-        self.ubg += [0]
+        #  g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
+        # self.lbg += [-inf]
+        # self.ubg += [0]
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_points)}
         opts = {"verbose": False, 'warm_start_primal': True, "warm_start_dual": True,
                 "osqp": {"verbose": False, "polish": True, "eps_prim_inf": 1.00e-22, "rho": 1.00e-22}}
-        #self.solver = qpsol("solver", "osqp", prob, opts)
-        self.solver = qpsol("solver", "qpoases", prob, {"printLevel":"none"})
+        # self.solver = qpsol("solver", "osqp", prob, opts)
+        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
 
     def calc(self, x, u_L, lin_dict):
 
@@ -222,18 +222,18 @@ if __name__ == '__main__':
     free_vars = [free_vars[i] for i in change_to_seq]
     psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
               N=30,
-              R=np.diag([15e6/ 50000**2, 15e6 / 0.349**2, 1 / 15e6]),
+              R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
               PK_path="stored_PK",
               lin_points=free_vars,
-              lin_bounds={"w": [3*2/3, 25*2/3],
+              lin_bounds={"w": [3 * 2.1 / 3, 25 * 2 / 3],
                           "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
                           "Omega": [5 * RPM2RAD, 7.55 * RPM2RAD],
                           "P_ref": [0, 15e6]})
 
-    print(psf.calc([0, 0, 7.55 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12)))
+    print(psf.calc([0, 0, 5 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12)))
     number_of_iter = 1000
     start = time.time()
     for i in range(number_of_iter):
         psf.calc([0, 0, 7.55 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12))
-    end = time.time(
+    end = time.time()
     print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")

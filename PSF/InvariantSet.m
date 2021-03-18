@@ -1,5 +1,22 @@
 function [PK] = InvariantSet(A_set,B_set, Hx, Hu, hx, hu)
 
+
+Px = Polyhedron(Hx, hx);
+
+x_center= Px.chebyCenter();
+x_0 = x_center.x;
+hx_0 =hx-Hx*x_0;
+
+
+Pu= Polyhedron(Hu, hu);
+
+u_center= Pu.chebyCenter();
+u_0 = x_center.x;
+hu_0 =hu- Hu*u_0;
+
+
+
+
 nx = size(Hx,2);
 nu = size(Hu,2);
 
@@ -29,11 +46,11 @@ end
 
 % State constraints
 for i=1:size(Hx,1)
-    constraints=[constraints, [hx(i)^2, Hx(i,:)*E; E*Hx(i,:)', E]>=0];
+    constraints=[constraints, [hx_0(i)^2, Hx(i,:)*E; E*Hx(i,:)', E]>=0];
 end
 % Input constraints
 for j=1:size(Hu,1)
-    constraints=[constraints, [hu(j)^2, Hu(j,:)*Y;Y'*Hu(j,:)', E]>=0];
+    constraints=[constraints, [hu_0(j)^2, Hu(j,:)*Y;Y'*Hu(j,:)', E]>=0];
 end
 % --------- End Modifying Code Here -----------
 
@@ -46,7 +63,7 @@ P = inv(value(E));
 K = value(Y)*P;
 PK =[P,K];
 
-Px = Polyhedron(Hx, hx);
+
 
 xplot = sdpvar(3,1);
 Pproj1 = YSet(xplot,xplot'*P*xplot <= 1);

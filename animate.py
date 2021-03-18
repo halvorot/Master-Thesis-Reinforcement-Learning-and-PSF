@@ -17,6 +17,11 @@ import os
 def animate(frame):
     plt.cla()
     height = params.L
+    print(env.turbine.state)
+    if frame == 0:
+        blade_pitch = init_blade_pitch
+    else:
+        blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/params.max_blade_pitch
 
     if args.data:
         # If reading from file:
@@ -27,7 +32,7 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0, env.turbine.input[1]/params.max_blade_pitch, params.power_regime(env.wind_speed)])
+            action = np.array([0, blade_pitch, params.power_regime(env.wind_speed)])
             
             
         _, _, done, _ = env.step(action)
@@ -134,6 +139,7 @@ if __name__ == "__main__":
         env.reset()
         if args.agent:
             agent = PPO.load(args.agent)
+        init_blade_pitch = env.turbine.input[1]/params.max_blade_pitch
 
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000*env.step_size/animation_speed, blit=False)
@@ -202,14 +208,16 @@ if __name__ == "__main__":
 
 
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
-        ax21.plot(time, recorded_disturbance[:,3], label='wind speed', color=color)
-        ax21.set_ylabel('adjusted wind speed', color=color)
-        ax21.set_title('Wind')
+        ax21.plot(time, np.array(env.episode_history['agent_actions'])[:,0]*params.max_thrust_force, label='agent thrust')
+        ax21.plot(time, np.array(env.episode_history['psf_actions'])[:,0]*params.max_thrust_force, label='PSF thrust')
+        ax21.set_ylabel('F_thr [N]')
+        ax21.set_title('Commanded Thrust Force')
         ax21.legend()
 
-        ax22.plot(time, recorded_inputs[:,2], label='power')
+        ax22.plot(time, np.array(env.episode_history['agent_actions'])[:,2]*params.max_power_generation, label='agent power')
+        ax22.plot(time, np.array(env.episode_history['psf_actions'])[:,2]*params.max_power_generation, label='PSF power')
         ax22.set_ylabel('Power')
-        ax22.set_title('Power')
+        ax22.set_title('Commanded Power')
         ax22.legend()
 
         ax23.plot(time, np.array(env.episode_history['agent_actions'])[:,1]*params.max_blade_pitch*RAD2DEG, label='agent blade pitch')

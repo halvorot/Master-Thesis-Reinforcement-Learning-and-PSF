@@ -35,7 +35,7 @@ class Turbine:
         """
 
         self.state = np.zeros(3)    # Initialize states
-        self.adjusted_wind_speed = (2/3)*init_wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
+        self.adjusted_wind_speed = params.wind_inflow_ratio*init_wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
         init_power = params.power_regime(init_wind_speed) * params.max_power_generation
 
         opt_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
@@ -72,7 +72,7 @@ class Turbine:
         self.input = np.array([F_thr, blade_pitch, power])
 
         # Adjust wind speed based on inflow and structure
-        self.adjusted_wind_speed = (2/3)*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        self.adjusted_wind_speed = params.wind_inflow_ratio*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
 
         self._sim(self.adjusted_wind_speed)
 

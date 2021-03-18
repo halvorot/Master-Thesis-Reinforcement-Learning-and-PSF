@@ -41,6 +41,7 @@ l_r = (2/3)*R_p                         # l in Force/Torque equations
 b_d_r = 0.5*rho*A*(B**2*(16/27)-C_P_star)*(R/lambda_star)**3  # b_d in Force/Torque equations
 d_r = 0.5*rho*A*C_F                     # d in Force/Torque equations
 J_r = 4.068903574982517e+07             # From OpenFast
+wind_inflow_ratio = 2/3
 
 max_thrust_force = 5e5                  # maximum force input [N]
 max_blade_pitch = 20*(np.pi/180)        # maximum deviation from beta^*
@@ -58,8 +59,6 @@ C_2 = -4.488263864070078
 C_3 = 0.0055491593253495
 C_4 = -6.86458290065766e-12*L_thr
 C_5 = 0.000000000991589
-
-inflow_reduction_frac = 1/1  # 2/3
 
 
 

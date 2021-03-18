@@ -71,7 +71,7 @@ class ReportingCallback(BaseCallback):
                     report_env.history.append(env_histories[env_idx][episode])
 
         if len(report_env.history) > 0:
-            training_data = reporting.format_history(report_env, lastn=50)
+            training_data = reporting.format_history(report_env, lastn=100)
             reporting.make_summary_file(training_data, self.report_dir, len(env_histories))
             if self.verbose:
                 print("Made summary file of training")

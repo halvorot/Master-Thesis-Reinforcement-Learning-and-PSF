@@ -94,7 +94,7 @@ class PSF:
             w += [X[:, i + 1]]
 
             # Composite State constrains
-            g += [self.sys["Hx"] @ X[:, i + 1]]
+            g += [self.sys["Hx"] @ X[:, i + 1] ]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
 

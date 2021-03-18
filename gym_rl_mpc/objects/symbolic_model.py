@@ -61,7 +61,7 @@ hx = np.asarray([[
     CONFIG["crash_angle_condition"],
     45*DEG2RAD,
     45*DEG2RAD,
-    -params.omega_setpoint(CONFIG["min_wind_speed"]),
+    -params.omega_setpoint(3),
     params.omega_setpoint(CONFIG["max_wind_speed"])
 ]]).T
 

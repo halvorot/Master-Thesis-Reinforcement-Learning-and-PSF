@@ -1,5 +1,4 @@
 from gym.envs.registration import register
-import numpy as np
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {
@@ -10,7 +9,7 @@ DEFAULT_CONFIG = {
     "crash_angle_condition": 10*DEG2RAD,
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
-    "max_wind_speed": 20,
+    "max_wind_speed": 15,
     "min_wind_speed": 10,
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward

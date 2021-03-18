@@ -206,8 +206,7 @@ class TurbineEnv(gym.Env):
         return [seed]
 
     def save_latest_step(self):
-        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:3]))
-        self.episode_history.setdefault('states_dot', []).append(np.copy(self.turbine.state[3:6]))
+        self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state))
         self.episode_history.setdefault('input', []).append(self.turbine.input)
         self.episode_history.setdefault('observations', []).append(self.observation)
         self.episode_history.setdefault('time', []).append(self.t_step*self.step_size)

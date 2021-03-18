@@ -236,4 +236,4 @@ if __name__ == '__main__':
     for i in range(number_of_iter):
         psf.calc([0, 0, 7.55 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12))
     end = time.time(
-    print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")
+    print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]"))

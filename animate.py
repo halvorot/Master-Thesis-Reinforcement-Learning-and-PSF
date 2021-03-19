@@ -17,7 +17,8 @@ import os
 def animate(frame):
     plt.cla()
     height = params.L
-    print(env.turbine.state)
+    if args.psf:
+        print(env.turbine.state)
     if frame == 0:
         blade_pitch = init_blade_pitch
     else:

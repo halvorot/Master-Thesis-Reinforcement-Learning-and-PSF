@@ -30,7 +30,7 @@ class TurbineEnv(gym.Env):
         # Legal limits for state observations
         low = np.array([-np.pi,  # theta
                         -np.finfo(np.float32).max,  # theta_dot
-                        -np.finfo(np.float32).max,  # omega
+                        0,  # omega
                         0,  # wind speed
                         ])
         high = np.array([np.pi,  # theta
@@ -125,9 +125,9 @@ class TurbineEnv(gym.Env):
             action_blade_pitch = action[1]*params.max_blade_pitch
             action_power = action[2]*params.max_power_generation
             action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
-            linearization_point = [self.turbine.adjusted_wind_speed]
+            params = [self.turbine.adjusted_wind_speed]
 
-            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
+            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, params)
             print(psf_corrected_action_un_normalized)
             print("ahsoåduh")
             psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force,
@@ -156,7 +156,7 @@ class TurbineEnv(gym.Env):
 
     def generate_environment(self):
         """
-        Generates environment with a turbine at random initial conditions
+        Generates environment with a turbine and a random initial wind speed
         """
         self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)

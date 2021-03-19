@@ -153,15 +153,12 @@ class Turbine:
 
 
 def _un_normalize_thrust_input(input):
-    input = np.clip(input, -1, 1)
     return input * params.max_thrust_force
 
 
 def _un_normalize_blade_pitch_input(input):
-    input = np.clip(input, -params.min_blade_pitch_ratio, 1)
     return input * params.max_blade_pitch
 
 
 def _un_normalize_power_input(input):
-    input = np.clip(input, 0, 1)
     return input * params.max_power_generation

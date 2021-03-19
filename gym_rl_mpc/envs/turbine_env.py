@@ -31,7 +31,7 @@ class TurbineEnv(gym.Env):
         # Legal limits for state observations
         low = np.array([-np.pi,  # theta
                         -np.finfo(np.float32).max,  # theta_dot
-                        -np.finfo(np.float32).max,  # omega
+                        0,  # omega
                         0,  # wind speed
                         ])
         high = np.array([np.pi,  # theta
@@ -59,7 +59,6 @@ class TurbineEnv(gym.Env):
                        N=30,
                        R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
                        PK_path=Path("PSF", "stored_PK"),
-                       lin_points=free_vars,
                        lin_bounds={"w": [self.min_wind_speed*params.wind_inflow_ratio, self.max_wind_speed*params.wind_inflow_ratio],
                                    "u_p": [0*params.max_blade_pitch, params.max_blade_pitch],
                                    "Omega": [params.omega_setpoint(self.min_wind_speed), params.omega_setpoint(self.max_wind_speed)],

@@ -9,7 +9,6 @@ from gym_rl_mpc.objects.turbine import Turbine
 import gym_rl_mpc.utils.model_params as params
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 import gym_rl_mpc.objects.symbolic_model as sym
-from casadi import SX, Function, jacobian
 from PSF.PSF import PSF
 
 class TurbineEnv(gym.Env):
@@ -45,25 +44,30 @@ class TurbineEnv(gym.Env):
                                                 dtype=np.float32)
 
         ## PSF init ##
-        psf_Ts = 1  # NEEDS NEW variable
-        A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
-        A_disc = np.eye(3) + psf_Ts * A_cont  # Euler discretization
-        B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
-        B_disc = psf_Ts * B_cont  # Euler discretization
-        free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
-        desired_seq = ["Omega", "u_p", "P_ref", "w"]
-        current_seq = [a.name() for a in free_vars]
-        change_to_seq = [current_seq.index(d) for d in desired_seq]
-        free_vars = [free_vars[i] for i in change_to_seq]
-        self.psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-                       N=30,
-                       R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
-                       PK_path=Path("PSF", "stored_PK"),
-                       lin_points=free_vars,
-                       lin_bounds={"w": [self.min_wind_speed*params.wind_inflow_ratio, self.max_wind_speed*params.wind_inflow_ratio],
-                                   "u_p": [0*params.max_blade_pitch, params.max_blade_pitch],
-                                   "Omega": [params.omega_setpoint(self.min_wind_speed), params.omega_setpoint(self.max_wind_speed)],
-                                   "P_ref": [0, params.max_power_generation]})
+        self.psf = PSF(sys={"xdot": sym.symbolic_x_dot,
+                       "x": sym.x,
+                       "u": sym.u,
+                       "p": sym.w,
+                       "Hx": sym.Hx,
+                       "hx": sym.hx,
+                       "Hu": sym.Hu,
+                       "hu": sym.hu
+                       },
+                  N=20,
+                  T=20,
+                  R=np.diag([
+                      1 / params.max_thrust_force ** 2,
+                      1 / params.max_blade_pitch ** 2,
+                      1 / params.max_power_generation ** 2
+                  ]),
+                  lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
+                                    self.max_wind_speed * params.wind_inflow_ratio],
+                              "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
+                              "Omega": [params.omega_setpoint(self.min_wind_speed),
+                                        params.omega_setpoint(self.max_wind_speed)],
+                              "P_ref": [0, params.max_power_generation]}
+                  )
+
 
         ## END PSF init ##
 
@@ -121,10 +125,11 @@ class TurbineEnv(gym.Env):
             action_blade_pitch = action[1]*params.max_blade_pitch
             action_power = action[2]*params.max_power_generation
             action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
-            linearization_point = [self.turbine.omega, action_blade_pitch, action_power, self.turbine.adjusted_wind_speed]
+            linearization_point = [self.turbine.adjusted_wind_speed]
 
             psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, linearization_point)
-
+            print(psf_corrected_action_un_normalized)
+            print("ahsoåduh")
             psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force,
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch,
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]

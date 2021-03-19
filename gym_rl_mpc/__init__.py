@@ -2,7 +2,7 @@ from gym.envs.registration import register
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {
-    "use_psf": False,
+    "use_psf": True,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "working_range_reward_multiplier": 10,

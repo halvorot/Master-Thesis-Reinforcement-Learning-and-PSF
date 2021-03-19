@@ -1,4 +1,5 @@
 import itertools
+import os
 import pickle
 import time
 from hashlib import sha1
@@ -6,7 +7,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas
-from casadi import SX, qpsol, Function, vertcat, inf, jacobian, DM, nlpsol
+from casadi import SX, qpsol, Function, vertcat, inf, jacobian, DM, nlpsol, external
+from casadi.tools import struct
+
 import gym_rl_mpc.objects.symbolic_model as sym
 from gym_rl_mpc.utils.model_params import max_thrust_force, max_blade_pitch, max_power_generation
 
@@ -25,11 +28,15 @@ class PSF:
                  R=None,
                  PK_path="",
                  param=None,
+                 steady_u=None,
+                 slack=False,
                  lin_bounds=None,
                  P=None,
                  alpha=None,
                  K=None
                  ):
+
+        self.slack = slack
         self.sys = sys
         self.N = N
         self.T = T
@@ -48,6 +55,10 @@ class PSF:
         else:
             self.R = R
 
+        if steady_u is None:
+            self.steady_u = np.zeros((self.nu, 1))
+        else:
+            self.steady_u = steady_u
         # if P is None:
         #    self.set_terminal_set()
         # else:
@@ -67,8 +78,11 @@ class PSF:
         U = SX.sym('U', self.nu, self.N)
         u_L = SX.sym('u_L', self.nu)
         p = SX.sym("p", self.np, 1)
-
-        objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+        if self.slack:
+            eps = SX.sym("eps", self.nx, self.N)
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e6 * eps[:].T @ eps[:]
+        else:
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
 
         w = []
         w0 = []
@@ -86,7 +100,7 @@ class PSF:
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [u_L]
+            w0 += [self.steady_u]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -94,15 +108,20 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [X0]
+            w0 += [self.model_step.fold(20).expand()(x0=X0, u=self.steady_u, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
-
+            if self.slack:
+                w += [eps[:, i]]
+                w0 += [0] * self.nx
+                g += [X[:, i + 1] - (1 + eps[:, i]) * self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf']]
+            else:
+                g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i], p=p)["xf"]]
             # State propagation
-            g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf']]
+
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
@@ -111,25 +130,31 @@ class PSF:
         # self.ubg += [0]
 
         opts = {
-            "verbose_init": True,
+            "verbose_init": False,
             "ipopt": {"print_level": 2},
             "print_time": False,
+            "compiler": "shell",
+            #"jit": True,
+            'jit_options': {"compiler": 'cl.exe'}
         }
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, p)}
-        self.solver = nlpsol("solver", "ipopt", prob, opts)
-        self.eval_w0 = Function("eval_w0", [X0, u_L], [vertcat(*w0)])
 
-    def calc(self, x, u_L, lin_dict):
+        self.solver = nlpsol("solver", "ipopt", prob, opts)
+        self.eval_w0 = Function("eval_w0", [X0, u_L, p], [vertcat(*w0)])
+
+    def calc(self, x, u_L, lin_dict, well_behaved=False):
         if self.init_guess.shape[0] == 0:
-            self.init_guess = np.asarray(self.eval_w0(x, u_L))
+            time.time()
+            self.init_guess = np.asarray(self.eval_w0(x, u_L, lin_dict))
         solution = self.solver(p=vertcat(x, u_L, lin_dict),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self.init_guess
                                )
-        prev = np.asarray(solution["x"])
-        self.init_guess = prev
+        if well_behaved:
+            prev = np.asarray(solution["x"])
+            self.init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
@@ -213,10 +238,21 @@ if __name__ == '__main__':
                   1 / max_blade_pitch ** 2,
                   1 / max_power_generation ** 2
               ]),
+              slack=True,
+              steady_u=np.array([[500000, 0, 10e6]]).T
               )
-    number_of_iter = 1000
+    number_of_iter = 50
     start = time.time()
     for i in range(number_of_iter):
-        psf.calc([0, 0, np.random.uniform(low=5, high=7.5) * RPM2RAD], [0, -0.1, 15e6], vertcat(12))
+        print(psf.calc([0, 0, np.random.uniform(low=5, high=7.5) * RPM2RAD],
+                       [
+                           2 * np.random.uniform(low=-max_thrust_force, high=max_thrust_force),
+                           2 * np.random.uniform(low=-4 * DEG2RAD, high=max_blade_pitch),
+                           2 * np.random.uniform(low=0, high=max_power_generation)
+                       ],
+                       vertcat(np.random.uniform(low=12, high=12))
+                       , well_behaved=True
+                       )
+              )
     end = time.time()
     print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")

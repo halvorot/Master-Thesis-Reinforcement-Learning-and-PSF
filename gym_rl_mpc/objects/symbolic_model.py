@@ -1,4 +1,3 @@
-from gym_rl_mpc.utils.model_params import C_1, C_4, C_2, C_3, C_5, d_r, k_r, l_r, J_r, b_d_r
 from casadi import SX, vertcat, jacobian, cos, sin, Function, nlpsol, inf
 import numpy as np
 from gym_rl_mpc import DEFAULT_CONFIG as CONFIG

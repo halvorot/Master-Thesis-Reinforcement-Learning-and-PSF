@@ -151,7 +151,7 @@ class TurbineEnv(gym.Env):
 
     def generate_environment(self):
         """
-        Generates environment with a turbine at random initial conditions
+        Generates environment with a turbine and a random initial wind speed
         """
         self.wind_speed = (self.max_wind_speed-self.min_wind_speed)*self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)

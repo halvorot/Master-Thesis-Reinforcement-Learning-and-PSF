@@ -3,10 +3,12 @@ import pickle
 import time
 from hashlib import sha1
 from pathlib import Path
-
+import matplotlib.pyplot as plt
 import numpy as np
-from casadi import SX, qpsol, Function, vertcat, inf, jacobian, DM
+import pandas
+from casadi import SX, qpsol, Function, vertcat, inf, jacobian, DM, nlpsol
 import gym_rl_mpc.objects.symbolic_model as sym
+from gym_rl_mpc.utils.model_params import max_thrust_force, max_blade_pitch, max_power_generation
 
 LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi
@@ -19,72 +21,72 @@ class PSF:
     def __init__(self,
                  sys,
                  N,
+                 T,
                  R=None,
                  PK_path="",
-                 lin_points=None,
+                 param=None,
                  lin_bounds=None,
                  P=None,
                  alpha=None,
                  K=None
                  ):
-        if lin_points is None:
-            lin_points = []
-
         self.sys = sys
         self.N = N
-        self.PK_path = PK_path
-        self.lin_points = vertcat(*lin_points)
-        self.lin_bounds = lin_bounds
+        self.T = T
 
-        self.nx = self.sys["A"].shape[1]
-        self.nu = self.sys["B"].shape[1]
+        if param is None:
+            self.param = SX([])
+        else:
+            self.param = param
+
+        self.PK_path = PK_path
+        self.nx = self.sys["x"].shape[0]
+        self.nu = self.sys["u"].shape[0]
+        self.np = self.sys["p"].shape[0]
         if R is None:
             self.R = np.eye(self.nu)
         else:
             self.R = R
 
-        #if P is None:
+        # if P is None:
         #    self.set_terminal_set()
-        #else:
-        #     self.P = P
+        # else:
+        #    self.P = P
         #    self.alpha = alpha
         #    self.K = K
 
         self._set_model_step()
 
-        self._LP_init(sys)
+        self._NLP_init()
+        self.init_guess = np.array([])
 
-    def _LP_init(self, N):
+    def _NLP_init(self):
 
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)
         U = SX.sym('U', self.nu, self.N)
         u_L = SX.sym('u_L', self.nu)
+        p = SX.sym("p", self.np, 1)
 
-        objective = (u_L - U[:, 0]).T @ self.R @ (
-                u_L - U[:, 0])
+        objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
 
         w = []
-
-        self.lbw = []
-        self.ubw = []
+        w0 = []
 
         g = []
         self.lbg = []
         self.ubg = []
 
         w += [X[:, 0]]
-        self.lbw += [-inf] * self.nx
-        self.ubw += [inf] * self.nx
-        g += [self.sys["Hx"] @ X[:, 0]]
-        self.lbg += [-inf] * g[-1].shape[0]
-        self.ubg += [self.sys["hx"]]
+        w0 += [X0]
+
         g += [X0 - X[:, 0]]
         self.lbg += [0] * self.nx
         self.ubg += [0] * self.nx
 
         for i in range(self.N):
             w += [U[:, i]]
+            w0 += [u_L]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -92,33 +94,42 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
+            w0 += [X0]
 
             # Composite State constrains
-            g += [self.sys["Hx"] @ X[:, i + 1] ]
+            g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
 
             # State propagation
-            g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i])['xf']]
+            g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf']]
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
-        #  g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
+        # g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
         # self.lbg += [-inf]
         # self.ubg += [0]
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, self.lin_points)}
-        opts = {"verbose": False, 'warm_start_primal': True, "warm_start_dual": True,
-                "osqp": {"verbose": False, "polish": True, "eps_prim_inf": 1.00e-22, "rho": 1.00e-22}}
-        # self.solver = qpsol("solver", "osqp", prob, opts)
-        self.solver = qpsol("solver", "qpoases", prob, {"printLevel": "none"})
+        opts = {
+            "verbose_init": True,
+            "ipopt": {"print_level": 2},
+            "print_time": False,
+        }
+
+        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, p)}
+        self.solver = nlpsol("solver", "ipopt", prob, opts)
+        self.eval_w0 = Function("eval_w0", [X0, u_L], [vertcat(*w0)])
 
     def calc(self, x, u_L, lin_dict):
-
+        if self.init_guess.shape[0] == 0:
+            self.init_guess = np.asarray(self.eval_w0(x, u_L))
         solution = self.solver(p=vertcat(x, u_L, lin_dict),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
+                               x0=self.init_guess
                                )
+        prev = np.asarray(solution["x"])
+        self.init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
@@ -151,49 +162,12 @@ class PSF:
             self.K = PK[:, : self.nx]
             pickle.dump((self.K, self.P), open(path, "wb"))
 
-        """
-        E = cp.Variable((self.nx, self.nx), symmetric=True)
-        Y = cp.Variable((self.nx, self.nu))
-        
-        objective = cp.Minimize(-cp.log_det(E))
-        constraints = []
-
-        for A, B in zip(A_set, B_set):
-            constraints.append(
-                bmat([
-                    [E, (A @ E + B @ Y).T],
-                    [A @ E + B @ Y, E]
-                ]) >> 0
-            )
-
-        for i in range(self.nx):
-            constraints.append(
-                bmat([
-                    [hx[None, i] ** 2, Hx[None, i, :] @ E],
-                    [E @ Hx[None, i, :].T, E]
-                ]) >> 0
-            )
-
-        for j in range(self.nu):
-            constraints.append(
-                bmat([
-                    [hu[None, j] ** 2, Hu[None, j, :] @ E],
-                    [E @ Hu[None, j, :].T, E]
-                ]) >> 0
-            )
-
-        problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=True)
-        self.P = np.linalg.inv(E.value)
-        self.alpha = 1
-        self.K = Y.value * self.P """
-
     def create_system_set(self):
         A_set = []
         B_set = []
 
         free_vars = SX.get_free(Function("list_free_vars", [], [self.sys["A"], self.sys["B"]]))
-        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
+        bounds = [self.sys["p"][k.name()] for k in free_vars]  # relist as given above
         eval_func = Function("eval_func", free_vars, [self.sys["A"], self.sys["B"]])
 
         for product in itertools.product(*bounds):  # creating maximum difference
@@ -204,36 +178,45 @@ class PSF:
         return A_set, B_set
 
     def _set_model_step(self):
-        x0 = SX.sym('x0', self.nx)
-        u = SX.sym('u', self.nu)
-        xf = self.sys["A"] @ x0 + self.sys["B"] @ u
-        self.model_step = Function('f', [x0, u], [xf], ['x0', 'u'], ['xf'])
+        M = 4  # RK4 steps per interval
+        DT = self.T / self.N / M
+        f = Function('f',
+                     [self.sys["x"], self.sys["u"], self.sys["p"]],
+                     [self.sys["xdot"]])
+        X0 = SX.sym('X0', self.nx)
+        U = SX.sym('U', self.nu)
+        P = SX.sym('P', self.np)
+        X = X0
+        for j in range(M):
+            k1 = f(X, U, P)
+            k2 = f(X + DT / 2 * k1, U, P)
+            k3 = f(X + DT / 2 * k2, U, P)
+            k4 = f(X + DT * k3, U, P)
+            X = X + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+        self.model_step = Function('F', [X0, U, P], [X], ['x0', 'u', 'p'], ['xf'])
 
 
 if __name__ == '__main__':
-    A_cont = jacobian(sym.symbolic_x_dot_simple, sym.x)
-    A_disc = np.eye(3) + A_cont  # Euler discretization
-    B_cont = jacobian(sym.symbolic_x_dot_simple, sym.u)
-    B_disc = B_cont  # Euler discretization
-    free_vars = SX.get_free(Function("list_free_vars", [], [A_disc, B_disc]))
-    desired_seq = ["Omega", "u_p", "P_ref", "w"]
-    current_seq = [a.name() for a in free_vars]
-    change_to_seq = [current_seq.index(d) for d in desired_seq]
-    free_vars = [free_vars[i] for i in change_to_seq]
-    psf = PSF({"A": A_disc, "B": B_disc, "Hx": sym.Hx, "Hu": sym.Hu, "hx": sym.hx, "hu": sym.hu},
-              N=30,
-              R=np.diag([15e6 / 50000 ** 2, 15e6 / 0.349 ** 2, 1 / 15e6]),
-              PK_path="stored_PK",
-              lin_points=free_vars,
-              lin_bounds={"w": [3 * 2.1 / 3, 25 * 2 / 3],
-                          "u_p": [0 * DEG2RAD, 20 * DEG2RAD],
-                          "Omega": [5 * RPM2RAD, 7.55 * RPM2RAD],
-                          "P_ref": [0, 15e6]})
-
-    print(psf.calc([0, 0, 5 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12)))
+    psf = PSF(sys={"xdot": sym.symbolic_x_dot,
+                   "x": sym.x,
+                   "u": sym.u,
+                   "p": sym.w,
+                   "Hx": sym.Hx,
+                   "hx": sym.hx,
+                   "Hu": sym.Hu,
+                   "hu": sym.hu
+                   },
+              N=20,
+              T=20,
+              R=np.diag([
+                  1 / max_thrust_force ** 2,
+                  1 / max_blade_pitch ** 2,
+                  1 / max_power_generation ** 2
+              ]),
+              )
     number_of_iter = 1000
     start = time.time()
     for i in range(number_of_iter):
-        psf.calc([0, 0, 7.55 * RPM2RAD], [0, -0.1, 15e6], vertcat(7 * RPM2RAD, 0, 15e6, 12))
+        psf.calc([0, 0, np.random.uniform(low=5, high=7.5) * RPM2RAD], [0, -0.1, 15e6], vertcat(12))
     end = time.time()
     print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")

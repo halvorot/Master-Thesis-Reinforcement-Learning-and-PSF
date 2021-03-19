@@ -38,11 +38,11 @@ class Turbine:
         self.adjusted_wind_speed = params.wind_inflow_ratio*init_wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
         init_power = params.power_regime(init_wind_speed) * params.max_power_generation
 
-        opt_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
+        self.steady_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
                                                        power=init_power,
                                                        thruster_force=0)
 
-        self.state = opt_state
+        self.u0 = [init_power, 0, blade_pitch]
         self.input = np.array([0, float(blade_pitch), init_power])  # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)

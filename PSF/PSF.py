@@ -28,7 +28,6 @@ class PSF:
                  R=None,
                  PK_path="",
                  param=None,
-                 steady_u=None,
                  slack=False,
                  lin_bounds=None,
                  P=None,
@@ -54,11 +53,6 @@ class PSF:
             self.R = np.eye(self.nu)
         else:
             self.R = R
-
-        if steady_u is None:
-            self.steady_u = np.zeros((self.nu, 1))
-        else:
-            self.steady_u = steady_u
         # if P is None:
         #    self.set_terminal_set()
         # else:
@@ -77,6 +71,7 @@ class PSF:
         X = SX.sym('X', self.nx, self.N + 1)
         U = SX.sym('U', self.nu, self.N)
         u_L = SX.sym('u_L', self.nu)
+        u0 = SX.sym('u0', self.nu)
         p = SX.sym("p", self.np, 1)
         if self.slack:
             eps = SX.sym("eps", self.nx, self.N)
@@ -100,7 +95,7 @@ class PSF:
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [self.steady_u]
+            w0 += [u0]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -108,7 +103,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(20).expand()(x0=X0, u=self.steady_u, p=p)["xf"]]
+            w0 += [self.model_step.fold(20).expand()(x0=X0, u=u0, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
@@ -133,30 +128,33 @@ class PSF:
             "verbose_init": False,
             "ipopt": {"print_level": 2},
             "print_time": False,
-            "compiler": "shell",
-            #"jit": True,
-            'jit_options': {"compiler": 'cl.exe'}
+            # "compiler": "shell",
+            # "jit": True,
+            # 'jit_options': {"compiler": 'cl.exe'}
         }
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, p)}
+        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
 
         self.solver = nlpsol("solver", "ipopt", prob, opts)
-        self.eval_w0 = Function("eval_w0", [X0, u_L, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [X0, u_L,u0, p], [vertcat(*w0)])
 
-    def calc(self, x, u_L, lin_dict, well_behaved=False):
+    def calc(self, x, u_L, u0, params, reset_x0=False):
         if self.init_guess.shape[0] == 0:
-            time.time()
-            self.init_guess = np.asarray(self.eval_w0(x, u_L, lin_dict))
-        solution = self.solver(p=vertcat(x, u_L, lin_dict),
+            self.init_guess = np.asarray(self.eval_w0(x, u_L, u0, params))
+
+        solution = self.solver(p=vertcat(x, u_L, u0, params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self.init_guess
                                )
-        if well_behaved:
+        if not reset_x0:
             prev = np.asarray(solution["x"])
             self.init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
+
+    def reset_init_guess(self):
+        self.init_guess = np.array([])
 
     def set_terminal_set(self):
         self.alpha = 0.9
@@ -239,19 +237,21 @@ if __name__ == '__main__':
                   1 / max_power_generation ** 2
               ]),
               slack=True,
-              steady_u=np.array([[500000, 0, 10e6]]).T
               )
     number_of_iter = 50
     start = time.time()
     for i in range(number_of_iter):
-        print(psf.calc([0, 0, np.random.uniform(low=5, high=7.5) * RPM2RAD],
-                       [
+        print(psf.calc(x=[np.random.uniform(low=-7, high=10) * DEG2RAD,
+                        0,
+                        np.random.uniform(low=5, high=7.5) * RPM2RAD],
+                       u_L=[
                            2 * np.random.uniform(low=-max_thrust_force, high=max_thrust_force),
                            2 * np.random.uniform(low=-4 * DEG2RAD, high=max_blade_pitch),
                            2 * np.random.uniform(low=0, high=max_power_generation)
                        ],
-                       vertcat(np.random.uniform(low=12, high=12))
-                       , well_behaved=True
+                       u0=vertcat([500000, 0, 10e6]),
+                       params=vertcat(np.random.uniform(low=3, high=25)),
+                       reset_x0=True
                        )
               )
     end = time.time()

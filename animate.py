@@ -132,9 +132,10 @@ if __name__ == "__main__":
         if args.psf:
             config = DEFAULT_CONFIG.copy()
             config['use_psf'] = True
-            print("Using PSF corrected actions")
         else:
             config = DEFAULT_CONFIG
+        if config['use_psf']:
+            print("Using PSF corrected actions")
         env = gym.make("TurbineStab-v0", env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()

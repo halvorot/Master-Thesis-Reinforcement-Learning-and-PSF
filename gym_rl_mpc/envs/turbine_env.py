@@ -125,11 +125,10 @@ class TurbineEnv(gym.Env):
             action_blade_pitch = action[1]*params.max_blade_pitch
             action_power = action[2]*params.max_power_generation
             action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
-            params = [self.turbine.adjusted_wind_speed]
+            psf_params = [self.turbine.adjusted_wind_speed]
 
-            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, params)
-            print(psf_corrected_action_un_normalized)
-            print("ahsoåduh")
+            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, psf_params)
+            
             psf_corrected_action = [psf_corrected_action_un_normalized[0]/params.max_thrust_force,
                                 psf_corrected_action_un_normalized[1]/params.max_blade_pitch,
                                 psf_corrected_action_un_normalized[2]/params.max_power_generation]

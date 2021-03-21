@@ -1,17 +1,10 @@
 import itertools
-import os
 import pickle
-import time
 from hashlib import sha1
 from pathlib import Path
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas
-from casadi import SX, qpsol, Function, vertcat, inf, jacobian, DM, nlpsol, external
-from casadi.tools import struct
 
-import gym_rl_mpc.objects.symbolic_model as sym
-from gym_rl_mpc.utils.model_params import max_thrust_force, max_blade_pitch, max_power_generation
+import numpy as np
+from casadi import SX, Function, vertcat, inf, nlpsol
 
 LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi
@@ -32,7 +25,8 @@ class PSF:
                  lin_bounds=None,
                  P=None,
                  alpha=None,
-                 K=None
+                 K=None,
+                 jit_flag=False,
                  ):
 
         self.slack = slack
@@ -62,6 +56,7 @@ class PSF:
 
         self._set_model_step()
 
+        self.jit_flag = jit_flag
         self._NLP_init()
         self.init_guess = np.array([])
 
@@ -124,25 +119,33 @@ class PSF:
         # self.lbg += [-inf]
         # self.ubg += [0]
 
+
+        # Pick a compiler
+        # compiler = "gcc"  # Linux
+        # compiler = "clang"  # OSX
+        compiler = "cl.exe"  # Windows
+
+        flags = ["/O2"]  # win
+        jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
         opts = {
             "verbose_init": False,
             "ipopt": {"print_level": 2},
             "print_time": False,
-            # "compiler": "shell",
-            # "jit": True,
-            # 'jit_options': {"compiler": 'cl.exe'}
+            "compiler": "shell",
+            "jit": self.jit_flag,
+            'jit_options': jit_options
         }
 
         prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
 
         self.solver = nlpsol("solver", "ipopt", prob, opts)
-        self.eval_w0 = Function("eval_w0", [X0, u_L,u0, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
 
-    def calc(self, x, u_L, u0, params, reset_x0=False):
+    def calc(self, x, u_L, u0, ext_params, reset_x0=False):
         if self.init_guess.shape[0] == 0:
-            self.init_guess = np.asarray(self.eval_w0(x, u_L, u0, params))
+            self.init_guess = np.asarray(self.eval_w0(x, u_L, u0, ext_params))
 
-        solution = self.solver(p=vertcat(x, u_L, u0, params),
+        solution = self.solver(p=vertcat(x, u_L, u0, ext_params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self.init_guess
@@ -220,39 +223,4 @@ class PSF:
 
 
 if __name__ == '__main__':
-    psf = PSF(sys={"xdot": sym.symbolic_x_dot,
-                   "x": sym.x,
-                   "u": sym.u,
-                   "p": sym.w,
-                   "Hx": sym.Hx,
-                   "hx": sym.hx,
-                   "Hu": sym.Hu,
-                   "hu": sym.hu
-                   },
-              N=20,
-              T=20,
-              R=np.diag([
-                  1 / max_thrust_force ** 2,
-                  1 / max_blade_pitch ** 2,
-                  1 / max_power_generation ** 2
-              ]),
-              slack=True,
-              )
-    number_of_iter = 50
-    start = time.time()
-    for i in range(number_of_iter):
-        print(psf.calc(x=[np.random.uniform(low=-7, high=10) * DEG2RAD,
-                        0,
-                        np.random.uniform(low=5, high=7.5) * RPM2RAD],
-                       u_L=[
-                           2 * np.random.uniform(low=-max_thrust_force, high=max_thrust_force),
-                           2 * np.random.uniform(low=-4 * DEG2RAD, high=max_blade_pitch),
-                           2 * np.random.uniform(low=0, high=max_power_generation)
-                       ],
-                       u0=vertcat([500000, 0, 10e6]),
-                       params=vertcat(np.random.uniform(low=3, high=25)),
-                       reset_x0=True
-                       )
-              )
-    end = time.time()
-    print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")
+    pass

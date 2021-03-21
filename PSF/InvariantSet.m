@@ -5,7 +5,7 @@ Px = Polyhedron(Hx, hx);
 
 x_center= Px.chebyCenter();
 x_0 = x_center.x;
-hx_0 =hx-Hx*x_0;
+hx_0 =hx+Hx*x_0;
 
 
 Pu= Polyhedron(Hu, hu);
@@ -14,6 +14,22 @@ u_center= Pu.chebyCenter();
 u_0 = x_center.x;
 hu_0 =hu- Hu*u_0;
 
+x_0=Polyhedron(Hx,hx).chebyCenter().x
+u_0=Polyhedron(Hu,hu).chebyCenter().x
+Ao = [A A*x_0]
+Ao(end+1,end)=1
+Bo = [B B*u_0]
+Bo(end+1,end)=1 
+
+hx_0 = hx+Hx*x_0
+
+Hx_0= Hx
+Hx_0(end,end+1)=0
+
+hu_0 = hu+Hu*u_0,0
+
+Hu_0= Hu
+Hu_0(end,end+1)=0
 
 
 

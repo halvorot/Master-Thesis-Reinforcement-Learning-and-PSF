@@ -20,7 +20,7 @@ def animate(frame):
     if frame == 0:
         blade_pitch = init_blade_pitch
     else:
-        blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/params.max_blade_pitch
+        blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/ext_params.max_blade_pitch
 
     if args.data:
         # If reading from file:

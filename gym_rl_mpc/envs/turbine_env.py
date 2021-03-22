@@ -67,7 +67,9 @@ class TurbineEnv(gym.Env):
                                    "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
                                    "Omega": [params.omega_setpoint(self.min_wind_speed),
                                              params.omega_setpoint(self.max_wind_speed)],
-                                   "P_ref": [0, params.max_power_generation]}
+                                   "P_ref": [0, params.max_power_generation],
+                                   "theta": [-10, 10],
+                                   "theta_dot": [-45, 45]}
                        )
 
         ## END PSF init ##
@@ -172,7 +174,7 @@ class TurbineEnv(gym.Env):
         theta_dot_deg_s = self.turbine.state[1] * RAD2DEG
         omega_rpm = self.turbine.state[2] * RAD2RPM
         power_error_MegaWatts = np.abs(action[2] - self.turbine.power_regime(self.wind_speed)) * (
-                    self.turbine.max_power_generation / 1e6)
+                self.turbine.max_power_generation / 1e6)
 
         omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed) * RAD2RPM
         omega_error_rpm = np.abs(omega_rpm - omega_ref_rpm)

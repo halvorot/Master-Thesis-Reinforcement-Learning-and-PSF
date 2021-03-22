@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import numpy as np
 from casadi import vertcat
@@ -25,8 +26,19 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
               1 / params.max_blade_pitch ** 2,
               1 / params.max_power_generation ** 2
           ]),
-          slack=True,
-          jit_flag=False
+          PK_path=Path("PSF", "stored_PK"),
+          lin_bounds={"w": [3,
+                            25],
+                      "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
+                      "Omega": [params.omega_setpoint(3),
+                                params.omega_setpoint(25)],
+                      "P_ref": [0, params.max_power_generation],
+                      "theta": [-10 * sym.DEG2RAD, 10 * sym.DEG2RAD],
+                      "theta_dot": [-45 * sym.DEG2RAD, 45 * sym.DEG2RAD]
+                      },
+          slack_flag=True,
+          jit_flag=False,
+          terminal_flag=True
           )
 start = time.time()
 for i in range(number_of_iter):
@@ -46,5 +58,3 @@ for i in range(number_of_iter):
 end = time.time()
 print(
     f"Jit: {psf.jit_flag}. Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")
-
-

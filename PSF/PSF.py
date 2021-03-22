@@ -4,11 +4,7 @@ from hashlib import sha1
 from pathlib import Path
 
 import numpy as np
-from casadi import SX, Function, vertcat, inf, nlpsol
-
-LARGE_NUM = 1e9
-RPM2RAD = 1 / 60 * 2 * np.pi
-DEG2RAD = 1 / 360 * 2 * np.pi
+from casadi import SX, Function, vertcat, inf, nlpsol, jacobian
 
 LEN_FILE_STR = 20
 
@@ -21,44 +17,53 @@ class PSF:
                  R=None,
                  PK_path="",
                  param=None,
-                 slack=False,
                  lin_bounds=None,
                  P=None,
                  alpha=None,
                  K=None,
+                 slack_flag=True,
+                 terminal_flag=False,
                  jit_flag=False,
                  ):
+        self.jit_flag = jit_flag
+        self.terminal_flag = terminal_flag
+        self.slack_flag = slack_flag
 
-        self.slack = slack
         self.sys = sys
         self.N = N
         self.T = T
+        self.lin_bounds = lin_bounds
+
+        self.PK_path = PK_path
+        self.nx = self.sys["x"].shape[0]
+        self.nu = self.sys["u"].shape[0]
+        self.np = self.sys["p"].shape[0]
 
         if param is None:
             self.param = SX([])
         else:
             self.param = param
 
-        self.PK_path = PK_path
-        self.nx = self.sys["x"].shape[0]
-        self.nu = self.sys["u"].shape[0]
-        self.np = self.sys["p"].shape[0]
         if R is None:
             self.R = np.eye(self.nu)
         else:
             self.R = R
-        # if P is None:
-        #    self.set_terminal_set()
-        # else:
-        #    self.P = P
-        #    self.alpha = alpha
-        #    self.K = K
+
+        if self.terminal_flag:
+            if P is None:
+                self.set_terminal_set()
+            else:
+                self.P = P
+                self.alpha = alpha
+                self.K = K
+
+        self._centroid_Px = np.zeros((self.nx, 1))
+        self._centroid_Pu = np.zeros((self.nu, 1))
+        self._init_guess = np.array([])
 
         self._set_model_step()
 
-        self.jit_flag = jit_flag
         self._NLP_init()
-        self.init_guess = np.array([])
 
     def _NLP_init(self):
 
@@ -68,7 +73,7 @@ class PSF:
         u_L = SX.sym('u_L', self.nu)
         u0 = SX.sym('u0', self.nu)
         p = SX.sym("p", self.np, 1)
-        if self.slack:
+        if self.slack_flag:
             eps = SX.sym("eps", self.nx, self.N)
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e6 * eps[:].T @ eps[:]
         else:
@@ -104,7 +109,7 @@ class PSF:
             g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
-            if self.slack:
+            if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
                 g += [X[:, i + 1] - (1 + eps[:, i]) * self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf']]
@@ -115,11 +120,14 @@ class PSF:
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
-        # g += [X[:, self.N].T @ self.P @ X[:, self.N] - [self.alpha]]
-        # self.lbg += [-inf]
-        # self.ubg += [0]
+        # Terminal Set constrain
+        if self.terminal_flag:
+            XN_shifted = X[:, self.N] - self._centroid_Px
+            g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
+            self.lbg += [-inf]
+            self.ubg += [0]
 
-
+        # JIT
         # Pick a compiler
         # compiler = "gcc"  # Linux
         # compiler = "clang"  # OSX
@@ -127,6 +135,8 @@ class PSF:
 
         flags = ["/O2"]  # win
         jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
+
+        # JIT
         opts = {
             "verbose_init": False,
             "ipopt": {"print_level": 2},
@@ -142,22 +152,22 @@ class PSF:
         self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
 
     def calc(self, x, u_L, u0, ext_params, reset_x0=False):
-        if self.init_guess.shape[0] == 0:
-            self.init_guess = np.asarray(self.eval_w0(x, u_L, u0, ext_params))
+        if self._init_guess.shape[0] == 0:
+            self._init_guess = np.asarray(self.eval_w0(x, u_L, u0, ext_params))
 
         solution = self.solver(p=vertcat(x, u_L, u0, ext_params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
-                               x0=self.init_guess
+                               x0=self._init_guess
                                )
         if not reset_x0:
             prev = np.asarray(solution["x"])
-            self.init_guess = prev
+            self._init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
     def reset_init_guess(self):
-        self.init_guess = np.array([])
+        self._init_guess = np.array([])
 
     def set_terminal_set(self):
         self.alpha = 0.9
@@ -166,7 +176,8 @@ class PSF:
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
-            self.K, self.P = pickle.load(open(path, mode="rb"))
+            load_tuple = pickle.load(open(path, mode="rb"))
+            self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
         except FileNotFoundError:
             print("Could not find stored KP, using MATLAB.")
             import matlab.engine
@@ -181,20 +192,24 @@ class PSF:
 
             eng = matlab.engine.start_matlab()
             eng.eval("addpath(genpath('./'))")
-            m_PK = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu)
+            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, nargout=4)
             eng.quit()
-            PK = np.asarray(m_PK)
-            self.P = PK[:, :self.nx]
-            self.K = PK[:, : self.nx]
-            pickle.dump((self.K, self.P), open(path, "wb"))
+
+            self.P = np.asarray(P)
+            self.K = np.asarray(K)
+            self._centroid_Px = np.asarray(centroid_Px)
+            self._centroid_Pu = np.asarray(centroid_Pu)
+            dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
+            pickle.dump(dump_tuple, open(path, "wb"))
 
     def create_system_set(self):
         A_set = []
         B_set = []
-
-        free_vars = SX.get_free(Function("list_free_vars", [], [self.sys["A"], self.sys["B"]]))
-        bounds = [self.sys["p"][k.name()] for k in free_vars]  # relist as given above
-        eval_func = Function("eval_func", free_vars, [self.sys["A"], self.sys["B"]])
+        A = jacobian(self.sys["xdot"], self.sys["x"])
+        B = jacobian(self.sys["xdot"], self.sys["u"])
+        free_vars = SX.get_free(Function("list_free_vars", [], [A, B]))
+        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
+        eval_func = Function("eval_func", free_vars, [A, B])
 
         for product in itertools.product(*bounds):  # creating maximum difference
             AB_set = eval_func(*product)

@@ -124,7 +124,7 @@ if __name__ == "__main__":
         data_angle = data['theta']
         data_input = np.array([data['F']])
         data_reward = np.array(data['reward'])
-        env_id = "TurbineStab-v0"
+        env_id = "TurbineStab-v1"
     else:
         done = False
         if args.psf:
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             config = DEFAULT_CONFIG
         if config['use_psf']:
             print("Using PSF corrected actions")
-        env = gym.make("TurbineStab-v0", env_config=config)
+        env = gym.make("TurbineStab-v1", env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()
         if args.agent:

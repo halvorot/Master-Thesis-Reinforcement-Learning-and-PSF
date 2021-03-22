@@ -136,7 +136,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Make environment (NUM_CPUs parallel envs)
-    env_id = 'TurbineStab-v0'
+    env_id = 'TurbineStab-v1'
     if args.psf:
         customconfig = DEFAULT_CONFIG.copy()
         customconfig['use_psf'] = True

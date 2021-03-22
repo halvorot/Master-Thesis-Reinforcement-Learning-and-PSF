@@ -41,7 +41,7 @@ if __name__ == "__main__":
         print("Using PSF corrected actions")
     else:
         config = DEFAULT_CONFIG
-    env = gym.make("TurbineStab-v0", env_config=config)
+    env = gym.make("TurbineStab-v1", env_config=config)
     env_id = env.unwrapped.spec.id
     if args.agent:
         agent_path = args.agent

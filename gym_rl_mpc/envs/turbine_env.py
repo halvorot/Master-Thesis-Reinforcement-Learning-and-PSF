@@ -179,12 +179,13 @@ class TurbineEnv(gym.Env):
 
         # Set each part of the reward
         self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
-        self.theta_dot_reward = -self.reward_theta_dot * theta_dot_deg_s ** 2
+        self.theta_dot_reward = -self.gamma_theta_dot * theta_dot_deg_s ** 2
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
         self.control_reward = -self.reward_control * (action[0] ** 2 + action[1] ** 2)
+        self.psf_reward = -self.gamma_psf * np.abs(np.subtract(self.agent_action, self.psf_action))
 
-        step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.reward_survival
+        step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.psf_reward + self.reward_survival
 
         # Check if episode is done
         end_cond_2 = self.t_step >= self.max_episode_time / self.step_size

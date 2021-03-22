@@ -14,13 +14,14 @@ DEFAULT_CONFIG = {
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
-    "reward_theta_dot": 3,                      # Coefficient for angular rate penalty
+    "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
+    "gamma_psf": 1/3,
     "reward_control": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
 }
 
 register(
-    id='TurbineStab-v0',
+    id='TurbineStab-v1',
     entry_point='gym_rl_mpc.envs:TurbineEnv',
     kwargs={'env_config': DEFAULT_CONFIG}
 )

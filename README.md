@@ -57,7 +57,7 @@ Test yalmip in Matlab:
 ```
 Test PSF module:
 ```
->>> python test_py
+>>> python test_PSF.py
 ```
 
 ## Running the program

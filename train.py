@@ -98,7 +98,8 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/theta_dot_reward', history[env_idx]['theta_dot_reward'])
                     self.logger.record_mean('custom/omega_reward', history[env_idx]['omega_reward'])
                     self.logger.record_mean('custom/power_reward', history[env_idx]['power_reward'])
-                    self.logger.record_mean('custom/control_reward', history[env_idx]['control_reward'])
+                    self.logger.record_mean('custom/input_reward', history[env_idx]['input_reward'])
+                    self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
 
         return True
 

@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
     "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
     "gamma_psf": 1/3,
-    "reward_control": 0,                        # Coefficient for control input penalty
+    "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
 }
 

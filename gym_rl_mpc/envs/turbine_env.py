@@ -182,10 +182,16 @@ class TurbineEnv(gym.Env):
         self.theta_dot_reward = -self.gamma_theta_dot * theta_dot_deg_s ** 2
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
-        self.control_reward = -self.reward_control * (action[0] ** 2 + action[1] ** 2)
+        self.input_reward = -self.gamma_input * (action[0] ** 2 + action[1] ** 2)
         self.psf_reward = -self.gamma_psf * np.abs(np.subtract(self.agent_action, self.psf_action))
 
-        step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.psf_reward + self.reward_survival
+        step_reward = (self.theta_reward 
+                        + self.theta_dot_reward 
+                        + self.omega_reward 
+                        + self.power_reward 
+                        + self.input_reward 
+                        + self.psf_reward 
+                        + self.reward_survival)
 
         # Check if episode is done
         end_cond_2 = self.t_step >= self.max_episode_time / self.step_size
@@ -230,7 +236,8 @@ class TurbineEnv(gym.Env):
         self.episode_history.setdefault('theta_dot_reward', []).append(self.theta_dot_reward)
         self.episode_history.setdefault('omega_reward', []).append(self.omega_reward)
         self.episode_history.setdefault('power_reward', []).append(self.power_reward)
-        self.episode_history.setdefault('control_reward', []).append(self.control_reward)
+        self.episode_history.setdefault('input_reward', []).append(self.input_reward)
+        self.episode_history.setdefault('psf_reward', []).append(self.psf_reward)
 
         self.episode_history.setdefault('agent_actions', []).append(self.agent_action)
         self.episode_history.setdefault('psf_actions', []).append(self.psf_action)
@@ -249,7 +256,8 @@ class TurbineEnv(gym.Env):
             'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),
             'omega_reward': np.array(self.episode_history['omega_reward']).mean(),
             'power_reward': np.array(self.episode_history['power_reward']).mean(),
-            'control_reward': np.array(self.episode_history['control_reward']).mean(),
+            'input_reward': np.array(self.episode_history['input_reward']).mean(),
+            'psf_reward': np.array(self.episode_history['psf_reward']).mean(),
         }
 
         self.total_history.append(self.history)

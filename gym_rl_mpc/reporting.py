@@ -24,7 +24,8 @@ def format_history(env, lastn=-1):
     theta_dot_rewards = np.array([obj['theta_dot_reward'] for obj in relevant_history])
     omega_rewards = np.array([obj['omega_reward'] for obj in relevant_history])
     power_rewards = np.array([obj['power_reward'] for obj in relevant_history])
-    control_rewards = np.array([obj['control_reward'] for obj in relevant_history])
+    input_rewards = np.array([obj['input_reward'] for obj in relevant_history])
+    psf_rewards = np.array([obj['psf_reward'] for obj in relevant_history])
 
     labels = np.array([r"episode", 
                         r"reward", 
@@ -39,7 +40,8 @@ def format_history(env, lastn=-1):
                         r"theta_dot_reward", 
                         r"omega_reward", 
                         r"power_reward", 
-                        r"control_reward"])
+                        r"input_reward",
+                        r"psf_reward"])
 
     episode_nums = episode_nums.reshape((len(relevant_history), 1))
     rewards = rewards.reshape((len(relevant_history), 1))
@@ -55,7 +57,8 @@ def format_history(env, lastn=-1):
     theta_dot_rewards = theta_dot_rewards.reshape((len(relevant_history), 1))
     omega_rewards = omega_rewards.reshape((len(relevant_history), 1))
     power_rewards = power_rewards.reshape((len(relevant_history), 1))
-    control_rewards = control_rewards.reshape((len(relevant_history), 1))
+    input_rewards = input_rewards.reshape((len(relevant_history), 1))
+    psf_rewards = psf_rewards.reshape((len(relevant_history), 1))
 
     report_data = np.hstack([   episode_nums,
                                 rewards,
@@ -70,7 +73,8 @@ def format_history(env, lastn=-1):
                                 theta_dot_rewards,
                                 omega_rewards,
                                 power_rewards,
-                                control_rewards
+                                input_rewards,
+                                psf_rewards
                             ])
 
     df = DataFrame(report_data, columns=labels)

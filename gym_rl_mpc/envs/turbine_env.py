@@ -1,15 +1,8 @@
-import gym
 import numpy as np
-from gym.utils import seeding
-from termcolor import colored
 
 from gym_rl_mpc.envs.base_turbine_env import BaseTurbineEnv
 from gym_rl_mpc.objects.turbine import Turbine
-import gym_rl_mpc.utils.model_params as params
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
-import gym_rl_mpc.objects.symbolic_model as sym
-from PSF.PSF import PSF
-
 
 class ConstantWind(BaseTurbineEnv):
     def __init__(self, *args, **kwargs) -> None:

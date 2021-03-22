@@ -247,6 +247,7 @@ class TurbineEnv(gym.Env):
             'episode_num': self.episode,
             'avg_abs_theta': np.abs(np.array(self.episode_history['states'])[:, 0]).mean(),
             'std_theta': np.array(self.episode_history['states'])[:, 0].std(),
+            'avg_abs_theta_dot': np.abs(np.array(self.episode_history['states'])[:, 1]).mean(),
             'crashed': int(self.crashed),
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,

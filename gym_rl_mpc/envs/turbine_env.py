@@ -168,6 +168,7 @@ class TurbineEnv(gym.Env):
         """
         done = False
 
+        # Convert variables to intuitive units
         theta_deg = self.turbine.platform_angle * RAD2DEG
         theta_dot_deg_s = self.turbine.state[1] * RAD2DEG
         omega_rpm = self.turbine.state[2] * RAD2RPM
@@ -177,6 +178,7 @@ class TurbineEnv(gym.Env):
         omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed) * RAD2RPM
         omega_error_rpm = np.abs(omega_rpm - omega_ref_rpm)
 
+        # Set each part of the reward
         self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
         self.theta_dot_reward = -self.reward_theta_dot * theta_dot_deg_s ** 2
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
@@ -185,6 +187,7 @@ class TurbineEnv(gym.Env):
 
         step_reward = self.theta_reward + self.theta_dot_reward + self.omega_reward + self.power_reward + self.control_reward + self.reward_survival
 
+        # Check if episode is done
         end_cond_2 = self.t_step >= self.max_episode_time / self.step_size
         crash_cond_1 = np.abs(self.turbine.platform_angle) > self.crash_angle_condition
         crash_cond_2 = self.turbine.omega > self.crash_omega_max

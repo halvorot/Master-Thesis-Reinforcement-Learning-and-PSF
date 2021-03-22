@@ -18,8 +18,10 @@ def animate(frame):
     plt.cla()
     height = params.L
     if frame == 0:
+        thr = 0
         blade_pitch = init_blade_pitch
     else:
+        thr = 1
         blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/ext_params.max_blade_pitch
 
     if args.data:
@@ -31,7 +33,7 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0, blade_pitch, params.power_regime(env.wind_speed)])
+            action = np.array([thr, blade_pitch, params.power_regime(env.wind_speed)])
             
             
         _, _, done, _ = env.step(action)
@@ -56,7 +58,7 @@ def animate(frame):
     # Plot pole
     ax_ani.plot(x, y, color='b', linewidth=2)
     # Plot arrow proportional to input force
-    ax_ani.arrow(x = -params.L_thr*np.sin(env.turbine.platform_angle), y = -params.L_thr*np.cos(env.turbine.platform_angle), dx=100*action[0], dy=0, head_width=2, head_length=2, length_includes_head=True)
+    ax_ani.arrow(x = -params.L_thr*np.sin(env.turbine.platform_angle), y = -params.L_thr*np.cos(env.turbine.platform_angle), dx=100*env.turbine.input[0]/params.max_thrust_force, dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot arrow proportional to wind force
     ax_ani.arrow(x = x_top, y = y_top, dx=30*(env.turbine.wind_force/params.max_wind_force), dy=0, head_width=2, head_length=2, length_includes_head=True)
     # Plot wind arrow with wind number

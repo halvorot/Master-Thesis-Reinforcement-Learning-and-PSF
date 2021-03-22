@@ -50,7 +50,6 @@ max_wind_force = 1e7                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 max_power_generation = 15e6
 max_generator_torque = max_power_generation/omega_setpoint(0)
-tau_blade_pitch = 0.1                   # Blade pitch time constant
 tau_thr = 2                             # Thrust force time constant
 
 

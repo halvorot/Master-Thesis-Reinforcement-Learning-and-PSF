@@ -47,7 +47,6 @@ class Turbine:
         self.input = self.u0                            # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
-        self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation

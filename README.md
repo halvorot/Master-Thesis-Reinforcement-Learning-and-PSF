@@ -6,6 +6,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a pendulu
  - Yalmip 20200930
  - Mosek 9.2
  - MATLAB R2011a or later (Tested with 2020b)
+ - MPT 3
 
 
 
@@ -19,12 +20,8 @@ Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interfac
 ```
 addpath <MSKHOME>/mosek/9.2/toolbox/r2015aom
 ```
-### Yalmip
-Yalmip is easily through the txbmananger http://tbxmanager.com/. 
-After installation, run the follow command in Matlab:
-```
->> tbxmanager install yalmip
-```
+### MPT toolbox and Yalmip
+MPT toolbox and Yalmip can be install through the `install_mpt.m` from https://www.mpt3.org/Main/Installation.
 
 ### Python dependencies and packages
 
@@ -50,13 +47,17 @@ Test Mosek in Matlab:
 ```
 >> mosekdiag
 ```
+Test mpt in Matlab:
+```
+>> mpt_init
+```
 Test yalmip in Matlab:
 ```
 >> yalmiptest
 ```
 Test PSF module:
 ```
->>> python PSF/PSF.p
+>>> python test_py
 ```
 
 ## Running the program

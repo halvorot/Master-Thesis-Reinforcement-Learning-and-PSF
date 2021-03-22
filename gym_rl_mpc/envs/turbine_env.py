@@ -183,7 +183,7 @@ class TurbineEnv(gym.Env):
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
         self.input_reward = -self.gamma_input * (action[0] ** 2 + action[1] ** 2)
-        self.psf_reward = -self.gamma_psf * np.abs(np.subtract(self.agent_action, self.psf_action))
+        self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
 
         step_reward = (self.theta_reward 
                         + self.theta_dot_reward 

@@ -9,10 +9,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame
 
-from gym_rl_mpc import DEFAULT_CONFIG
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--env',
+        type=str,
+        default='ConstantWind-v0',
+        choices=gym_rl_mpc.SCENARIOS.keys(),
+        help="Environment to run."
+    )
     parser.add_argument(
         '--agent',
         help='Path to agent .zip file.',
@@ -36,12 +42,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.psf:
-        config = DEFAULT_CONFIG.copy()
+        config = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
         config['use_psf'] = True
         print("Using PSF corrected actions")
     else:
-        config = DEFAULT_CONFIG
-    env = gym.make("TurbineStab-v1", env_config=config)
+        config = gym_rl_mpc.SCENARIOS[args.env]['config']
+    env = gym.make(args.env, env_config=config)
     env_id = env.unwrapped.spec.id
     if args.agent:
         agent_path = args.agent

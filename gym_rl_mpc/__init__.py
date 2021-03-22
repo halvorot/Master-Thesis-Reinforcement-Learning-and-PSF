@@ -20,8 +20,26 @@ DEFAULT_CONFIG = {
     "reward_survival": 1,
 }
 
-register(
-    id='TurbineStab-v1',
-    entry_point='gym_rl_mpc.envs:TurbineEnv',
-    kwargs={'env_config': DEFAULT_CONFIG}
-)
+CONSTANT_WIND_CONFIG = DEFAULT_CONFIG.copy()
+
+VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
+VARIABLE_WIND_CONFIG["wind_period"] = 60
+VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 5
+
+SCENARIOS = {
+    'ConstantWind-v0': {   
+        'entry_point': 'gym_rl_mpc.envs:ConstantWind',
+        'config': CONSTANT_WIND_CONFIG
+    },
+    'VariableWind-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWind',
+        'config': VARIABLE_WIND_CONFIG
+    }
+}
+
+for scenario in SCENARIOS:
+    register(
+        id=scenario,
+        entry_point=SCENARIOS[scenario]['entry_point'],
+        kwargs={'env_config': SCENARIOS[scenario]['config']}
+    )

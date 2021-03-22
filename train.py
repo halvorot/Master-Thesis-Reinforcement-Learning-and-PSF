@@ -8,7 +8,6 @@ import numpy as np
 import json
 
 from gym_rl_mpc import reporting
-from gym_rl_mpc import DEFAULT_CONFIG
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -119,6 +118,13 @@ if __name__ == '__main__':
         help='Path to the RL agent to continue training from.',
     )
     parser.add_argument(
+        '--env',
+        type=str,
+        default='ConstantWind-v0',
+        choices=gym_rl_mpc.SCENARIOS.keys(),
+        help="Environment to run."
+    )
+    parser.add_argument(
         '--note',
         type=str,
         default=None,
@@ -137,9 +143,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Make environment (NUM_CPUs parallel envs)
-    env_id = 'TurbineStab-v1'
+    env_id = args.env
     if args.psf:
-        customconfig = DEFAULT_CONFIG.copy()
+        customconfig = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
         customconfig['use_psf'] = True
         env_kwargs = {'env_config': customconfig}
         print("Using PSF corrected actions")

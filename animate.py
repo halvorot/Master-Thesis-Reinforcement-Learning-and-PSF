@@ -2,12 +2,10 @@ from casadi.casadi import offset
 import numpy as np
 import gym
 from stable_baselines3 import PPO
+import gym_rl_mpc
 from gym_rl_mpc.utils import model_params as params
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
-from gym_rl_mpc import DEFAULT_CONFIG
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 
 from matplotlib.animation import FuncAnimation
 import pandas as pd
@@ -21,7 +19,7 @@ def animate(frame):
         thr = 0
         blade_pitch = init_blade_pitch
     else:
-        thr = 1
+        thr = 0
         blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/ext_params.max_blade_pitch
 
     if args.data:
@@ -103,6 +101,13 @@ if __name__ == "__main__":
         help='Path to agent .zip file.',
     )
     parser.add_argument(
+        '--env',
+        type=str,
+        default='VariableWind-v0',
+        choices=gym_rl_mpc.SCENARIOS.keys(),
+        help="Environment to run."
+    )
+    parser.add_argument(
         '--time',
         type=int,
         default=50,
@@ -126,17 +131,17 @@ if __name__ == "__main__":
         data_angle = data['theta']
         data_input = np.array([data['F']])
         data_reward = np.array(data['reward'])
-        env_id = "TurbineStab-v1"
+        env_id = args.env
     else:
         done = False
         if args.psf:
-            config = DEFAULT_CONFIG.copy()
+            config = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
             config['use_psf'] = True
         else:
-            config = DEFAULT_CONFIG
+            config = gym_rl_mpc.SCENARIOS[args.env]['config']
         if config['use_psf']:
             print("Using PSF corrected actions")
-        env = gym.make("TurbineStab-v1", env_config=config)
+        env = gym.make(args.env, env_config=config)
         env_id = env.unwrapped.spec.id
         env.reset()
         if args.agent:
@@ -198,7 +203,7 @@ if __name__ == "__main__":
         ax4.plot(time, recorded_disturbance[:,0], label='F_w', color=color)
         ax4.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
         ax4.set_ylabel('F_w [N]', color=color)
-        ax4.set_title('Wind')
+        ax4.set_title('Wind Force and torque')
         ax4.legend()
 
         color = 'tab:orange'
@@ -227,5 +232,10 @@ if __name__ == "__main__":
         ax23.set_ylabel('Blade pitch [deg]')
         ax23.set_title('Commanded blade pitch')
         ax23.legend()
+
+        ax24.plot(time, np.array(env.episode_history['wind_speed']), label='Wind speed')
+        ax24.set_ylabel('Wind speed [m/s]')
+        ax24.set_title('Wind')
+        ax24.legend()
 
         plt.show()

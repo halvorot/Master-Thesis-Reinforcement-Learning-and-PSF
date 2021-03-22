@@ -160,7 +160,6 @@ class TurbineEnv(gym.Env):
         """
         self.wind_speed = (self.max_wind_speed - self.min_wind_speed) * self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
-        # TODO: Test to see if wind speed is actually different in the 12 envs or seed needs to be reset or something.
 
     def calculate_reward(self, obs, action):
         """

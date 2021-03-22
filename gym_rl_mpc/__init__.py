@@ -20,8 +20,6 @@ DEFAULT_CONFIG = {
     "reward_survival": 1,
 }
 
-CONSTANT_WIND_CONFIG = DEFAULT_CONFIG.copy()
-
 VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
 VARIABLE_WIND_CONFIG["wind_period"] = 60
 VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 5
@@ -29,7 +27,7 @@ VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 5
 SCENARIOS = {
     'ConstantWind-v0': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
-        'config': CONSTANT_WIND_CONFIG
+        'config': DEFAULT_CONFIG
     },
     'VariableWind-v0': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',

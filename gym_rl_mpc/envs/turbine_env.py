@@ -128,7 +128,7 @@ class TurbineEnv(gym.Env):
             action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
             psf_params = [self.turbine.adjusted_wind_speed]
             u0 = self.turbine.u0
-            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized,u0, psf_params)
+            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
 
             psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
                                     psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
@@ -160,6 +160,7 @@ class TurbineEnv(gym.Env):
         """
         self.wind_speed = (self.max_wind_speed - self.min_wind_speed) * self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
+        # TODO: Test to see if wind speed is actually different in the 12 envs or seed needs to be reset or something.
 
     def calculate_reward(self, obs, action):
         """

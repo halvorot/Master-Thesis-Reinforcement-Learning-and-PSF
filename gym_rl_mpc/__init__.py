@@ -10,7 +10,7 @@ DEFAULT_CONFIG = {
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
     "max_wind_speed": 15,
-    "min_wind_speed": 10,
+    "min_wind_speed": 13,
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward

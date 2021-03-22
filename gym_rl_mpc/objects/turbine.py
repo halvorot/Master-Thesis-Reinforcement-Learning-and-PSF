@@ -42,8 +42,9 @@ class Turbine:
                                                        power=init_power,
                                                        thruster_force=0)
 
-        self.u0 = [init_power, 0, blade_pitch]
-        self.input = np.array([0, float(blade_pitch), init_power])  # Initialize control input
+        self.state = self.steady_state
+        self.u0 = [0, blade_pitch, init_power]
+        self.input = self.u0                            # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
         self.alpha_blade_pitch = self.step_size/(self.step_size + params.tau_blade_pitch)

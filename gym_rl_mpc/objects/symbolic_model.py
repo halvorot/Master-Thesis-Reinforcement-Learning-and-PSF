@@ -122,7 +122,7 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
 
     result = solver(x0=[1, 1, 1, 1], p=vertcat(power, wind, thruster_force), lbg=-inf, ubg=0)
     state = np.asarray(result["x"])[:3].flatten()
-    blade_pitch = np.asarray(result["x"])[-1].flatten()
+    blade_pitch = np.asarray(result["x"])[-1].flatten()[0]
     return state, blade_pitch
 
 

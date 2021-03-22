@@ -123,6 +123,6 @@ def make_summary_file(data, report_dir, total_num_episodes):
         f.write('{:<30}{:<30.2%}\n'.format('No Crashes', no_crashes.mean()))
         f.write('{:<30}{:<30}\n'.format('Avg. Absolute theta [deg]', avg_abs_theta.mean()*RAD2DEG))
         f.write('{:<30}{:<30}\n'.format('Avg. Std. theta [deg]', std_theta.mean()*RAD2DEG))
-        f.write('{:<30}{:<30}\n'.format('Avg. Absolute theta_dot [deg/s]', avg_abs_theta.mean()*RAD2DEG))
+        f.write('{:<30}{:<30}\n'.format('Avg. Absolute theta_dot [deg/s]', avg_abs_theta_dot.mean()*RAD2DEG))
         f.write('{:<30}{:<30}\n'.format('Avg. Timesteps', timesteps.mean()))
         f.write('{:<30}{:<30}\n'.format('Avg. Duration', durations.mean()))

@@ -127,8 +127,8 @@ class PSF:
             DT = self.T / self.N
             for i in range(self.N - 1):
                 g += [U[:, i + 1] - U[:, i]]
-                self.lbg += self.slew_rate*DT
-                self.ubg += -self.slew_rate*DT
+                self.lbg += [-np.array(self.slew_rate)*DT]
+                self.ubg += [np.array(self.slew_rate)*DT]
 
         # Terminal Set constrain
         if self.terminal_flag:

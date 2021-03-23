@@ -59,7 +59,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                            1 / params.max_power_generation ** 2
                        ]),
                        slack_flag=True,
-                       slew_rate=np.array([[0, params.max_blade_pitch_rate, 0]]).T,
+                       slew_rate=[0, params.max_blade_pitch_rate, 0],
                        lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
                                          self.max_wind_speed * params.wind_inflow_ratio],
                                    "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
@@ -128,7 +128,6 @@ class BaseTurbineEnv(gym.Env, ABC):
             psf_params = [self.turbine.adjusted_wind_speed]
             u0 = self.turbine.u0
             psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
-
             psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
                                     psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
                                     psf_corrected_action_un_normalized[2] / params.max_power_generation]

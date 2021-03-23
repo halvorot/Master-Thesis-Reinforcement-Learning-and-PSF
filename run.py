@@ -8,6 +8,7 @@ from stable_baselines3 import PPO
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 
 if __name__ == "__main__":
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, sim_df['omega']*(60/(2*np.pi)), label='omega')
+        ax2.plot(time, sim_df['omega']*RAD2RPM, label='omega')
         ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()

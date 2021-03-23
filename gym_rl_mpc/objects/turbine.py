@@ -58,16 +58,21 @@ class Turbine:
     def step(self, action, wind_speed):
         prev_F_thr = self.input[0]
         prev_blade_pitch = self.input[1]
+        prev_power = self.input[2]
 
         commanded_F_thr = _un_normalize_thrust_input(action[0])
         commanded_blade_pitch = _un_normalize_blade_pitch_input(action[1])
-        power = _un_normalize_power_input(action[2])
+        commanded_power = _un_normalize_power_input(action[2])
 
-        # Lowpass filter the thrust force and blade pitch angle
-        F_thr = self.alpha_thr * commanded_F_thr + (1 - self.alpha_thr) * prev_F_thr
+        # Saturate the thrust force rate
+        F_thr = prev_F_thr + np.sign(commanded_F_thr - prev_F_thr) * min(
+            abs(commanded_F_thr - prev_F_thr), params.max_thrust_rate*self.step_size)
         # Saturate blade pitch rate
         blade_pitch = prev_blade_pitch + np.sign(commanded_blade_pitch - prev_blade_pitch) * min(
-            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate) * self.step_size
+            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate*self.step_size)
+        # Saturate the power rate
+        power = prev_power + np.sign(commanded_power - prev_power) * min(
+            abs(commanded_power - prev_power), params.max_power_rate*self.step_size)
 
         self.input = np.array([F_thr, blade_pitch, power])
 

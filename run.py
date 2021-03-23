@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--env',
         type=str,
-        default='ConstantWind-v0',
+        default='VariableWind-v0',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )

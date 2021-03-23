@@ -142,7 +142,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.observation = self.observe()
 
-        done, reward = self.calculate_reward(self.observation, action)
+        done, reward = self.calculate_reward(action)
 
         self.cumulative_reward += reward
         self.last_reward = reward
@@ -161,7 +161,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         Must set the 'turbine', 'wind_speed' attributes.
         """
 
-    def calculate_reward(self, obs, action):
+    def calculate_reward(self, action):
         """
         Calculates the reward function for one time step. Also checks if the episode is done.
         """

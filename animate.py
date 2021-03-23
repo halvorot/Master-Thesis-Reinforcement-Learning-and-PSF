@@ -34,8 +34,7 @@ def animate(frame):
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
             action = np.array([thr, blade_pitch, power])
-            
-            
+              
         _, _, done, _ = env.step(action)
 
         x_top = height*np.sin(env.turbine.platform_angle)

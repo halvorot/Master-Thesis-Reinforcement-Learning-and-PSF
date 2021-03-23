@@ -22,6 +22,7 @@ class PSF:
                  alpha=None,
                  K=None,
                  slew_rate=None,
+                 LP_flag=False,
                  slack_flag=True,
                  terminal_flag=False,
                  jit_flag=False,
@@ -29,6 +30,8 @@ class PSF:
         self.jit_flag = jit_flag
         self.terminal_flag = terminal_flag
         self.slack_flag = slack_flag
+
+        self.LP_flag = LP_flag
 
         self.sys = sys
         self.N = N
@@ -63,12 +66,14 @@ class PSF:
         self._centroid_Px = np.zeros((self.nx, 1))
         self._centroid_Pu = np.zeros((self.nu, 1))
         self._init_guess = np.array([])
+        if self.LP_flag:
+            raise NotImplemented
+            self._LP_init()
+        else:
+            self._NLP_init()
 
+    def _formulate_problem(self):
         self._set_model_step()
-
-        self._NLP_init()
-
-    def _NLP_init(self):
 
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)
@@ -115,7 +120,7 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - (1 + eps[:, i]) * self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf']]
+                g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i], p=p)['xf'] + eps[:, i]]
             else:
                 g += [X[:, i + 1] - self.model_step(x0=X[:, i], u=U[:, i], p=p)["xf"]]
             # State propagation
@@ -127,8 +132,8 @@ class PSF:
             DT = self.T / self.N
             for i in range(self.N - 1):
                 g += [U[:, i + 1] - U[:, i]]
-                self.lbg += self.slew_rate*DT
-                self.ubg += -self.slew_rate*DT
+                self.lbg += self.slew_rate * DT
+                self.ubg += -self.slew_rate * DT
 
         # Terminal Set constrain
         if self.terminal_flag:
@@ -137,29 +142,56 @@ class PSF:
             self.lbg += [-inf]
             self.ubg += [0]
 
-        # JIT
-        # Pick a compiler
-        # compiler = "gcc"  # Linux
-        # compiler = "clang"  # OSX
-        compiler = "cl.exe"  # Windows
+        if self.LP_flag:
+            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
+        else:
+            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
 
-        flags = ["/O2"]  # win
-        jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
+            # JIT
+            # Pick a compiler
+            # compiler = "gcc"  # Linux
+            # compiler = "clang"  # OSX
+            compiler = "cl.exe"  # Windows
 
-        # JIT
-        opts = {
-            "verbose_init": False,
-            "ipopt": {"print_level": 2},
-            "print_time": False,
-            "compiler": "shell",
-            "jit": self.jit_flag,
-            'jit_options': jit_options
-        }
+            flags = ["/O2"]  # win
+            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
 
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
+            # JIT
+            opts = {
+                "verbose_init": False,
+                "ipopt": {"print_level": 2},
+                "print_time": False,
+                "compiler": "shell",
+                "jit": self.jit_flag,
+                'jit_options': jit_options
+            }
 
-        self.solver = nlpsol("solver", "ipopt", prob, opts)
-        self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
+            self.solver = nlpsol("solver", "ipopt", NLP, opts)
+            self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
+
+    def _LP_init(self):
+
+        X0 = SX.sym('X0', self.nx)
+        X = SX.sym('X', self.nx, self.N + 1)
+        U = SX.sym('U', self.nu, self.N)
+        u_L = SX.sym('u_L', self.nu)
+        u0 = SX.sym('u0', self.nu)
+        p = SX.sym("p", self.np, 1)
+
+        if self.slack_flag:
+            eps = SX.sym("eps", self.nx, self.N)
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e6 * eps[:].T @ eps[:]
+        else:
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+
+        A = jacobian(self.sys["A"], self.sys["x"])
+        B = jacobian(self.sys["B"], self.sys["u"])
+        w = []
+        w0 = []
+
+        g = []
+        self.lbg = []
+        self.ubg = []
 
     def calc(self, x, u_L, u0, ext_params, reset_x0=False):
         if self._init_guess.shape[0] == 0:
@@ -231,9 +263,16 @@ class PSF:
     def _set_model_step(self):
         M = 4  # RK4 steps per interval
         DT = self.T / self.N / M
+        if self.LP_flag:
+            A = jacobian(self.sys["xdot"], self.sys["x"])
+            B = jacobian(self.sys["xdot"], self.sys["u"])
+            xdot = A * self.sys["x"] + B * self.sys["u"]
+
+        else:
+            xdot = self.sys["xdot"]
         f = Function('f',
                      [self.sys["x"], self.sys["u"], self.sys["p"]],
-                     [self.sys["xdot"]])
+                     [xdot])
         X0 = SX.sym('X0', self.nx)
         U = SX.sym('U', self.nu)
         P = SX.sym('P', self.np)

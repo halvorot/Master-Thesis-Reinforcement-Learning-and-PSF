@@ -66,8 +66,8 @@ class BaseTurbineEnv(gym.Env, ABC):
                                    "Omega": [params.omega_setpoint(self.min_wind_speed),
                                              params.omega_setpoint(self.max_wind_speed)],
                                    "P_ref": [0, params.max_power_generation],
-                                   "theta": [-10, 10],
-                                   "theta_dot": [-45, 45]}
+                                   "theta": [-self.crash_angle_condition, self.crash_angle_condition],
+                                   "theta_dot": [-45*DEG2RAD, 45*DEG2RAD]}
                        )
 
         ## END PSF init ##

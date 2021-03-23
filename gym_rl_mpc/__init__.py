@@ -5,7 +5,6 @@ DEFAULT_CONFIG = {
     "use_psf": True,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
-    "working_range_reward_multiplier": 10,
     "crash_angle_condition": 10*DEG2RAD,
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
@@ -15,7 +14,7 @@ DEFAULT_CONFIG = {
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
     "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
-    "gamma_psf": 3,
+    "gamma_psf": 5,
     "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
 }

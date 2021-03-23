@@ -184,7 +184,7 @@ if __name__ == "__main__":
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, recorded_states[:,2]*(60/(2*np.pi)), label='omega')
+        ax2.plot(time, recorded_states[:,2]*RAD2RPM, label='omega')
         ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()

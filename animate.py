@@ -22,7 +22,7 @@ def animate(frame):
     else:
         thr = 0
         blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/ext_params.max_blade_pitch
-        power = 0
+        power = params.power_regime(env.wind_speed)
 
     if args.data:
         # If reading from file:

@@ -81,6 +81,7 @@ class TensorboardCallback(BaseCallback):
     """
 
     def __init__(self, verbose=0):
+        self.start_time = time()
         super(TensorboardCallback, self).__init__(verbose)
 
     def _on_step(self) -> bool:
@@ -99,12 +100,14 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/power_reward', history[env_idx]['power_reward'])
                     self.logger.record_mean('custom/input_reward', history[env_idx]['input_reward'])
                     self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
+        
+        self.logger.record("time/custom_time_elapsed", int(time() - self.start_time))
 
         return True
 
 
 if __name__ == '__main__':
-    NUM_CPUs = multiprocessing.cpu_count()
+    NUM_CPUs = 1#multiprocessing.cpu_count()
 
     parser = argparse.ArgumentParser()
     parser.add_argument(

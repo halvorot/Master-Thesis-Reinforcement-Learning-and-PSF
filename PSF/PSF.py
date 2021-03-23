@@ -21,6 +21,7 @@ class PSF:
                  P=None,
                  alpha=None,
                  K=None,
+                 slew_rate=None,
                  slack_flag=True,
                  terminal_flag=False,
                  jit_flag=False,
@@ -38,6 +39,8 @@ class PSF:
         self.nx = self.sys["x"].shape[0]
         self.nu = self.sys["u"].shape[0]
         self.np = self.sys["p"].shape[0]
+
+        self.slew_rate = slew_rate
 
         if param is None:
             self.param = SX([])
@@ -119,6 +122,13 @@ class PSF:
 
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
+
+        if self.slew_rate is not None:
+            DT = self.T / self.N
+            for i in range(self.N - 1):
+                g += [U[:, i + 1] - U[:, i]]
+                self.lbg += self.slew_rate*DT
+                self.ubg += -self.slew_rate*DT
 
         # Terminal Set constrain
         if self.terminal_flag:

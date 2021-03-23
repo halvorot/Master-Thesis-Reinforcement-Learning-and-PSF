@@ -27,6 +27,8 @@ class PSF:
                  terminal_flag=False,
                  jit_flag=False,
                  ):
+        if LP_flag:
+            raise NotImplementedError("Linear MPC is not implemented")
         self.jit_flag = jit_flag
         self.terminal_flag = terminal_flag
         self.slack_flag = slack_flag
@@ -254,7 +256,7 @@ class PSF:
 
     def _set_linear_model_step(self):
 
-        M = 2
+        M = 10
         DT = self.T / self.N
         Ad = np.eye(self.nx)
         Bd = 0

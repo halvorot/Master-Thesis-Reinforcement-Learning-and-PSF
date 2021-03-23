@@ -59,6 +59,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                            1 / params.max_power_generation ** 2
                        ]),
                        slack_flag=True,
+                       slew_rate=np.array([[0, params.max_blade_pitch_rate, 0]]).T,
                        lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
                                          self.max_wind_speed * params.wind_inflow_ratio],
                                    "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],

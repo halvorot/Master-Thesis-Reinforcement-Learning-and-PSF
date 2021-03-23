@@ -25,7 +25,9 @@ class VariableWind(BaseTurbineEnv):
     def step(self, action):
         t = self.t_step*self.step_size
 
-        wind_speed = self.wind_amplitude*np.sin((1/self.wind_period)*2*np.pi*t + self.wind_phase_shift) + self.wind_mean + np.random.normal(0, 0.3)
+        wind_speed = self.wind_amplitude*np.sin((1/self.wind_period)*2*np.pi*t + self.wind_phase_shift) + self.wind_mean
+        if self.wind_noise:
+            wind_speed += np.random.normal(0, 0.3)
         self.wind_speed = np.clip(wind_speed, self.min_wind_speed, self.max_wind_speed)
 
         return super().step(action)

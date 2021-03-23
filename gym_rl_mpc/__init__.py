@@ -9,20 +9,21 @@ DEFAULT_CONFIG = {
     "crash_angle_condition": 10*DEG2RAD,
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
-    "max_wind_speed": 20,
-    "min_wind_speed": 10,
+    "max_wind_speed": 15,
+    "min_wind_speed": 7,
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
     "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
-    "gamma_psf": 1,
+    "gamma_psf": 3,
     "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
 }
 
 VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
 VARIABLE_WIND_CONFIG["wind_period"] = 60
-VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 5
+VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 2
+VARIABLE_WIND_CONFIG["wind_noise"] = False
 
 SCENARIOS = {
     'ConstantWind-v0': {   

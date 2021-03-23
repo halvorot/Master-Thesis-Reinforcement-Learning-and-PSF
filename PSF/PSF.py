@@ -171,6 +171,7 @@ class PSF:
             # JIT
             opts = {
                 "error_on_fail": True,
+                "eval_errors_fatal": True,
                 "verbose_init": False,
                 "ipopt": {"print_level": 2},
                 "print_time": False,

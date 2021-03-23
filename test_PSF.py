@@ -36,7 +36,7 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
                       "theta": [-10 * sym.DEG2RAD, 10 * sym.DEG2RAD],
                       "theta_dot": [-45 * sym.DEG2RAD, 45 * sym.DEG2RAD]
                       },
-          LP_flag=True,
+          LP_flag=False,
           slack_flag=True,
           jit_flag=False,
           terminal_flag=False

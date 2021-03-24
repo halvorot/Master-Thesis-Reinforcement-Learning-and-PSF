@@ -5,10 +5,12 @@ def simulate_episode(env, agent, max_time):
     global input_labels, state_labels
     state_labels = [r"theta", r"theta_dot", r"omega"]
     input_labels = [r"F_thr", r"blade_pitch", r"power"]
-    wind_labels = [r"F_w", r"Q_w", r"Q_gen", r"adjusted_wind_speed"]
+    agent_action_labels = [r"agent_F_thr", r"agent_blade_pitch", r"agent_power"]
+    psf_action_labels = [r"psf_F_thr", r"psf_blade_pitch", r"psf_power"]
+    wind_labels = [r"F_w", r"Q_w", r"Q_gen", r"wind_speed", r"adjusted_wind_speed"]
     reward_labels = [r"reward", r"theta_reward", r"theta_dot_reward", r"omega_reward", r"power_reward", r"input_reward", r"psf_reward"]
     
-    labels = np.hstack(["time", state_labels, input_labels, wind_labels, reward_labels])
+    labels = np.hstack(["time", state_labels, input_labels, agent_action_labels, psf_action_labels, wind_labels, reward_labels])
 
     done = False
     env.reset()
@@ -29,16 +31,23 @@ def simulate_episode(env, agent, max_time):
     psf_reward = np.array(env.episode_history['psf_reward']).reshape((env.t_step, 1))
     states = env.episode_history['states']
     input = env.episode_history['input']
+    agent_actions = env.episode_history['agent_actions']
+    psf_actions = env.episode_history['psf_actions']
     wind_force = np.array(env.episode_history['wind_force']).reshape((env.t_step, 1))
     wind_torque = np.array(env.episode_history['wind_torque']).reshape((env.t_step, 1))
     generator_torque = np.array(env.episode_history['generator_torque']).reshape((env.t_step, 1))
+    wind_speed = np.array(env.episode_history['wind_speed']).reshape((env.t_step, 1))
     adjusted_wind_speed = np.array(env.episode_history['adjusted_wind_speed']).reshape((env.t_step, 1))
+
     sim_data = np.hstack([  time,
                             states,
                             input,
+                            agent_actions,
+                            psf_actions,
                             wind_force,
                             wind_torque,
                             generator_torque,
+                            wind_speed,
                             adjusted_wind_speed,
                             last_reward,
                             theta_reward,

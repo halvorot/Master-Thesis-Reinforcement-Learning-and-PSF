@@ -18,9 +18,11 @@ def animate(frame):
     if frame == 0:
         thr = 0
         blade_pitch = init_blade_pitch
+        power = params.power_regime(env.wind_speed)
     else:
         thr = 0
-        blade_pitch = init_blade_pitch #- 0.1*DEG2RAD/ext_params.max_blade_pitch
+        blade_pitch = init_blade_pitch + 0.1*DEG2RAD/params.max_blade_pitch
+        power = params.power_regime(env.wind_speed)
 
     if args.data:
         # If reading from file:
@@ -31,9 +33,8 @@ def animate(frame):
         if args.agent:
                 action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([thr, blade_pitch, params.power_regime(env.wind_speed)])
-            
-            
+            action = np.array([thr, blade_pitch, power])
+              
         _, _, done, _ = env.step(action)
 
         x_top = height*np.sin(env.turbine.platform_angle)
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         recorded_inputs = np.array(recorded_inputs)
         recorded_disturbance = np.array(recorded_disturbance)
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
         if args.env == 'ConstantWind-v0':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
@@ -177,14 +178,14 @@ if __name__ == "__main__":
 
         time = np.array(range(0, len(recorded_states[:,0])))*env.step_size
 
-        ax1.plot(time, recorded_states[:,0]*RAD2DEG, label='theta')
-        ax1.plot(time, recorded_states[:,1]*RAD2DEG, label='theta_dot')
+        ax1.plot(time, recorded_states[:,0]*RAD2DEG, label='$\\theta$')
+        ax1.plot(time, recorded_states[:,1]*RAD2DEG, label='$\dot{\\theta}$')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees, deg/sec')
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, recorded_states[:,2]*RAD2RPM, label='omega')
+        ax2.plot(time, recorded_states[:,2]*RAD2RPM, label='$\Omega$')
         ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
@@ -216,6 +217,10 @@ if __name__ == "__main__":
         ax4_2.set_ylabel('Q [Nm]', color=color)
         ax4_2.legend()
 
+        ax5.plot(time, recorded_inputs[:,2], label="Power")
+        ax5.set_ylabel('P_gen [W]')
+        ax5.set_title('Power generated')
+        ax5.legend()
 
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
         ax21.plot(time, np.array(env.episode_history['agent_actions'])[:,0]*params.max_thrust_force, label='agent thrust')

@@ -44,11 +44,13 @@ J_r = 4.068903574982517e+07             # From OpenFast
 wind_inflow_ratio = 2/3
 
 max_thrust_force = 5e5                  # maximum force input [N]
+max_thrust_rate = 1.5e5
 max_blade_pitch = 20*(np.pi/180)        # maximum deviation from beta^*
 min_blade_pitch_ratio = 0.2 
 max_wind_force = 5e7                    # Just used for animation scaling
 max_blade_pitch_rate = 8*(np.pi/180)    # Max blade pitch rate [rad/sec]
 max_power_generation = 15e6
+max_power_rate = 5e6
 max_generator_torque = max_power_generation/omega_setpoint(0)
 tau_thr = 2                             # Thrust force time constant
 

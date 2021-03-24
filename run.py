@@ -8,6 +8,7 @@ from stable_baselines3 import PPO
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame
+from gym_rl_mpc.utils import model_params as params
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 
@@ -70,18 +71,21 @@ if __name__ == "__main__":
 
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
+        if args.env == 'ConstantWind-v0':
+            fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
+        else:
+            fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")
 
         time = np.array(range(0, len(sim_df['theta'])))*env.step_size
 
-        ax1.plot(time, sim_df['theta']*RAD2DEG, label='theta')
-        ax1.plot(time, sim_df['theta_dot']*RAD2DEG, label='theta_dot')
+        ax1.plot(time, sim_df['theta']*RAD2DEG, label='$\\theta$')
+        ax1.plot(time, sim_df['theta_dot']*RAD2DEG, label='$\dot{\\theta}$')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees, deg/sec')
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, sim_df['omega']*RAD2RPM, label='omega')
+        ax2.plot(time, sim_df['omega']*RAD2RPM, label='$\Omega$')
         ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
@@ -97,7 +101,6 @@ if __name__ == "__main__":
         ax3_2.plot(time, sim_df['blade_pitch']*RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
-        ax3_2.set_ylim([-4,20])
 
         color = 'tab:blue'
         ax4.plot(time, sim_df['F_w'], label='F_w', color=color)
@@ -115,14 +118,27 @@ if __name__ == "__main__":
 
 
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
-        ax21.plot(time, sim_df['adjusted_wind_speed'], label='wind speed', color=color)
-        ax21.set_ylabel('adjusted wind speed', color=color)
-        ax21.set_title('Wind')
+        ax21.plot(time, sim_df['agent_F_thr']*params.max_thrust_force, label='agent thrust')
+        ax21.plot(time, sim_df['psf_F_thr']*params.max_thrust_force, label='agent thrust')
+        ax21.set_ylabel('F_thr [N]')
+        ax21.set_title('Commanded Thrust Force')
         ax21.legend()
 
-        ax22.plot(time, sim_df['power'], label='power')
+        ax22.plot(time, np.array(sim_df['agent_power'])*params.max_power_generation, label='agent power')
+        ax22.plot(time, np.array(sim_df['psf_power'])*params.max_power_generation, label='PSF power')
         ax22.set_ylabel('Power')
-        ax22.set_title('Power')
+        ax22.set_title('Commanded Power')
         ax22.legend()
+
+        ax23.plot(time, np.array(sim_df['agent_blade_pitch'])*params.max_blade_pitch*RAD2DEG, label='agent blade pitch')
+        ax23.plot(time, np.array(sim_df['psf_blade_pitch'])*params.max_blade_pitch*RAD2DEG, label='PSF blade pitch')
+        ax23.set_ylabel('Blade pitch [deg]')
+        ax23.set_title('Commanded blade pitch')
+        ax23.legend()
+
+        ax24.plot(time, np.array(sim_df['wind_speed']), label='Wind speed')
+        ax24.set_ylabel('Wind speed [m/s]')
+        ax24.set_title('Wind')
+        ax24.legend()
 
         plt.show()

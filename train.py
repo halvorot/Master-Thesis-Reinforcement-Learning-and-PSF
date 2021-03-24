@@ -107,7 +107,6 @@ class TensorboardCallback(BaseCallback):
 
 
 if __name__ == '__main__':
-    NUM_CPUs = multiprocessing.cpu_count()
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -143,7 +142,14 @@ if __name__ == '__main__':
         help='Use psf corrected action',
         action='store_true'
     )
+    parser.add_argument(
+        '--single_cpu',
+        help='Use only one CPU (no parallelization)',
+        action='store_true'
+    )
     args = parser.parse_args()
+
+    NUM_CPUs = multiprocessing.cpu_count() if args.single_cpu == False else 1
 
     # Make environment (NUM_CPUs parallel envs)
     env_id = args.env

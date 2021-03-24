@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
 VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
 VARIABLE_WIND_CONFIG["wind_period"] = 60
 VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 2
-VARIABLE_WIND_CONFIG["wind_noise"] = True
+VARIABLE_WIND_CONFIG["wind_noise"] = False
 
 SCENARIOS = {
     'ConstantWind-v1': {   

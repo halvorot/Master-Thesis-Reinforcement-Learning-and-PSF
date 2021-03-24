@@ -167,15 +167,18 @@ class PSF:
 
             # JIT
             opts = {
+                "warn_initial_bounds": False,
                 "error_on_fail": True,
                 "eval_errors_fatal": True,
                 "verbose_init": False,
-                "ipopt": {"print_level": 2},
+                "show_eval_warnings": False,
+                "ipopt": {"print_level": 0},
                 "print_time": False,
                 "compiler": "shell",
                 "jit": self.jit_flag,
                 'jit_options': jit_options
             }
+
             NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
 
             self.solver = nlpsol("solver", "ipopt", NLP, opts)

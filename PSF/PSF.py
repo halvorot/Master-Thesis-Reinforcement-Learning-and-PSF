@@ -76,10 +76,10 @@ class PSF:
 
     def _formulate_problem(self):
 
-        if self.LP_flag:
-            self._set_linear_model_step()
-        else:
-            self._set_nonlinear_model_step()
+        #if self.LP_flag:
+        #    self._set_linear_model_step()
+        #else:
+        self._set_nonlinear_model_step()
 
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)

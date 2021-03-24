@@ -29,6 +29,7 @@ class PSF:
                  ):
         if LP_flag:
             raise NotImplementedError("Linear MPC is not implemented")
+
         self.jit_flag = jit_flag
         self.terminal_flag = terminal_flag
         self.slack_flag = slack_flag
@@ -76,10 +77,10 @@ class PSF:
 
     def _formulate_problem(self):
 
-        #if self.LP_flag:
-        #    self._set_linear_model_step()
-        #else:
-        self._set_nonlinear_model_step()
+        if self.LP_flag:
+           self._set_linear_model_step()
+        else:
+            self._set_nonlinear_model_step()
 
         X0 = SX.sym('X0', self.nx)
         X = SX.sym('X', self.nx, self.N + 1)
@@ -117,7 +118,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(i+1).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
+            w0 += [self.model_step.fold(i + 1).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
@@ -138,8 +139,8 @@ class PSF:
             DT = self.T / self.N
             for i in range(self.N - 1):
                 g += [U[:, i + 1] - U[:, i]]
-                self.lbg += [-np.array(self.slew_rate)*DT]
-                self.ubg += [np.array(self.slew_rate)*DT]
+                self.lbg += [-np.array(self.slew_rate) * DT]
+                self.ubg += [np.array(self.slew_rate) * DT]
 
         # Terminal Set constrain
         if self.terminal_flag:
@@ -148,38 +149,37 @@ class PSF:
             self.lbg += [-inf]
             self.ubg += [0]
 
-        #if self.LP_flag:
-        #    lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
-        #    LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p, *lin_points)}
-        #
-        #    opts = {"osqp": {"verbose": 0, "polish": False}}
-        #    self.solver = qpsol("solver", "osqp", LP, opts)
-        #else:
-        # JIT
-        # Pick a compiler
-        # compiler = "gcc"  # Linux
-        # compiler = "clang"  # OSX
-        compiler = "cl.exe"  # Windows
+        if self.LP_flag:
+            lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
+            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p, *lin_points)}
 
-        flags = ["/O2"]  # win
-        jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
+            opts = {"osqp": {"verbose": 0, "polish": False}}
+            self.solver = qpsol("solver", "osqp", LP, opts)
+        else:
+            # JIT
+            # Pick a compiler
+            # compiler = "gcc"  # Linux
+            # compiler = "clang"  # OSX
+            compiler = "cl.exe"  # Windows
 
-        # JIT
-        opts = {
-            "error_on_fail": True,
-            "eval_errors_fatal": True,
-            "verbose_init": False,
-            "ipopt": {"print_level": 2},
-            "print_time": False,
-            "compiler": "shell",
-            "jit": self.jit_flag,
-            'jit_options': jit_options
-        }
-        NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
-        prob = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
+            flags = ["/O2"]  # win
+            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
 
-        self.solver = nlpsol("solver", "ipopt", prob, opts)
-        self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
+            # JIT
+            opts = {
+                "error_on_fail": True,
+                "eval_errors_fatal": True,
+                "verbose_init": False,
+                "ipopt": {"print_level": 2},
+                "print_time": False,
+                "compiler": "shell",
+                "jit": self.jit_flag,
+                'jit_options': jit_options
+            }
+            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
+
+            self.solver = nlpsol("solver", "ipopt", NLP, opts)
+            self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
 
     def calc(self, x, u_L, u0, ext_params, reset_x0=False):
         if self._init_guess.shape[0] == 0:
@@ -269,6 +269,7 @@ class PSF:
                                    ['xk', 'x_lin', 'u', 'u_lin', 'p'],
                                    ['xf']
                                    )
+
     def _set_nonlinear_model_step(self):
         M = 4  # RK4 steps per interval
         DT = self.T / self.N / M

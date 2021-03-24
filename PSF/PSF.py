@@ -89,7 +89,7 @@ class PSF:
         p = SX.sym("p", self.np, 1)
         if self.slack_flag:
             eps = SX.sym("eps", self.nx, self.N)
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e6 * eps[:].T @ eps[:]
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
         else:
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
 
@@ -117,7 +117,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(20).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
+            w0 += [self.model_step.fold(i+1).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]

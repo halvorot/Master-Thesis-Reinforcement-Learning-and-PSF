@@ -25,11 +25,11 @@ VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 2
 VARIABLE_WIND_CONFIG["wind_noise"] = False
 
 SCENARIOS = {
-    'ConstantWind-v0': {   
+    'ConstantWind-v1': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
-    'VariableWind-v0': {
+    'VariableWind-v1': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',
         'config': VARIABLE_WIND_CONFIG
     }

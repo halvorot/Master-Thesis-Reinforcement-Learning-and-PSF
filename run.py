@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--env',
         type=str,
-        default='VariableWind-v0',
+        default='VariableWind-v1',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     if args.plot:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-        if args.env == 'ConstantWind-v0':
+        if args.env == 'ConstantWind-v1':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
             fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")

@@ -76,8 +76,8 @@ class Turbine:
 
         self.input = np.array([F_thr, blade_pitch, power])
 
-        # Adjust wind speed based on inflow and structure
-        self.adjusted_wind_speed = params.wind_inflow_ratio*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]  # Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        # Adjust wind speed based on inflow and structure. Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
+        self.adjusted_wind_speed = params.wind_inflow_ratio*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
 
         self._sim(self.adjusted_wind_speed)
 

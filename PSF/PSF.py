@@ -78,16 +78,19 @@ class PSF:
     def _formulate_problem(self):
 
         if self.LP_flag:
-           self._set_linear_model_step()
+            self._set_linear_model_step()
         else:
             self._set_nonlinear_model_step()
 
-        X0 = SX.sym('X0', self.nx)
+        x0 = SX.sym('x0', self.nx, 1)
         X = SX.sym('X', self.nx, self.N + 1)
         U = SX.sym('U', self.nu, self.N)
-        u_L = SX.sym('u_L', self.nu)
-        u0 = SX.sym('u0', self.nu)
+
+        u_L = SX.sym('u_L', self.nu, 1)
         p = SX.sym("p", self.np, 1)
+
+        u_stable = SX.sym('u_stable', self.nu, 1)
+        u_prev = SX.sym('u_prev', self.nu, 1)
         if self.slack_flag:
             eps = SX.sym("eps", self.nx, self.N)
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
@@ -102,15 +105,15 @@ class PSF:
         self.ubg = []
 
         w += [X[:, 0]]
-        w0 += [X0]
+        w0 += [x0]
 
-        g += [X0 - X[:, 0]]
+        g += [x0 - X[:, 0]]
         self.lbg += [0] * self.nx
         self.ubg += [0] * self.nx
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [u0]
+            w0 += [u_stable]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -118,7 +121,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(i + 1).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
+            w0 += [self.model_step.fold(i + 1).expand()(xk=x0, x_lin=x0, u=u_stable, u_lin=u_stable, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
@@ -127,9 +130,10 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)['xf'] + eps[:, i]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)['xf'] + eps[:,
+                                                                                                                  i]]
             else:
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)["xf"]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)["xf"]]
             # State propagation
 
             self.lbg += [0] * g[-1].shape[0]
@@ -137,6 +141,9 @@ class PSF:
 
         if self.slew_rate is not None:
             DT = self.T / self.N
+            g += [U[:, 0] - u_prev]
+            self.lbg += [-np.array(self.slew_rate) * DT]
+            self.ubg += [np.array(self.slew_rate) * DT]
             for i in range(self.N - 1):
                 g += [U[:, i + 1] - U[:, i]]
                 self.lbg += [-np.array(self.slew_rate) * DT]
@@ -151,7 +158,7 @@ class PSF:
 
         if self.LP_flag:
             lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
-            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p, *lin_points)}
+            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p, *lin_points)}
 
             opts = {"osqp": {"verbose": 0, "polish": False}}
             self.solver = qpsol("solver", "osqp", LP, opts)
@@ -167,7 +174,7 @@ class PSF:
 
             # JIT
             opts = {
-                "warn_initial_bounds": False,
+                "warn_initial_bounds": True,
                 "error_on_fail": True,
                 "eval_errors_fatal": True,
                 "verbose_init": False,
@@ -179,16 +186,22 @@ class PSF:
                 'jit_options': jit_options
             }
 
-            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
+            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
 
             self.solver = nlpsol("solver", "ipopt", NLP, opts)
-            self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
+            self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
 
-    def calc(self, x, u_L, u0, ext_params, reset_x0=False):
+    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
+        if u_prev is None and self.slew_rate is not None:
+            raise ValueError("'u_prev' must be set if 'slew_rate' is given")
+
+        if u_prev is None:
+            u_prev = u_L # Dont care, just for vertcat match
+
         if self._init_guess.shape[0] == 0:
-            self._init_guess = np.asarray(self.eval_w0(x, u_L, u0, ext_params))
+            self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))
 
-        solution = self.solver(p=vertcat(x, u_L, u0, ext_params),
+        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self._init_guess

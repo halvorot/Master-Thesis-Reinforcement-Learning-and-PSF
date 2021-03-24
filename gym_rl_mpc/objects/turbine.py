@@ -44,6 +44,7 @@ class Turbine:
 
         self.state = self.steady_state
         self.u0 = [0, blade_pitch, init_power]
+        print(f"State {self.state}. u0 {self.u0}")
         self.input = self.u0                            # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)

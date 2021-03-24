@@ -36,7 +36,7 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
                       "theta": [-10 * sym.DEG2RAD, 10 * sym.DEG2RAD],
                       "theta_dot": [-45 * sym.DEG2RAD, 45 * sym.DEG2RAD]
                       },
-          slew_rate=None,#"[1e5, 8 * params.DEG2RAD, 1e6],
+          slew_rate=[1e5, 8 * params.DEG2RAD, 1e6],
           LP_flag=False,
           slack_flag=True,
           jit_flag=False,
@@ -52,8 +52,9 @@ for i in range(number_of_iter):
                        2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
                        2 * np.random.uniform(low=0, high=params.max_power_generation)
                    ],
-                   u0=vertcat([0, 0, 1e6]),
-                   ext_params=vertcat(np.random.uniform(low=3, high=25)),
+                   u_stable=[0, 0, 1e6],
+                   u_prev=[0, 0, 0],
+                   ext_params=np.random.uniform(low=3, high=25),
                    reset_x0=True
 
                    ))

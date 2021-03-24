@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gym
 import numpy as np
 from gym.utils import seeding
@@ -52,13 +54,15 @@ class BaseTurbineEnv(gym.Env, ABC):
                             "hu": sym.hu
                             },
                        N=20,
-                       T=20,
+                       T=10,
                        R=np.diag([
                            1 / params.max_thrust_force ** 2,
                            1 / params.max_blade_pitch ** 2,
                            1 / params.max_power_generation ** 2
                        ]),
                        slack_flag=True,
+                       terminal_flag=True,
+                       PK_path=Path("PSF", "stored_PK"),
                        slew_rate=[params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate],
                        lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
                                          self.max_wind_speed * params.wind_inflow_ratio],
@@ -126,22 +130,35 @@ class BaseTurbineEnv(gym.Env, ABC):
             F_thr = action[0] * params.max_thrust_force
             blade_pitch = action[1] * params.max_blade_pitch
             power = action[2] * params.max_power_generation
-            action_un_normalized = [F_thr, blade_pitch, power]
+            action_un_normalized = [
+                np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
+                np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
+                np.random.uniform(low=0, high=params.max_power_generation)
+            ] # [F_thr, blade_pitch, power]
+            print(action_un_normalized)
             new_adjusted_wind_speed = params.wind_inflow_ratio*self.wind_speed - params.L * np.cos(self.turbine.platform_angle) * self.turbine.state[1]
             psf_params = [new_adjusted_wind_speed]
-            u0 = self.turbine.u0
+            u_stable = self.turbine.u0
+            u_prev = self.turbine.input
             try:
-                psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
+                psf_corrected_action_un_normalized = self.psf.calc(x=self.turbine.state,
+                                                                   u_L=action_un_normalized,
+                                                                   u_stable=u_stable,
+                                                                   ext_params=psf_params,
+                                                                   u_prev=u_prev
+                                                                   )
                 psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
                                         psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
                                         psf_corrected_action_un_normalized[2] / params.max_power_generation]
                 self.psf_action = psf_corrected_action
+
                 self.turbine.step(self.psf_action, self.wind_speed)
             except RuntimeError:
                 print("Casadi failed to solve step. Using agent action. Episode done")
                 force_done = True
                 self.turbine.step(action, self.wind_speed)
                 self.psf_action = [0] * len(action)
+                raise RuntimeError
         else:
             self.turbine.step(action, self.wind_speed)
             self.psf_action = [0] * len(action)

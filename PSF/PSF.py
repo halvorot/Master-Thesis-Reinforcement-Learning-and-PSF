@@ -126,9 +126,9 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)['xf'] + eps[:, i]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)['xf'] + eps[:, i]]
             else:
-                g += [X[:, i + 1] - self.model_step(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)["xf"]]
             # State propagation
 
             self.lbg += [0] * g[-1].shape[0]

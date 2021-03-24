@@ -44,15 +44,15 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
           )
 start = time.time()
 for i in range(number_of_iter):
-    print(psf.calc(x=[np.random.uniform(low=-7, high=10) * params.DEG2RAD,
+    print(psf.calc(x=[np.random.uniform(low=-7, high=9) * params.DEG2RAD,
                       0,
-                      np.random.uniform(low=5, high=7.5) * params.RPM2RAD],
+                      np.random.uniform(low=5.1, high=7.5) * params.RPM2RAD],
                    u_L=[
                        2 * np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
                        2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
                        2 * np.random.uniform(low=0, high=params.max_power_generation)
                    ],
-                   u0=vertcat([400000, 0, 14e6]),
+                   u0=vertcat([000, 0, 1e6]),
                    ext_params=vertcat(np.random.uniform(low=3, high=25)),
                    reset_x0=False
 

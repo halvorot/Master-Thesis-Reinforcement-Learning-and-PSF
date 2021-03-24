@@ -39,6 +39,10 @@ class PSF:
         self.nu = self.sys["u"].shape[0]
         self.np = self.sys["p"].shape[0]
 
+        self._centroid_Px = np.zeros((self.nx, 1))
+        self._centroid_Pu = np.zeros((self.nu, 1))
+        self._init_guess = np.array([])
+
         if param is None:
             self.param = SX([])
         else:
@@ -56,10 +60,6 @@ class PSF:
                 self.P = P
                 self.alpha = alpha
                 self.K = K
-
-        self._centroid_Px = np.zeros((self.nx, 1))
-        self._centroid_Pu = np.zeros((self.nu, 1))
-        self._init_guess = np.array([])
 
         self._set_model_step()
 

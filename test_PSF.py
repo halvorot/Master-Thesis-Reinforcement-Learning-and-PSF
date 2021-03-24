@@ -50,8 +50,8 @@ for i in range(number_of_iter):
                        2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
                        2 * np.random.uniform(low=0, high=params.max_power_generation)
                    ],
-                   u0=vertcat([500000, 0, 10e6]),
-                   ext_params=vertcat(np.random.uniform(low=15, high=15)),
+                   u0=vertcat([0, 0, 0]),
+                   ext_params=vertcat(np.random.uniform(low=3, high=25)),
                    reset_x0=True
                    ))
 

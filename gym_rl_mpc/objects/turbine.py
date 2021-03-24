@@ -97,13 +97,9 @@ class Turbine:
         power = self.input[2]
         omega = self.state[2]
 
-        F_w = numerical_F_wind(omega, wind_speed, u)
-        Q_w = numerical_Q_wind(omega, wind_speed, u)
-        Q_g = max(0, min(power / omega, params.max_generator_torque))
-
-        self.F_w = F_w
-        self.Q_w = Q_w
-        self.Q_g = Q_g
+        self.F_w = numerical_F_wind(omega, wind_speed, u)
+        self.Q_w = numerical_Q_wind(omega, wind_speed, u)
+        self.Q_g = max(0, min(power / omega, params.max_generator_torque))
 
         state_dot = numerical_x_dot(state, u, F_thr, power, wind_speed)
 

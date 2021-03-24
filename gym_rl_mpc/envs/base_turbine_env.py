@@ -59,14 +59,15 @@ class BaseTurbineEnv(gym.Env, ABC):
                            1 / params.max_power_generation ** 2
                        ]),
                        slack_flag=True,
+                       slew_rate=[0, params.max_blade_pitch_rate, 0],
                        lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
                                          self.max_wind_speed * params.wind_inflow_ratio],
                                    "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
                                    "Omega": [params.omega_setpoint(self.min_wind_speed),
                                              params.omega_setpoint(self.max_wind_speed)],
                                    "P_ref": [0, params.max_power_generation],
-                                   "theta": [-10, 10],
-                                   "theta_dot": [-45, 45]}
+                                   "theta": [-self.crash_angle_condition, self.crash_angle_condition],
+                                   "theta_dot": [-45*DEG2RAD, 45*DEG2RAD]}
                        )
 
         ## END PSF init ##
@@ -127,7 +128,6 @@ class BaseTurbineEnv(gym.Env, ABC):
             psf_params = [self.turbine.adjusted_wind_speed]
             u0 = self.turbine.u0
             psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
-
             psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
                                     psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
                                     psf_corrected_action_un_normalized[2] / params.max_power_generation]
@@ -141,7 +141,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.observation = self.observe()
 
-        done, reward = self.calculate_reward(self.observation, action)
+        done, reward = self.calculate_reward(action)
 
         self.cumulative_reward += reward
         self.last_reward = reward
@@ -160,7 +160,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         Must set the 'turbine', 'wind_speed' attributes.
         """
 
-    def calculate_reward(self, obs, action):
+    def calculate_reward(self, action):
         """
         Calculates the reward function for one time step. Also checks if the episode is done.
         """
@@ -182,7 +182,10 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
         self.input_reward = -self.gamma_input * (action[0] ** 2 + action[1] ** 2)
-        self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
+        if self.use_psf:
+            self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
+        else:
+            self.psf_reward = 0
 
         step_reward = (self.theta_reward 
                         + self.theta_dot_reward 

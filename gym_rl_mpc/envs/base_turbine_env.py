@@ -121,10 +121,10 @@ class BaseTurbineEnv(gym.Env, ABC):
         Simulates the environment one time-step.
         """
         if self.use_psf:
-            action_F_thr = action[0] * params.max_thrust_force
-            action_blade_pitch = action[1] * params.max_blade_pitch
-            action_power = action[2] * params.max_power_generation
-            action_un_normalized = [action_F_thr, action_blade_pitch, action_power]
+            F_thr = action[0] * params.max_thrust_force
+            blade_pitch = action[1] * params.max_blade_pitch
+            power = action[2] * params.max_power_generation
+            action_un_normalized = [F_thr, blade_pitch, power]
             psf_params = [self.turbine.adjusted_wind_speed]
             u0 = self.turbine.u0
             psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)

@@ -107,7 +107,7 @@ class TensorboardCallback(BaseCallback):
 
 
 if __name__ == '__main__':
-    NUM_CPUs = 1#multiprocessing.cpu_count()
+    NUM_CPUs = multiprocessing.cpu_count()
 
     parser = argparse.ArgumentParser()
     parser.add_argument(

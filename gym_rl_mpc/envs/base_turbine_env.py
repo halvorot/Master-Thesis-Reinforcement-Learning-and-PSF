@@ -136,12 +136,12 @@ class BaseTurbineEnv(gym.Env, ABC):
                                         psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
                                         psf_corrected_action_un_normalized[2] / params.max_power_generation]
                 self.psf_action = psf_corrected_action
+                self.turbine.step(self.psf_action, self.wind_speed)
             except RuntimeError:
-                print("Casadi failed to solve step. Using prev psf action")
-                self.psf_action = self.psf_action
+                print("Casadi failed to solve step. Using agent action. Episode done")
                 force_done = True
-            
-            self.turbine.step(self.psf_action, self.wind_speed)
+                self.turbine.step(action, self.wind_speed)
+                self.psf_action = [0] * len(action)
         else:
             self.turbine.step(action, self.wind_speed)
             self.psf_action = [0] * len(action)

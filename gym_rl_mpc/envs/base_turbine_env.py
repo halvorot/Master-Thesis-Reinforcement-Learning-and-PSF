@@ -120,6 +120,8 @@ class BaseTurbineEnv(gym.Env, ABC):
         """
         Simulates the environment one time-step.
         """
+        force_done = False
+
         if self.use_psf:
             F_thr = action[0] * params.max_thrust_force
             blade_pitch = action[1] * params.max_blade_pitch
@@ -128,12 +130,18 @@ class BaseTurbineEnv(gym.Env, ABC):
             new_adjusted_wind_speed = params.wind_inflow_ratio*self.wind_speed - params.L * np.cos(self.turbine.platform_angle) * self.turbine.state[1]
             psf_params = [new_adjusted_wind_speed]
             u0 = self.turbine.u0
-            psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
-            psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
-                                    psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
-                                    psf_corrected_action_un_normalized[2] / params.max_power_generation]
-            self.turbine.step(psf_corrected_action, self.wind_speed)
-            self.psf_action = psf_corrected_action
+            try:
+                psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
+                psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
+                                        psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
+                                        psf_corrected_action_un_normalized[2] / params.max_power_generation]
+                self.psf_action = psf_corrected_action
+            except RuntimeError:
+                print("Casadi failed to solve step. Using prev psf action")
+                self.psf_action = self.psf_action
+                force_done = True
+            
+            self.turbine.step(self.psf_action, self.wind_speed)
         else:
             self.turbine.step(action, self.wind_speed)
             self.psf_action = [0] * len(action)
@@ -151,7 +159,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.t_step += 1
 
-        return self.observation, reward, done, {}
+        return self.observation, reward, (done or force_done), {}
 
     @abstractmethod
     def generate_environment(self):

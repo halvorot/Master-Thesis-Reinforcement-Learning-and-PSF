@@ -196,7 +196,7 @@ class PSF:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
 
         if u_prev is None:
-            u_prev = u_L # Dont care, just for vertcat match
+            u_prev = u_L  # Dont care, just for vertcat match
 
         if self._init_guess.shape[0] == 0:
             self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))

@@ -1,14 +1,11 @@
-import json
-import pickle
 from pathlib import Path
 
 import gym
 import numpy as np
 from gym.utils import seeding
-from termcolor import colored
 
 import gym_rl_mpc.utils.model_params as params
-from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, DEG2RAD
 import gym_rl_mpc.objects.symbolic_model as sym
 from PSF.PSF import PSF
 from abc import ABC, abstractmethod
@@ -159,11 +156,7 @@ class BaseTurbineEnv(gym.Env, ABC):
             F_thr = action[0] * params.max_thrust_force
             blade_pitch = action[1] * params.max_blade_pitch
             power = action[2] * params.max_power_generation
-            action_un_normalized = [
-                np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
-                np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
-                np.random.uniform(low=0, high=params.max_power_generation)
-            ]  # [F_thr, blade_pitch, power]
+            action_un_normalized = [F_thr, blade_pitch, power]
             new_adjusted_wind_speed = params.wind_inflow_ratio * self.wind_speed - params.L * np.cos(
                 self.turbine.platform_angle) * self.turbine.state[1]
             psf_params = [new_adjusted_wind_speed]

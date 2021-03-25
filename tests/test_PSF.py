@@ -2,7 +2,12 @@ import time
 from pathlib import Path
 
 import numpy as np
-from casadi import vertcat
+
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).parent
+sys.path.append(HERE.parent) # to import gym and psf
 
 from PSF.PSF import PSF
 import gym_rl_mpc.objects.symbolic_model as sym
@@ -26,7 +31,7 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
               1 / params.max_blade_pitch ** 2,
               1 / params.max_power_generation ** 2
           ]),
-          PK_path=Path("PSF", "stored_PK"),
+          PK_path=Path("../PSF", "stored_PK"),
           lin_bounds={"w": [3,
                             25],
                       "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
@@ -56,7 +61,6 @@ for i in range(number_of_iter):
                    u_prev=[0, 0, 0],
                    ext_params=np.random.uniform(low=3, high=25),
                    reset_x0=True
-
                    ))
 
 end = time.time()

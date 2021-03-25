@@ -55,6 +55,8 @@ class PSF:
         self._centroid_Pu = np.zeros((self.nu, 1))
         self._init_guess = np.array([])
 
+        self.solver = None
+
         if param is None:
             self.param = SX([])
         else:
@@ -73,14 +75,141 @@ class PSF:
                 self.alpha = alpha
                 self.K = K
 
-        self._formulate_problem()
+        self.formulate_problem()
+        self.set_solver()
 
-    def _formulate_problem(self):
+    def create_system_set(self):
+        A_set = []
+        B_set = []
+
+        free_vars = SX.get_free(Function("list_free_vars", [], [self.Ac, self.Bc]))
+        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
+        eval_func = Function("eval_func", free_vars, [self.Ac, self.Bc])
+
+        for product in itertools.product(*bounds):  # creating maximum difference
+            AB_set = eval_func(*product)
+            A_set.append(np.asarray(AB_set[0]))
+            B_set.append(np.asarray(AB_set[1]))
+
+        return A_set, B_set
+
+    def set_terminal_set(self):
+        self.alpha = 0.9
+        A_set, B_set = self.create_system_set()
+        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
+        filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
+        path = Path(self.PK_path, filename + ".dat")
+        try:
+            load_tuple = pickle.load(open(path, mode="rb"))
+            self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
+        except FileNotFoundError:
+            print("Could not find stored KP, using MATLAB.")
+            import matlab.engine
+
+            Hx = matlab.double(self.sys["Hx"].tolist())
+            hx = matlab.double(self.sys["hx"].tolist())
+            Hu = matlab.double(self.sys["Hu"].tolist())
+            hu = matlab.double(self.sys["hu"].tolist())
+
+            m_A = matlab.double(np.hstack(A_set).tolist())
+            m_B = matlab.double(np.hstack(B_set).tolist())
+
+            eng = matlab.engine.start_matlab()
+            eng.eval("addpath(genpath('./'))")
+            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, nargout=4)
+            eng.quit()
+
+            self.P = np.asarray(P)
+            self.K = np.asarray(K)
+            self._centroid_Px = np.asarray(centroid_Px)
+            self._centroid_Pu = np.asarray(centroid_Pu)
+            dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
+            pickle.dump(dump_tuple, open(path, "wb"))
+
+    def set_linear_model_step(self):
+
+        M = 10
+        DT = self.T / self.N
+        Ad = np.eye(self.nx)
+        Bd = 0
+        for i in range(1, M):
+            Ad += 1 / np.math.factorial(i) * mpower(self.Ac, i) * DT ** i
+            Bd += 1 / np.math.factorial(i) * mpower(self.Ac, i - 1) * DT ** i
+
+        Bd = Bd * self.Bc
+
+        X0 = SX.sym('X0', self.nx)
+        U = SX.sym('U', self.nu)
+        X_next = Ad @ X0 + Bd @ U
+
+        self.model_step = Function('F',
+                                   [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
+                                   [X_next],
+                                   ['xk', 'x_lin', 'u', 'u_lin', 'p'],
+                                   ['xf']
+                                   )
+
+    def set_nonlinear_model_step(self):
+        M = 4  # RK4 steps per interval
+        DT = self.T / self.N / M
+        f = Function('f',
+                     [self.sys["x"], self.sys["u"], self.sys["p"]],
+                     [self.sys["xdot"]])
+        Xk = SX.sym('Xk', self.nx)
+        U = SX.sym('U', self.nu)
+        P = SX.sym('P', self.np)
+        X_next = Xk
+        # Not used in solution, just to fit with linear MPC (DC = Dont Care)
+        DCx = SX.sym('DCx', self.nx)
+        DCu = SX.sym('DCu', self.nu)
+
+        for j in range(M):
+            k1 = f(X_next, U, P)
+            k2 = f(X_next + DT / 2 * k1, U, P)
+            k3 = f(X_next + DT / 2 * k2, U, P)
+            k4 = f(X_next + DT * k3, U, P)
+            X_next = X_next + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+        self.model_step = Function('F', [Xk, DCx, U, DCu, P], [X_next], ['xk', 'x_lin', 'u', 'u_lin', 'p'], ['xf'])
+
+    def set_solver(self):
 
         if self.LP_flag:
-            self._set_linear_model_step()
+            lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
+
+            opts = {"osqp": {"verbose": 0, "polish": False}}
+            self.solver = qpsol("solver", "osqp", self.problem, opts)
         else:
-            self._set_nonlinear_model_step()
+            # JIT
+            # Pick a compiler
+            # compiler = "gcc"  # Linux
+            # compiler = "clang"  # OSX
+            compiler = "cl.exe"  # Windows
+
+            flags = ["/O2"]  # win
+            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
+
+            # JIT
+            opts = {
+                "warn_initial_bounds": True,
+                "error_on_fail": True,
+                "eval_errors_fatal": True,
+                "verbose_init": False,
+                "show_eval_warnings": False,
+                "ipopt": {"print_level": 0},
+                "print_time": False,
+                "compiler": "shell",
+                "jit": self.jit_flag,
+                'jit_options': jit_options
+            }
+
+            self.solver = nlpsol("solver", "ipopt", self.problem, opts)
+
+    def formulate_problem(self):
+
+        if self.LP_flag:
+            self.set_linear_model_step()
+        else:
+            self.set_nonlinear_model_step()
 
         x0 = SX.sym('x0', self.nx, 1)
         X = SX.sym('X', self.nx, self.N + 1)
@@ -91,8 +220,10 @@ class PSF:
 
         u_stable = SX.sym('u_stable', self.nu, 1)
         u_prev = SX.sym('u_prev', self.nu, 1)
+
+        eps = SX.sym("eps", self.nx, self.N)
+
         if self.slack_flag:
-            eps = SX.sym("eps", self.nx, self.N)
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
         else:
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
@@ -156,40 +287,12 @@ class PSF:
             self.lbg += [-inf]
             self.ubg += [0]
 
-        if self.LP_flag:
-            lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
-            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p, *lin_points)}
+        self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
 
-            opts = {"osqp": {"verbose": 0, "polish": False}}
-            self.solver = qpsol("solver", "osqp", LP, opts)
-        else:
-            # JIT
-            # Pick a compiler
-            # compiler = "gcc"  # Linux
-            # compiler = "clang"  # OSX
-            compiler = "cl.exe"  # Windows
+        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
 
-            flags = ["/O2"]  # win
-            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
-
-            # JIT
-            opts = {
-                "warn_initial_bounds": True,
-                "error_on_fail": True,
-                "eval_errors_fatal": True,
-                "verbose_init": False,
-                "show_eval_warnings": False,
-                "ipopt": {"print_level": 0},
-                "print_time": False,
-                "compiler": "shell",
-                "jit": self.jit_flag,
-                'jit_options': jit_options
-            }
-
-            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
-
-            self.solver = nlpsol("solver", "ipopt", NLP, opts)
-            self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
+    def reset_init_guess(self):
+        self._init_guess = np.array([])
 
     def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
         if u_prev is None and self.slew_rate is not None:
@@ -211,102 +314,6 @@ class PSF:
             self._init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
-
-    def reset_init_guess(self):
-        self._init_guess = np.array([])
-
-    def set_terminal_set(self):
-        self.alpha = 0.9
-        A_set, B_set = self.create_system_set()
-        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
-        filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
-        path = Path(self.PK_path, filename + ".dat")
-        try:
-            load_tuple = pickle.load(open(path, mode="rb"))
-            self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
-        except FileNotFoundError:
-            print("Could not find stored KP, using MATLAB.")
-            import matlab.engine
-
-            Hx = matlab.double(self.sys["Hx"].tolist())
-            hx = matlab.double(self.sys["hx"].tolist())
-            Hu = matlab.double(self.sys["Hu"].tolist())
-            hu = matlab.double(self.sys["hu"].tolist())
-
-            m_A = matlab.double(np.hstack(A_set).tolist())
-            m_B = matlab.double(np.hstack(B_set).tolist())
-
-            eng = matlab.engine.start_matlab()
-            eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, nargout=4)
-            eng.quit()
-
-            self.P = np.asarray(P)
-            self.K = np.asarray(K)
-            self._centroid_Px = np.asarray(centroid_Px)
-            self._centroid_Pu = np.asarray(centroid_Pu)
-            dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
-            pickle.dump(dump_tuple, open(path, "wb"))
-
-    def create_system_set(self):
-        A_set = []
-        B_set = []
-
-        free_vars = SX.get_free(Function("list_free_vars", [], [self.Ac, self.Bc]))
-        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
-        eval_func = Function("eval_func", free_vars, [self.Ac, self.Bc])
-
-        for product in itertools.product(*bounds):  # creating maximum difference
-            AB_set = eval_func(*product)
-            A_set.append(np.asarray(AB_set[0]))
-            B_set.append(np.asarray(AB_set[1]))
-
-        return A_set, B_set
-
-    def _set_linear_model_step(self):
-
-        M = 10
-        DT = self.T / self.N
-        Ad = np.eye(self.nx)
-        Bd = 0
-        for i in range(1, M):
-            Ad += 1 / np.math.factorial(i) * mpower(self.Ac, i) * DT ** i
-            Bd += 1 / np.math.factorial(i) * mpower(self.Ac, i - 1) * DT ** i
-
-        Bd = Bd * self.Bc
-
-        X0 = SX.sym('X0', self.nx)
-        U = SX.sym('U', self.nu)
-        X_next = Ad @ X0 + Bd @ U
-
-        self.model_step = Function('F',
-                                   [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
-                                   [X_next],
-                                   ['xk', 'x_lin', 'u', 'u_lin', 'p'],
-                                   ['xf']
-                                   )
-
-    def _set_nonlinear_model_step(self):
-        M = 4  # RK4 steps per interval
-        DT = self.T / self.N / M
-        f = Function('f',
-                     [self.sys["x"], self.sys["u"], self.sys["p"]],
-                     [self.sys["xdot"]])
-        Xk = SX.sym('Xk', self.nx)
-        U = SX.sym('U', self.nu)
-        P = SX.sym('P', self.np)
-        X_next = Xk
-        # Not used in solution, just to fit with linear MPC (DC = Dont Care)
-        DCx = SX.sym('DCx', self.nx)
-        DCu = SX.sym('DCu', self.nu)
-
-        for j in range(M):
-            k1 = f(X_next, U, P)
-            k2 = f(X_next + DT / 2 * k1, U, P)
-            k3 = f(X_next + DT / 2 * k2, U, P)
-            k4 = f(X_next + DT * k3, U, P)
-            X_next = X_next + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        self.model_step = Function('F', [Xk, DCx, U, DCu, P], [X_next], ['xk', 'x_lin', 'u', 'u_lin', 'p'], ['xf'])
 
 
 if __name__ == '__main__':

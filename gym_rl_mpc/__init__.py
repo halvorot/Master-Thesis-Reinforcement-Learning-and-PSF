@@ -24,6 +24,9 @@ VARIABLE_WIND_CONFIG["wind_period"] = 60
 VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 3
 VARIABLE_WIND_CONFIG["wind_noise"] = False
 
+CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
+CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
+
 SCENARIOS = {
     'ConstantWind-v1': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
@@ -32,6 +35,10 @@ SCENARIOS = {
     'VariableWind-v1': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',
         'config': VARIABLE_WIND_CONFIG
+    },
+    'CrazyAgent-v0': {
+        'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
+        'config': CRAZY_ENV_CONFIG
     }
 }
 

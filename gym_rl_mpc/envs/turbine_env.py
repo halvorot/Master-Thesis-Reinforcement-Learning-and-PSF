@@ -2,7 +2,6 @@ import numpy as np
 
 from gym_rl_mpc.envs.base_turbine_env import BaseTurbineEnv
 from gym_rl_mpc.objects.turbine import Turbine
-from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 
 class ConstantWind(BaseTurbineEnv):

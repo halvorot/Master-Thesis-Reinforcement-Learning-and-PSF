@@ -1,4 +1,5 @@
 from gym.envs.registration import register
+
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {

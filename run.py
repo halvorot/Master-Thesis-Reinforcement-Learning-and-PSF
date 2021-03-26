@@ -1,18 +1,18 @@
-import gym
-import gym_rl_mpc
-import os
 import argparse
+import os
 
-import utils
-from stable_baselines3 import PPO
+import gym
 import matplotlib.pyplot as plt
 import numpy as np
-from pandas import DataFrame
+from stable_baselines3 import PPO
+
+import gym_rl_mpc
+import utils
 from gym_rl_mpc.utils import model_params as params
-from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM
 
 
-if __name__ == "__main__":
+def parse_argument():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--env',
@@ -42,7 +42,12 @@ if __name__ == "__main__":
         action='store_true'
     )
     args = parser.parse_args()
+    return args
 
+
+def run(args):
+    if isinstance(args, dict):
+        args = argparse.Namespace(**args)
     if args.psf:
         config = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
         config['use_psf'] = True
@@ -51,6 +56,7 @@ if __name__ == "__main__":
         config = gym_rl_mpc.SCENARIOS[args.env]['config']
     env = gym.make(args.env, env_config=config)
     env_id = env.unwrapped.spec.id
+
     if args.agent:
         agent_path = args.agent
         agent = PPO.load(agent_path)
@@ -76,16 +82,16 @@ if __name__ == "__main__":
         else:
             fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")
 
-        time = np.array(range(0, len(sim_df['theta'])))*env.step_size
+        time = np.array(range(0, len(sim_df['theta']))) * env.step_size
 
-        ax1.plot(time, sim_df['theta']*RAD2DEG, label='$\\theta$')
-        ax1.plot(time, sim_df['theta_dot']*RAD2DEG, label='$\dot{\\theta}$')
+        ax1.plot(time, sim_df['theta'] * RAD2DEG, label='$\\theta$')
+        ax1.plot(time, sim_df['theta_dot'] * RAD2DEG, label='$\dot{\\theta}$')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
         ax1.set_ylabel('Degrees, deg/sec')
         ax1.set_title('platform angle and angular velocity')
         ax1.legend()
 
-        ax2.plot(time, sim_df['omega']*RAD2RPM, label='$\Omega$')
+        ax2.plot(time, sim_df['omega'] * RAD2RPM, label='$\Omega$')
         ax2.set_ylabel('rpm')
         ax2.set_title('Angluar Velocity Rotor')
         ax2.legend()
@@ -98,7 +104,7 @@ if __name__ == "__main__":
 
         color = 'tab:orange'
         ax3_2 = ax3.twinx()
-        ax3_2.plot(time, sim_df['blade_pitch']*RAD2DEG, label='Blade pitch', color=color)
+        ax3_2.plot(time, sim_df['blade_pitch'] * RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
 
@@ -116,22 +122,22 @@ if __name__ == "__main__":
         ax4_2.set_ylabel('Q [Nm]', color=color)
         ax4_2.legend()
 
-
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
-        ax21.plot(time, sim_df['agent_F_thr']*params.max_thrust_force, label='agent thrust')
-        ax21.plot(time, sim_df['psf_F_thr']*params.max_thrust_force, label='agent thrust')
+        ax21.plot(time, sim_df['agent_F_thr'] * params.max_thrust_force, label='agent thrust')
+        ax21.plot(time, sim_df['psf_F_thr'] * params.max_thrust_force, label='agent thrust')
         ax21.set_ylabel('F_thr [N]')
         ax21.set_title('Commanded Thrust Force')
         ax21.legend()
 
-        ax22.plot(time, np.array(sim_df['agent_power'])*params.max_power_generation, label='agent power')
-        ax22.plot(time, np.array(sim_df['psf_power'])*params.max_power_generation, label='PSF power')
+        ax22.plot(time, np.array(sim_df['agent_power']) * params.max_power_generation, label='agent power')
+        ax22.plot(time, np.array(sim_df['psf_power']) * params.max_power_generation, label='PSF power')
         ax22.set_ylabel('Power')
         ax22.set_title('Commanded Power')
         ax22.legend()
 
-        ax23.plot(time, np.array(sim_df['agent_blade_pitch'])*params.max_blade_pitch*RAD2DEG, label='agent blade pitch')
-        ax23.plot(time, np.array(sim_df['psf_blade_pitch'])*params.max_blade_pitch*RAD2DEG, label='PSF blade pitch')
+        ax23.plot(time, np.array(sim_df['agent_blade_pitch']) * params.max_blade_pitch * RAD2DEG,
+                  label='agent blade pitch')
+        ax23.plot(time, np.array(sim_df['psf_blade_pitch']) * params.max_blade_pitch * RAD2DEG, label='PSF blade pitch')
         ax23.set_ylabel('Blade pitch [deg]')
         ax23.set_title('Commanded blade pitch')
         ax23.legend()
@@ -142,3 +148,8 @@ if __name__ == "__main__":
         ax24.legend()
 
         plt.show()
+
+
+if __name__ == "__main__":
+    args = parse_argument()
+    run(args)

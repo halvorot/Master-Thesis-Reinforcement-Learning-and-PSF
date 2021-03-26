@@ -1,7 +1,8 @@
-from casadi import SX, vertcat, jacobian, cos, sin, Function, nlpsol, inf
 import numpy as np
-from gym_rl_mpc import DEFAULT_CONFIG as CONFIG
+from casadi import SX, vertcat, cos, sin, Function, nlpsol, inf
+
 import gym_rl_mpc.utils.model_params as params
+from gym_rl_mpc import DEFAULT_CONFIG as CONFIG
 
 LARGE_NUM = 1e9
 RPM2RAD = 1 / 60 * 2 * np.pi

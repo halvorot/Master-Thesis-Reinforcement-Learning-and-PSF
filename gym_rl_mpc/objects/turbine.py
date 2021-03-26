@@ -1,6 +1,7 @@
 import numpy as np
-import gym_rl_mpc.utils.model_params as params
+
 import gym_rl_mpc.utils.geomutils as geom
+import gym_rl_mpc.utils.model_params as params
 from gym_rl_mpc.objects.symbolic_model import solve_initial_problem, numerical_F_wind, numerical_Q_wind, numerical_x_dot
 
 

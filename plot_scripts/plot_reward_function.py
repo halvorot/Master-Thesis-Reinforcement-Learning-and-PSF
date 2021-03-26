@@ -1,8 +1,8 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import argparse
 
-import gym_rl_mpc.utils.model_params as params
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def r_theta():
     gamma_theta = 0.12

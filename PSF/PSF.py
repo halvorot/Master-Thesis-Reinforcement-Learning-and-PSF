@@ -55,6 +55,8 @@ class PSF:
         self._centroid_Pu = np.zeros((self.nu, 1))
         self._init_guess = np.array([])
 
+        self.problem = None
+        self.eval_w0 = None
         self.solver = None
 
         if param is None:

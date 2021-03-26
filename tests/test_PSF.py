@@ -1,10 +1,8 @@
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
-
-import sys
-from pathlib import Path
 
 HERE = Path(__file__).parent
 sys.path.append(HERE.parent) # to import gym and psf

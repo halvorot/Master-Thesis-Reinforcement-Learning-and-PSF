@@ -122,7 +122,7 @@ class PSF:
 
             eng = matlab.engine.start_matlab()
             eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, nargout=4)
+            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu,self.ext_step_size, nargout=4)
             eng.quit()
 
             self.P = np.asarray(P)

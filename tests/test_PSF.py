@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from pathlib import Path
@@ -6,6 +7,7 @@ import numpy as np
 
 HERE = Path(__file__).parent
 sys.path.append(HERE.parent) # to import gym and psf
+os.chdir(HERE.parent)
 
 from PSF.PSF import PSF
 import gym_rl_mpc.objects.symbolic_model as sym
@@ -25,7 +27,7 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
     1 / params.max_thrust_force ** 2,
     1 / params.max_blade_pitch ** 2,
     1 / params.max_power_generation ** 2
-]), PK_path=Path("../PSF", "stored_PK"), lin_bounds={"w": [3,
+]), PK_path=Path("PSF", "stored_PK"), lin_bounds={"w": [3,
                                                            25],
                                                      "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
                                                      "Omega": [params.omega_setpoint(3),

@@ -22,6 +22,7 @@ class PSF:
                  alpha=None,
                  K=None,
                  slew_rate=None,
+                 ext_step_size=1,
                  LP_flag=False,
                  slack_flag=True,
                  terminal_flag=False,
@@ -42,6 +43,7 @@ class PSF:
 
         self.N = N
         self.T = T
+
         self.lin_bounds = lin_bounds
 
         self.PK_path = PK_path
@@ -50,11 +52,13 @@ class PSF:
         self.np = self.sys["p"].shape[0]
 
         self.slew_rate = slew_rate
+        self.ext_step_size = ext_step_size
 
         self._centroid_Px = np.zeros((self.nx, 1))
         self._centroid_Pu = np.zeros((self.nu, 1))
         self._init_guess = np.array([])
 
+        self.model_step = None
         self.problem = None
         self.eval_w0 = None
         self.solver = None
@@ -128,9 +132,9 @@ class PSF:
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 
-    def set_linear_model_step(self):
+    def set_taylor_exp_model_step(self):
 
-        M = 10
+        M = 2
         DT = self.T / self.N
         Ad = np.eye(self.nx)
         Bd = 0
@@ -151,7 +155,7 @@ class PSF:
                                    ['xf']
                                    )
 
-    def set_nonlinear_model_step(self):
+    def set_RK_model_step(self):
         M = 4  # RK4 steps per interval
         DT = self.T / self.N / M
         f = Function('f',
@@ -209,9 +213,9 @@ class PSF:
     def formulate_problem(self):
 
         if self.LP_flag:
-            self.set_linear_model_step()
+            self.set_taylor_exp_model_step()
         else:
-            self.set_nonlinear_model_step()
+            self.set_RK_model_step()
 
         x0 = SX.sym('x0', self.nx, 1)
         X = SX.sym('X', self.nx, self.N + 1)
@@ -273,10 +277,12 @@ class PSF:
             self.ubg += [0] * g[-1].shape[0]
 
         if self.slew_rate is not None:
-            DT = self.T / self.N
+
             g += [U[:, 0] - u_prev]
-            self.lbg += [-np.array(self.slew_rate) * DT]
-            self.ubg += [np.array(self.slew_rate) * DT]
+            self.lbg += [-np.array(self.slew_rate) * self.ext_step_size]
+            self.ubg += [np.array(self.slew_rate) * self.ext_step_size]
+
+            DT = self.T / self.N
             for i in range(self.N - 1):
                 g += [U[:, i + 1] - U[:, i]]
                 self.lbg += [-np.array(self.slew_rate) * DT]

@@ -89,16 +89,8 @@ class BaseTurbineEnv(gym.Env, ABC):
             "theta_dot": [-45 * DEG2RAD, 45 * DEG2RAD]
         }
         ## PSF init ##
-        self.psf = PSF(sys=sys,
-                       N=20,
-                       T=10,
-                       R=R,
-                       slack_flag=True,
-                       terminal_flag=True,
-                       PK_path=Path("PSF", "stored_PK"),
-                       slew_rate=actuation_max_rate,
-                       lin_bounds=lin_bounds
-                       )
+        self.psf = PSF(sys=sys, N=20, T=10, ext_step_size=self.step_size, R=R, PK_path=Path("PSF", "stored_PK"),
+                       lin_bounds=lin_bounds, slew_rate=actuation_max_rate, slack_flag=True, terminal_flag=True)
 
         ## END PSF init ##
 

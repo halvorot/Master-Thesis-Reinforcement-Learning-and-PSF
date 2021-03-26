@@ -21,30 +21,20 @@ psf = PSF(sys={"xdot": sym.symbolic_x_dot,
                "hx": sym.hx,
                "Hu": sym.Hu,
                "hu": sym.hu
-               },
-          N=20,
-          T=20,
-          R=np.diag([
-              1 / params.max_thrust_force ** 2,
-              1 / params.max_blade_pitch ** 2,
-              1 / params.max_power_generation ** 2
-          ]),
-          PK_path=Path("../PSF", "stored_PK"),
-          lin_bounds={"w": [3,
-                            25],
-                      "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
-                      "Omega": [params.omega_setpoint(3),
-                                params.omega_setpoint(25)],
-                      "P_ref": [0, params.max_power_generation],
-                      "theta": [-10 * sym.DEG2RAD, 10 * sym.DEG2RAD],
-                      "theta_dot": [-45 * sym.DEG2RAD, 45 * sym.DEG2RAD]
-                      },
-          slew_rate=[1e5, 8 * params.DEG2RAD, 1e6],
-          LP_flag=False,
-          slack_flag=True,
-          jit_flag=False,
-          terminal_flag=True
-          )
+               }, N=20, T=20, R=np.diag([
+    1 / params.max_thrust_force ** 2,
+    1 / params.max_blade_pitch ** 2,
+    1 / params.max_power_generation ** 2
+]), PK_path=Path("../PSF", "stored_PK"), lin_bounds={"w": [3,
+                                                           25],
+                                                     "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
+                                                     "Omega": [params.omega_setpoint(3),
+                                                               params.omega_setpoint(25)],
+                                                     "P_ref": [0, params.max_power_generation],
+                                                     "theta": [-10 * sym.DEG2RAD, 10 * sym.DEG2RAD],
+                                                     "theta_dot": [-45 * sym.DEG2RAD, 45 * sym.DEG2RAD]
+                                                     }, slew_rate=[1e5, 8 * params.DEG2RAD, 1e6], LP_flag=False,
+          slack_flag=True, terminal_flag=True, jit_flag=False)
 start = time.time()
 for i in range(number_of_iter):
     print(psf.calc(x=[np.random.uniform(low=-7, high=9) * params.DEG2RAD,

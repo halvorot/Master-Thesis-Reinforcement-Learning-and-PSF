@@ -4,7 +4,7 @@ from hashlib import sha1
 from pathlib import Path
 
 import numpy as np
-from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit
+from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator
 
 LEN_FILE_STR = 20
 
@@ -23,6 +23,7 @@ class PSF:
                  K=None,
                  slew_rate=None,
                  ext_step_size=1,
+                 disc_method="RK",
                  LP_flag=False,
                  slack_flag=True,
                  terminal_flag=False,
@@ -59,6 +60,7 @@ class PSF:
         self._init_guess = np.array([])
 
         self.model_step = None
+        self._sym_model_step = None
         self.problem = None
         self.eval_w0 = None
         self.solver = None
@@ -81,6 +83,7 @@ class PSF:
                 self.alpha = alpha
                 self.K = K
 
+        self.set_model_step(disc_method)
         self.formulate_problem()
         self.set_solver()
 
@@ -122,7 +125,7 @@ class PSF:
 
             eng = matlab.engine.start_matlab()
             eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu,self.ext_step_size, nargout=4)
+            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
             eng.quit()
 
             self.P = np.asarray(P)
@@ -132,7 +135,22 @@ class PSF:
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 
-    def set_taylor_exp_model_step(self):
+    def set_cvodes_model_step(self):
+
+        """
+        dae = {'x': self.sys["x"], 'p': vertcat(self.sys["u"], self.sys["p"]), 'ode': self.sys["xdot"]}
+        opts = {'tf': self.T / self.N, "expand": False}
+        self._sym_model_step = integrator('F_internal', 'cvodes', dae, opts)
+
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(x0=xk, p=vertcat(u, p))
+
+        self.model_step = parse_model_step
+        """
+        raise NotImplementedError("BUG. Waiting on forum answer: "
+                                  "https://groups.google.com/g/casadi-users/c/hQG3zs88wVA")
+
+    def set_taylor_model_step(self):
 
         M = 2
         DT = self.T / self.N
@@ -148,12 +166,17 @@ class PSF:
         U = SX.sym('U', self.nu)
         X_next = Ad @ X0 + Bd @ U
 
-        self.model_step = Function('F',
-                                   [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
-                                   [X_next],
-                                   ['xk', 'x_lin', 'u', 'u_lin', 'p'],
-                                   ['xf']
-                                   )
+        self._sym_model_step = Function('F',
+                                        [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
+                                        [X_next],
+                                        ['xk', 'x_lin', 'u', 'u_lin', 'p'],
+                                        ['xf']
+                                        )
+
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(xk=xk, x_lin=x_lin, u=u, u_lin=u_lin, p=p)
+
+        self.model_step = parse_model_step
 
     def set_RK_model_step(self):
         M = 4  # RK4 steps per interval
@@ -165,9 +188,6 @@ class PSF:
         U = SX.sym('U', self.nu)
         P = SX.sym('P', self.np)
         X_next = Xk
-        # Not used in solution, just to fit with linear MPC (DC = Dont Care)
-        DCx = SX.sym('DCx', self.nx)
-        DCu = SX.sym('DCu', self.nu)
 
         for j in range(M):
             k1 = f(X_next, U, P)
@@ -175,7 +195,23 @@ class PSF:
             k3 = f(X_next + DT / 2 * k2, U, P)
             k4 = f(X_next + DT * k3, U, P)
             X_next = X_next + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        self.model_step = Function('F', [Xk, DCx, U, DCu, P], [X_next], ['xk', 'x_lin', 'u', 'u_lin', 'p'], ['xf'])
+
+        self._sym_model_step = Function('F', [Xk, U, P], [X_next], ['xk', 'u', 'p'], ['xf'])
+
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(xk=xk, u=u, p=p)
+
+        self.model_step = parse_model_step
+
+    def set_model_step(self, method_name):
+        if method_name == "RK":
+            self.set_RK_model_step()
+        elif method_name == "taylor":
+            self.set_taylor_model_step()
+        elif method_name == "cvodes":
+            self.set_cvodes_model_step()
+        else:
+            raise ValueError(f"{method_name} is not a implemented method")
 
     def set_solver(self):
 
@@ -201,7 +237,7 @@ class PSF:
                 "eval_errors_fatal": True,
                 "verbose_init": False,
                 "show_eval_warnings": False,
-                "ipopt": {"print_level": 0},
+                "ipopt": {"print_level": 0, "sb": "yes"},
                 "print_time": False,
                 "compiler": "shell",
                 "jit": self.jit_flag,
@@ -211,11 +247,6 @@ class PSF:
             self.solver = nlpsol("solver", "ipopt", self.problem, opts)
 
     def formulate_problem(self):
-
-        if self.LP_flag:
-            self.set_taylor_exp_model_step()
-        else:
-            self.set_RK_model_step()
 
         x0 = SX.sym('x0', self.nx, 1)
         X = SX.sym('X', self.nx, self.N + 1)
@@ -234,6 +265,7 @@ class PSF:
         else:
             objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
 
+        # empty problem
         w = []
         w0 = []
 
@@ -258,7 +290,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(i + 1).expand()(xk=x0, x_lin=x0, u=u_stable, u_lin=u_stable, p=p)["xf"]]
+            w0 += [self.model_step(xk=x0, x_lin=x0, u=u_stable, u_lin=u_stable, p=p)["xf"]]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]

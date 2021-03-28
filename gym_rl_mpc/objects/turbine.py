@@ -1,6 +1,7 @@
 import numpy as np
-import gym_rl_mpc.utils.model_params as params
+
 import gym_rl_mpc.utils.geomutils as geom
+import gym_rl_mpc.utils.model_params as params
 from gym_rl_mpc.objects.symbolic_model import solve_initial_problem, numerical_F_wind, numerical_Q_wind, numerical_x_dot
 
 
@@ -34,19 +35,18 @@ class Turbine:
             state = [theta, theta_dot, omega]^T
         """
 
-        self.state = np.zeros(3)    # Initialize states
-        self.adjusted_wind_speed = params.wind_inflow_ratio*init_wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
+        self.state = np.zeros(3)  # Initialize states
+        self.adjusted_wind_speed = params.wind_inflow_ratio * init_wind_speed
         init_power = params.power_regime(init_wind_speed) * params.max_power_generation
-
         self.steady_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
-                                                       power=init_power,
-                                                       thruster_force=0)
+                                                               power=init_power,
+                                                               thruster_force=0)
 
         self.state = self.steady_state
         self.u0 = [0, blade_pitch, init_power]
-        self.input = self.u0                            # Initialize control input
+        self.input = self.u0  # Initialize control input
         self.step_size = step_size
-        self.alpha_thr = self.step_size/(self.step_size + params.tau_thr)
+        self.alpha_thr = self.step_size / (self.step_size + params.tau_thr)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation
@@ -66,18 +66,19 @@ class Turbine:
 
         # Saturate the thrust force rate
         F_thr = prev_F_thr + np.sign(commanded_F_thr - prev_F_thr) * min(
-            abs(commanded_F_thr - prev_F_thr), params.max_thrust_rate*self.step_size)
+            abs(commanded_F_thr - prev_F_thr), params.max_thrust_rate * self.step_size)
         # Saturate blade pitch rate
         blade_pitch = prev_blade_pitch + np.sign(commanded_blade_pitch - prev_blade_pitch) * min(
-            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate*self.step_size)
+            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate * self.step_size)
         # Saturate the power rate
         power = prev_power + np.sign(commanded_power - prev_power) * min(
-            abs(commanded_power - prev_power), params.max_power_rate*self.step_size)
+            abs(commanded_power - prev_power), params.max_power_rate * self.step_size)
 
         self.input = np.array([F_thr, blade_pitch, power])
 
         # Adjust wind speed based on inflow and structure. Relative axial flux w = w_0 - w_i - x_dot = (2/3)w_0 - x_dot
-        self.adjusted_wind_speed = params.wind_inflow_ratio*wind_speed - params.L * np.cos(self.platform_angle) * self.state[1]
+        self.adjusted_wind_speed = params.wind_inflow_ratio * wind_speed - params.L * np.cos(self.platform_angle) * \
+                                   self.state[1]
 
         self._sim(self.adjusted_wind_speed)
 
@@ -104,7 +105,6 @@ class Turbine:
         state_dot = numerical_x_dot(state, u, F_thr, power, wind_speed)
 
         return state_dot
-
 
     @property
     def platform_angle(self):

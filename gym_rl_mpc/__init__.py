@@ -1,4 +1,5 @@
 from gym.envs.registration import register
+
 from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {
@@ -8,8 +9,8 @@ DEFAULT_CONFIG = {
     "crash_angle_condition": 10*DEG2RAD,
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
-    "max_wind_speed": 15,
-    "min_wind_speed": 7,
+    "max_wind_speed": 25,
+    "min_wind_speed": 5,
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
@@ -21,8 +22,11 @@ DEFAULT_CONFIG = {
 
 VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
 VARIABLE_WIND_CONFIG["wind_period"] = 60
-VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 2
+VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 3
 VARIABLE_WIND_CONFIG["wind_noise"] = False
+
+CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
+CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
     'ConstantWind-v1': {   
@@ -32,6 +36,10 @@ SCENARIOS = {
     'VariableWind-v1': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',
         'config': VARIABLE_WIND_CONFIG
+    },
+    'CrazyAgent-v0': {
+        'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
+        'config': CRAZY_ENV_CONFIG
     }
 }
 

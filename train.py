@@ -1,19 +1,18 @@
-import gym
 import gym_rl_mpc
+import argparse
+import json
+import multiprocessing
 import os
 from time import time
-import multiprocessing
-import argparse
+
 import numpy as np
-import json
-
-from gym_rl_mpc import reporting
-
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback
 
+import gym_rl_mpc
+from gym_rl_mpc import reporting
 
 hyperparams = {
     'n_steps': 1024,
@@ -100,7 +99,7 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/power_reward', history[env_idx]['power_reward'])
                     self.logger.record_mean('custom/input_reward', history[env_idx]['input_reward'])
                     self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
-        
+
         self.logger.record("time/custom_time_elapsed", int(time() - self.start_time))
 
         return True
@@ -162,7 +161,7 @@ if __name__ == '__main__':
         env_kwargs = None
 
     env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv, env_kwargs=env_kwargs)
-    
+
 
     # Define necessary directories
     EXPERIMENT_ID = str(int(time())) + 'ppo'

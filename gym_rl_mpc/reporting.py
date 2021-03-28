@@ -1,7 +1,10 @@
-import numpy as np
 import os
+
+import numpy as np
 from pandas import DataFrame
-from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
+
+from gym_rl_mpc.utils.model_params import RAD2DEG
+
 
 def format_history(env, lastn=-1):
 

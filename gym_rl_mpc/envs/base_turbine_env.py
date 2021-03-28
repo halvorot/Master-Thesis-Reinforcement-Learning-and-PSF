@@ -1,13 +1,15 @@
+from abc import ABC, abstractmethod
+from pathlib import Path
+
 import gym
 import numpy as np
 from gym.utils import seeding
-from termcolor import colored
 
-import gym_rl_mpc.utils.model_params as params
-from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 import gym_rl_mpc.objects.symbolic_model as sym
+import gym_rl_mpc.utils.model_params as params
 from PSF.PSF import PSF
-from abc import ABC, abstractmethod
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, DEG2RAD
+
 
 class BaseTurbineEnv(gym.Env, ABC):
     """
@@ -15,60 +17,80 @@ class BaseTurbineEnv(gym.Env, ABC):
     """
 
     def __init__(self, env_config):
-        print(colored('Debug: Initializing environment...', 'green'))
+        # print(colored('Initializing environment...', 'green'))
         for key in env_config:
             setattr(self, key, env_config[key])
 
         self.config = env_config
 
-        self.action_space = gym.spaces.Box(low=np.array([-1, -params.min_blade_pitch_ratio, 0]),
-                                           high=np.array([1, 1, 1]),
-                                           dtype=np.float32)
+        action_low = np.array(
+            [
+                -1,  # Scaled F_thr
+                -params.min_blade_pitch_ratio,  # Scaled blade pitch from MPPT angle
+                0  # Scaled P_ref
+            ]
+            , dtype=np.float32)
+
+        action_high = np.array(
+            [
+                1,  # Scaled F_thr
+                1,  # Scaled blade pitch from MPPT angle
+                1  # Scaled P_ref
+            ]
+            , dtype=np.float32)
+
+        self.action_space = gym.spaces.Box(low=action_low, high=action_high, dtype=np.float32)
 
         # Legal limits for state observations
-        low = np.array([-np.pi,  # theta
-                        -np.finfo(np.float32).max,  # theta_dot
-                        0,  # omega
-                        0,  # wind speed
-                        ])
-        high = np.array([np.pi,  # theta
-                         np.finfo(np.float32).max,  # theta_dot
-                         np.finfo(np.float32).max,  # omega
-                         self.max_wind_speed,  # wind speed
-                         ])
+        obsv_low = np.array(
+            [
+                -np.pi,  # theta
+                -np.finfo(np.float32).max,  # theta_dot
+                0,  # omega
+                0,  # wind speed
+            ],
+            dtype=np.float32)
 
-        self.observation_space = gym.spaces.Box(low=low,
-                                                high=high,
-                                                dtype=np.float32)
+        obsv_high = np.array(
+            [
+                np.pi,  # theta
+                np.finfo(np.float32).max,  # theta_dot
+                np.finfo(np.float32).max,  # omega
+                self.max_wind_speed,  # wind speed
+            ],
+            dtype=np.float32)
 
+        self.observation_space = gym.spaces.Box(low=obsv_low, high=obsv_high, dtype=np.float32)
+
+        sys = {
+            "xdot": sym.symbolic_x_dot,
+            "x": sym.x,
+            "u": sym.u,
+            "p": sym.w,
+            "Hx": sym.Hx,
+            "hx": sym.hx,
+            "Hu": sym.Hu,
+            "hu": sym.hu
+        }
+        R = np.diag(
+            [
+                1 / params.max_thrust_force ** 2,
+                1 / params.max_blade_pitch ** 2,
+                1 / params.max_power_generation ** 2
+            ])
+        actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
+
+        lin_bounds = {
+            "w": [self.min_wind_speed * params.wind_inflow_ratio, self.max_wind_speed * params.wind_inflow_ratio],
+            "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
+            "Omega": [params.omega_setpoint(self.min_wind_speed), params.omega_setpoint(self.max_wind_speed)],
+            "P_ref": [0, params.max_power_generation],
+            "theta": [-self.crash_angle_condition, self.crash_angle_condition],
+            "theta_dot": [-45 * DEG2RAD, 45 * DEG2RAD]
+        }
         ## PSF init ##
-        self.psf = PSF(sys={"xdot": sym.symbolic_x_dot,
-                            "x": sym.x,
-                            "u": sym.u,
-                            "p": sym.w,
-                            "Hx": sym.Hx,
-                            "hx": sym.hx,
-                            "Hu": sym.Hu,
-                            "hu": sym.hu
-                            },
-                       N=20,
-                       T=20,
-                       R=np.diag([
-                           1 / params.max_thrust_force ** 2,
-                           1 / params.max_blade_pitch ** 2,
-                           1 / params.max_power_generation ** 2
-                       ]),
-                       slack_flag=True,
-                       slew_rate=[params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate],
-                       lin_bounds={"w": [self.min_wind_speed * params.wind_inflow_ratio,
-                                         self.max_wind_speed * params.wind_inflow_ratio],
-                                   "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
-                                   "Omega": [params.omega_setpoint(self.min_wind_speed),
-                                             params.omega_setpoint(self.max_wind_speed)],
-                                   "P_ref": [0, params.max_power_generation],
-                                   "theta": [-self.crash_angle_condition, self.crash_angle_condition],
-                                   "theta_dot": [-45*DEG2RAD, 45*DEG2RAD]}
-                       )
+        self.psf = PSF(sys=sys, N=20, T=10, ext_step_size=self.step_size, R=R, PK_path=Path("PSF", "stored_PK"),
+                       lin_bounds=lin_bounds, slew_rate=actuation_max_rate, slack_flag=True, terminal_flag=True)
 
         ## END PSF init ##
 
@@ -127,21 +149,31 @@ class BaseTurbineEnv(gym.Env, ABC):
             blade_pitch = action[1] * params.max_blade_pitch
             power = action[2] * params.max_power_generation
             action_un_normalized = [F_thr, blade_pitch, power]
-            new_adjusted_wind_speed = params.wind_inflow_ratio*self.wind_speed - params.L * np.cos(self.turbine.platform_angle) * self.turbine.state[1]
+            new_adjusted_wind_speed = params.wind_inflow_ratio * self.wind_speed - params.L * np.cos(
+                self.turbine.platform_angle) * self.turbine.state[1]
             psf_params = [new_adjusted_wind_speed]
-            u0 = self.turbine.u0
+            u_stable = self.turbine.u0
+            u_prev = self.turbine.input
+
+            args = dict(x=self.turbine.state,
+                        u_L=action_un_normalized,
+                        u_stable=u_stable,
+                        ext_params=psf_params,
+                        u_prev=u_prev)
             try:
-                psf_corrected_action_un_normalized = self.psf.calc(self.turbine.state, action_un_normalized, u0, psf_params)
+                psf_corrected_action_un_normalized = self.psf.calc(**args)
                 psf_corrected_action = [psf_corrected_action_un_normalized[0] / params.max_thrust_force,
                                         psf_corrected_action_un_normalized[1] / params.max_blade_pitch,
                                         psf_corrected_action_un_normalized[2] / params.max_power_generation]
                 self.psf_action = psf_corrected_action
+
                 self.turbine.step(self.psf_action, self.wind_speed)
             except RuntimeError:
                 print("Casadi failed to solve step. Using agent action. Episode done")
                 force_done = True
                 self.turbine.step(action, self.wind_speed)
                 self.psf_action = [0] * len(action)
+
         else:
             self.turbine.step(action, self.wind_speed)
             self.psf_action = [0] * len(action)
@@ -196,13 +228,13 @@ class BaseTurbineEnv(gym.Env, ABC):
         else:
             self.psf_reward = 0
 
-        step_reward = (self.theta_reward 
-                        + self.theta_dot_reward 
-                        + self.omega_reward 
-                        + self.power_reward 
-                        + self.input_reward 
-                        + self.psf_reward 
-                        + self.reward_survival)
+        step_reward = (self.theta_reward
+                       + self.theta_dot_reward
+                       + self.omega_reward
+                       + self.power_reward
+                       + self.input_reward
+                       + self.psf_reward
+                       + self.reward_survival)
 
         # Check if episode is done
         end_cond_2 = self.t_step >= self.max_episode_time / self.step_size

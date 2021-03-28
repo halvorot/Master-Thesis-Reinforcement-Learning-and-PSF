@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import argparse
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 import gym_rl_mpc.utils.model_params as params
+
 
 def plot_gen_pow(save=False):
     fig = plt.figure()

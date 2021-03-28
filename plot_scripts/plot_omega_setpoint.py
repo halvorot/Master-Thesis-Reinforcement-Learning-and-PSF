@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import argparse
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 import gym_rl_mpc.utils.model_params as params
+
 
 def plot_omega_setpoint(save=False):
     fig = plt.figure()

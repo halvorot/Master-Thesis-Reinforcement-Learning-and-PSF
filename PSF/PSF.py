@@ -4,7 +4,7 @@ from hashlib import sha1
 from pathlib import Path
 
 import numpy as np
-from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit
+from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator
 
 LEN_FILE_STR = 20
 
@@ -22,6 +22,8 @@ class PSF:
                  alpha=None,
                  K=None,
                  slew_rate=None,
+                 ext_step_size=1,
+                 disc_method="RK",
                  LP_flag=False,
                  slack_flag=True,
                  terminal_flag=False,
@@ -42,6 +44,7 @@ class PSF:
 
         self.N = N
         self.T = T
+
         self.lin_bounds = lin_bounds
 
         self.PK_path = PK_path
@@ -50,10 +53,17 @@ class PSF:
         self.np = self.sys["p"].shape[0]
 
         self.slew_rate = slew_rate
+        self.ext_step_size = ext_step_size
 
         self._centroid_Px = np.zeros((self.nx, 1))
         self._centroid_Pu = np.zeros((self.nu, 1))
         self._init_guess = np.array([])
+
+        self.model_step = None
+        self._sym_model_step = None
+        self.problem = None
+        self.eval_w0 = None
+        self.solver = None
 
         if param is None:
             self.param = SX([])
@@ -73,134 +83,24 @@ class PSF:
                 self.alpha = alpha
                 self.K = K
 
-        self._formulate_problem()
+        self.set_model_step(disc_method)
+        self.formulate_problem()
+        self.set_solver()
 
-    def _formulate_problem(self):
+    def create_system_set(self):
+        A_set = []
+        B_set = []
 
-        if self.LP_flag:
-           self._set_linear_model_step()
-        else:
-            self._set_nonlinear_model_step()
+        free_vars = SX.get_free(Function("list_free_vars", [], [self.Ac, self.Bc]))
+        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
+        eval_func = Function("eval_func", free_vars, [self.Ac, self.Bc])
 
-        X0 = SX.sym('X0', self.nx)
-        X = SX.sym('X', self.nx, self.N + 1)
-        U = SX.sym('U', self.nu, self.N)
-        u_L = SX.sym('u_L', self.nu)
-        u0 = SX.sym('u0', self.nu)
-        p = SX.sym("p", self.np, 1)
-        if self.slack_flag:
-            eps = SX.sym("eps", self.nx, self.N)
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
-        else:
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+        for product in itertools.product(*bounds):  # creating maximum difference
+            AB_set = eval_func(*product)
+            A_set.append(np.asarray(AB_set[0]))
+            B_set.append(np.asarray(AB_set[1]))
 
-        w = []
-        w0 = []
-
-        g = []
-        self.lbg = []
-        self.ubg = []
-
-        w += [X[:, 0]]
-        w0 += [X0]
-
-        g += [X0 - X[:, 0]]
-        self.lbg += [0] * self.nx
-        self.ubg += [0] * self.nx
-
-        for i in range(self.N):
-            w += [U[:, i]]
-            w0 += [u0]
-            # Composite Input constrains
-
-            g += [self.sys["Hu"] @ U[:, i]]
-            self.lbg += [-inf] * g[-1].shape[0]
-            self.ubg += [self.sys["hu"]]
-
-            w += [X[:, i + 1]]
-            w0 += [self.model_step.fold(i + 1).expand()(xk=X0, x_lin=X0, u=u0, u_lin=u0, p=p)["xf"]]
-
-            # Composite State constrains
-            g += [self.sys["Hx"] @ X[:, i + 1]]
-            self.lbg += [-inf] * g[-1].shape[0]
-            self.ubg += [self.sys["hx"]]
-            if self.slack_flag:
-                w += [eps[:, i]]
-                w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)['xf'] + eps[:, i]]
-            else:
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=X0, u=U[:, i], u_lin=u0, p=p)["xf"]]
-            # State propagation
-
-            self.lbg += [0] * g[-1].shape[0]
-            self.ubg += [0] * g[-1].shape[0]
-
-        if self.slew_rate is not None:
-            DT = self.T / self.N
-            for i in range(self.N - 1):
-                g += [U[:, i + 1] - U[:, i]]
-                self.lbg += [-np.array(self.slew_rate) * DT]
-                self.ubg += [np.array(self.slew_rate) * DT]
-
-        # Terminal Set constrain
-        if self.terminal_flag:
-            XN_shifted = X[:, self.N] - self._centroid_Px
-            g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
-            self.lbg += [-inf]
-            self.ubg += [0]
-
-        if self.LP_flag:
-            lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
-            LP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p, *lin_points)}
-
-            opts = {"osqp": {"verbose": 0, "polish": False}}
-            self.solver = qpsol("solver", "osqp", LP, opts)
-        else:
-            # JIT
-            # Pick a compiler
-            # compiler = "gcc"  # Linux
-            # compiler = "clang"  # OSX
-            compiler = "cl.exe"  # Windows
-
-            flags = ["/O2"]  # win
-            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
-
-            # JIT
-            opts = {
-                "warn_initial_bounds": False,
-                "error_on_fail": True,
-                "eval_errors_fatal": True,
-                "verbose_init": False,
-                "show_eval_warnings": False,
-                "ipopt": {"print_level": 0},
-                "print_time": False,
-                "compiler": "shell",
-                "jit": self.jit_flag,
-                'jit_options': jit_options
-            }
-
-            NLP = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(X0, u_L, u0, p)}
-
-            self.solver = nlpsol("solver", "ipopt", NLP, opts)
-            self.eval_w0 = Function("eval_w0", [X0, u_L, u0, p], [vertcat(*w0)])
-
-    def calc(self, x, u_L, u0, ext_params, reset_x0=False):
-        if self._init_guess.shape[0] == 0:
-            self._init_guess = np.asarray(self.eval_w0(x, u_L, u0, ext_params))
-
-        solution = self.solver(p=vertcat(x, u_L, u0, ext_params),
-                               lbg=vertcat(*self.lbg),
-                               ubg=vertcat(*self.ubg),
-                               x0=self._init_guess
-                               )
-        if not reset_x0:
-            prev = np.asarray(solution["x"])
-            self._init_guess = prev
-
-        return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
-
-    def reset_init_guess(self):
-        self._init_guess = np.array([])
+        return A_set, B_set
 
     def set_terminal_set(self):
         self.alpha = 0.9
@@ -225,7 +125,7 @@ class PSF:
 
             eng = matlab.engine.start_matlab()
             eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, nargout=4)
+            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
             eng.quit()
 
             self.P = np.asarray(P)
@@ -235,24 +135,24 @@ class PSF:
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 
-    def create_system_set(self):
-        A_set = []
-        B_set = []
+    def set_cvodes_model_step(self):
 
-        free_vars = SX.get_free(Function("list_free_vars", [], [self.Ac, self.Bc]))
-        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
-        eval_func = Function("eval_func", free_vars, [self.Ac, self.Bc])
+        """
+        dae = {'x': self.sys["x"], 'p': vertcat(self.sys["u"], self.sys["p"]), 'ode': self.sys["xdot"]}
+        opts = {'tf': self.T / self.N, "expand": False}
+        self._sym_model_step = integrator('F_internal', 'cvodes', dae, opts)
 
-        for product in itertools.product(*bounds):  # creating maximum difference
-            AB_set = eval_func(*product)
-            A_set.append(np.asarray(AB_set[0]))
-            B_set.append(np.asarray(AB_set[1]))
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(x0=xk, p=vertcat(u, p))
 
-        return A_set, B_set
+        self.model_step = parse_model_step
+        """
+        raise NotImplementedError("BUG. Waiting on forum answer: "
+                                  "https://groups.google.com/g/casadi-users/c/hQG3zs88wVA")
 
-    def _set_linear_model_step(self):
+    def set_taylor_model_step(self):
 
-        M = 10
+        M = 2
         DT = self.T / self.N
         Ad = np.eye(self.nx)
         Bd = 0
@@ -266,14 +166,19 @@ class PSF:
         U = SX.sym('U', self.nu)
         X_next = Ad @ X0 + Bd @ U
 
-        self.model_step = Function('F',
-                                   [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
-                                   [X_next],
-                                   ['xk', 'x_lin', 'u', 'u_lin', 'p'],
-                                   ['xf']
-                                   )
+        self._sym_model_step = Function('F',
+                                        [X0, self.sys["x"], U, self.sys["u"], self.sys["p"]],
+                                        [X_next],
+                                        ['xk', 'x_lin', 'u', 'u_lin', 'p'],
+                                        ['xf']
+                                        )
 
-    def _set_nonlinear_model_step(self):
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(xk=xk, x_lin=x_lin, u=u, u_lin=u_lin, p=p)
+
+        self.model_step = parse_model_step
+
+    def set_RK_model_step(self):
         M = 4  # RK4 steps per interval
         DT = self.T / self.N / M
         f = Function('f',
@@ -283,9 +188,6 @@ class PSF:
         U = SX.sym('U', self.nu)
         P = SX.sym('P', self.np)
         X_next = Xk
-        # Not used in solution, just to fit with linear MPC (DC = Dont Care)
-        DCx = SX.sym('DCx', self.nx)
-        DCu = SX.sym('DCu', self.nu)
 
         for j in range(M):
             k1 = f(X_next, U, P)
@@ -293,7 +195,165 @@ class PSF:
             k3 = f(X_next + DT / 2 * k2, U, P)
             k4 = f(X_next + DT * k3, U, P)
             X_next = X_next + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        self.model_step = Function('F', [Xk, DCx, U, DCu, P], [X_next], ['xk', 'x_lin', 'u', 'u_lin', 'p'], ['xf'])
+
+        self._sym_model_step = Function('F', [Xk, U, P], [X_next], ['xk', 'u', 'p'], ['xf'])
+
+        def parse_model_step(xk, u, p, u_lin, x_lin):
+            return self._sym_model_step(xk=xk, u=u, p=p)
+
+        self.model_step = parse_model_step
+
+    def set_model_step(self, method_name):
+        if method_name == "RK":
+            self.set_RK_model_step()
+        elif method_name == "taylor":
+            self.set_taylor_model_step()
+        elif method_name == "cvodes":
+            self.set_cvodes_model_step()
+        else:
+            raise ValueError(f"{method_name} is not a implemented method")
+
+    def set_solver(self):
+
+        if self.LP_flag:
+            lin_points = [*vertsplit(self.sys["x"]), *vertsplit(self.sys["u"]), *vertsplit(self.sys["p"])]
+
+            opts = {"osqp": {"verbose": 0, "polish": False}}
+            self.solver = qpsol("solver", "osqp", self.problem, opts)
+        else:
+            # JIT
+            # Pick a compiler
+            # compiler = "gcc"  # Linux
+            # compiler = "clang"  # OSX
+            compiler = "cl.exe"  # Windows
+
+            flags = ["/O2"]  # win
+            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
+
+            # JIT
+            opts = {
+                "warn_initial_bounds": True,
+                "error_on_fail": True,
+                "eval_errors_fatal": True,
+                "verbose_init": False,
+                "show_eval_warnings": False,
+                "ipopt": {"print_level": 0, "sb": "yes"},
+                "print_time": False,
+                "compiler": "shell",
+                "jit": self.jit_flag,
+                'jit_options': jit_options
+            }
+
+            self.solver = nlpsol("solver", "ipopt", self.problem, opts)
+
+    def formulate_problem(self):
+
+        x0 = SX.sym('x0', self.nx, 1)
+        X = SX.sym('X', self.nx, self.N + 1)
+        U = SX.sym('U', self.nu, self.N)
+
+        u_L = SX.sym('u_L', self.nu, 1)
+        p = SX.sym("p", self.np, 1)
+
+        u_stable = SX.sym('u_stable', self.nu, 1)
+        u_prev = SX.sym('u_prev', self.nu, 1)
+
+        eps = SX.sym("eps", self.nx, self.N)
+
+        if self.slack_flag:
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
+        else:
+            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+
+        # empty problem
+        w = []
+        w0 = []
+
+        g = []
+        self.lbg = []
+        self.ubg = []
+
+        w += [X[:, 0]]
+        w0 += [x0]
+
+        g += [x0 - X[:, 0]]
+        self.lbg += [0] * self.nx
+        self.ubg += [0] * self.nx
+
+        for i in range(self.N):
+            w += [U[:, i]]
+            w0 += [u_stable]
+            # Composite Input constrains
+
+            g += [self.sys["Hu"] @ U[:, i]]
+            self.lbg += [-inf] * g[-1].shape[0]
+            self.ubg += [self.sys["hu"]]
+
+            w += [X[:, i + 1]]
+            w0 += [self.model_step(xk=x0, x_lin=x0, u=u_stable, u_lin=u_stable, p=p)["xf"]]
+
+            # Composite State constrains
+            g += [self.sys["Hx"] @ X[:, i + 1]]
+            self.lbg += [-inf] * g[-1].shape[0]
+            self.ubg += [self.sys["hx"]]
+            if self.slack_flag:
+                w += [eps[:, i]]
+                w0 += [0] * self.nx
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)['xf'] + eps[:,
+                                                                                                                  i]]
+            else:
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)["xf"]]
+            # State propagation
+
+            self.lbg += [0] * g[-1].shape[0]
+            self.ubg += [0] * g[-1].shape[0]
+
+        if self.slew_rate is not None:
+
+            g += [U[:, 0] - u_prev]
+            self.lbg += [-np.array(self.slew_rate) * self.ext_step_size]
+            self.ubg += [np.array(self.slew_rate) * self.ext_step_size]
+
+            DT = self.T / self.N
+            for i in range(self.N - 1):
+                g += [U[:, i + 1] - U[:, i]]
+                self.lbg += [-np.array(self.slew_rate) * DT]
+                self.ubg += [np.array(self.slew_rate) * DT]
+
+        # Terminal Set constrain
+        if self.terminal_flag:
+            XN_shifted = X[:, self.N] - self._centroid_Px
+            g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
+            self.lbg += [-inf]
+            self.ubg += [0]
+
+        self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
+
+        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
+
+    def reset_init_guess(self):
+        self._init_guess = np.array([])
+
+    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
+        if u_prev is None and self.slew_rate is not None:
+            raise ValueError("'u_prev' must be set if 'slew_rate' is given")
+
+        if u_prev is None:
+            u_prev = u_L  # Dont care, just for vertcat match
+
+        if self._init_guess.shape[0] == 0:
+            self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))
+
+        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
+                               lbg=vertcat(*self.lbg),
+                               ubg=vertcat(*self.ubg),
+                               x0=self._init_guess
+                               )
+        if not reset_x0:
+            prev = np.asarray(solution["x"])
+            self._init_guess = prev
+
+        return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
 
 if __name__ == '__main__':

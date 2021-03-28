@@ -1,5 +1,6 @@
 import numpy as np
 from pandas import DataFrame
+import gym_rl_mpc.utils.model_params as params
 
 def simulate_episode(env, agent, max_time):
     global input_labels, state_labels
@@ -14,11 +15,12 @@ def simulate_episode(env, agent, max_time):
 
     done = False
     env.reset()
+    init_blade_pitch = env.turbine.input[1]/params.max_blade_pitch
     while not done and env.t_step < max_time/env.step_size:
         if agent is not None:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0,0,0])
+            action = np.array([0, init_blade_pitch, params.power_regime(env.wind_speed)])
         _, _, done, _ = env.step(action)
 
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))

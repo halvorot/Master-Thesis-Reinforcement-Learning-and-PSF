@@ -13,7 +13,8 @@ import gym_rl_mpc.objects.symbolic_model as sym
 import gym_rl_mpc.utils.model_params as params
 
 print("Test Started")
-number_of_iter = 50
+number_of_state_perm = 3
+number_of_input_perm = 20
 np.random.seed(42)
 kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
                    "x": sym.x,
@@ -51,25 +52,28 @@ psf_HF = PSF(**kwargs)
 kwargs["N"] = 20
 psf_LF = PSF(**kwargs)
 
-start = time.time()
 nx = sym.x.shape[0]
 nu = sym.u.shape[0]
-x = [np.random.uniform(low=-7, high=9) * params.DEG2RAD,
-     0,
-     np.random.uniform(low=5.1, high=7.5) * params.RPM2RAD]
-for i in range(number_of_iter):
-    kwargs_calc = dict(x=x,
-                       u_L=[
-                           2 * np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
-                           2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
-                           2 * np.random.uniform(low=0, high=params.max_power_generation)
-                       ],
-                       u_stable=[0, 0, 1e6],
-                       u_prev=[0, 0, 0],
-                       ext_params=np.random.uniform(low=3, high=25),
-                       reset_x0=False
-                       )
-    psf_LF.calc(**kwargs_calc)
+start = time.time()
+for j in range(number_of_state_perm):
+    x = [np.random.uniform(low=-7, high=9) * params.DEG2RAD,
+         0,
+         np.random.uniform(low=5.1, high=7.5) * params.RPM2RAD]
+    for i in range(number_of_input_perm):
+        kwargs_calc = dict(x=x,
+                           u_L=[
+                               2 * np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
+                               2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
+                               2 * np.random.uniform(low=0, high=params.max_power_generation)
+                           ],
+                           u_stable=[0, 0, 1e6],
+                           u_prev=[0, 0, 0],
+                           ext_params=np.random.uniform(low=3, high=25),
+                           reset_x0=True
+                           )
+        psf_LF.calc(**kwargs_calc)
 
 end = time.time()
-print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")
+number_of_iter = number_of_input_perm * number_of_state_perm
+print(f"Number of state permutations: {number_of_state_perm}\n Number of input permutations: {number_of_input_perm}")
+print(f"Solved {number_of_iter} iterations in {end - start} s. {(end - start) / number_of_iter} s/step]")

@@ -15,6 +15,7 @@ class PSF:
                  N,
                  T,
                  R=None,
+                 Q=None,
                  PK_path="",
                  param=None,
                  lin_bounds=None,
@@ -25,13 +26,14 @@ class PSF:
                  LP_flag=False,
                  slack_flag=True,
                  jit_flag=False,
-                 ):
-        self.alpha = alpha
+                 mpc_flag=False):
+
         if LP_flag:
             raise NotImplementedError("Linear MPC is not implemented")
 
         self.jit_flag = jit_flag
         self.slack_flag = slack_flag
+        self.mpc_flag = mpc_flag
 
         self.LP_flag = LP_flag
 
@@ -41,6 +43,7 @@ class PSF:
 
         self.N = N
         self.T = T
+        self.alpha = alpha
 
         self.lin_bounds = lin_bounds
 
@@ -67,6 +70,7 @@ class PSF:
         else:
             self.param = param
 
+        self.Q = Q
         if R is None:
             self.R = np.eye(self.nu)
         else:
@@ -240,10 +244,13 @@ class PSF:
     def formulate_problem(self):
 
         x0 = SX.sym('x0', self.nx, 1)
-        X = SX.sym('X', self.nx, self.N + 1)
-        U = SX.sym('U', self.nu, self.N)
 
-        u_L = SX.sym('u_L', self.nu, 1)
+        X = SX.sym('X', self.nx, self.N + 1)
+        x_ref = SX.sym('x_ref', self.nx, 1)
+
+        U = SX.sym('U', self.nu, self.N)
+        u_ref = SX.sym('u_ref', self.nu, 1)
+
         p = SX.sym("p", self.np, 1)
 
         u_stable = SX.sym('u_stable', self.nu, 1)
@@ -251,10 +258,7 @@ class PSF:
 
         eps = SX.sym("eps", self.nx, self.N)
 
-        if self.slack_flag:
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
-        else:
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+        objective = self.get_objective(X=X, x_ref=x_ref, U=U, u_ref=u_ref, eps=eps)
 
         # empty problem
         w = []
@@ -320,25 +324,26 @@ class PSF:
         self.lbg += [-inf]
         self.ubg += [0]
 
-        self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [x0, u_ref, u_stable, p], [vertcat(*w0)])
 
-        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
+        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, x_ref, u_ref, u_prev, p)}
 
     def reset_init_guess(self):
         self._init_guess = np.array([])
 
-    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
+    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
 
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
 
         if u_prev is None:
             u_prev = u_L  # Dont care, just for vertcat match
-
+        if x_ref is None:
+            x_ref = [0] * self.nx
         if self._init_guess.shape[0] == 0:
             self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))
 
-        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
+        solution = self.solver(p=vertcat(x, x_ref, u_L, u_prev, ext_params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self._init_guess
@@ -348,6 +353,18 @@ class PSF:
             self._init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
+
+    def get_objective(self, U=None, eps=None, x_ref=None, X=None, u_ref=None):
+
+        if self.mpc_flag:
+            objective = (x_ref - X)[:].T @ self.Q @ (x_ref - X)[:]
+            if u_ref is not None:
+                objective += (u_ref - U)[:].T @ self.R @ (u_ref - U)[:]
+        else:
+            objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
+        if self.slack_flag:
+            objective += objective + 10e9 * eps[:].T @ eps[:]
+        return objective
 
 
 if __name__ == '__main__':

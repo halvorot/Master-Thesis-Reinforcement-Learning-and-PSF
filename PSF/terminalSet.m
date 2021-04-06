@@ -139,7 +139,7 @@ if error_flag
     plot(Pproj1,'alpha',0.1);
     savefig(gcf,'debug_terminal_set.fig');
     saveas(gcf,'debug_terminal_set', 'pdf');
-    save("LastPK",'P','K',"Px");
+    save("debug_PK",'P','K',"Px");
 end
 
 end

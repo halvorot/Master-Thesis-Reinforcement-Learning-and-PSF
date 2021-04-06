@@ -32,6 +32,7 @@ kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
                   1 / params.max_power_generation ** 2
               ]),
               PK_path=Path(HERE, "terminalset"),
+              ext_step_size=0.1,
               lin_bounds={"w": [3, 25],
                           "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
                           "Omega": [params.omega_setpoint(3),
@@ -50,16 +51,14 @@ psf_HF = PSF(**kwargs)
 kwargs["N"] = 20
 psf_LF = PSF(**kwargs)
 
-
-
 start = time.time()
 nx = sym.x.shape[0]
 nu = sym.u.shape[0]
-
+x = [np.random.uniform(low=-7, high=9) * params.DEG2RAD,
+     0,
+     np.random.uniform(low=5.1, high=7.5) * params.RPM2RAD]
 for i in range(number_of_iter):
-    kwargs_calc = dict(x=[np.random.uniform(low=-7, high=9) * params.DEG2RAD,
-                          0,
-                          np.random.uniform(low=5.1, high=7.5) * params.RPM2RAD],
+    kwargs_calc = dict(x=x,
                        u_L=[
                            2 * np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
                            2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
@@ -68,7 +67,7 @@ for i in range(number_of_iter):
                        u_stable=[0, 0, 1e6],
                        u_prev=[0, 0, 0],
                        ext_params=np.random.uniform(low=3, high=25),
-                       reset_x0=True
+                       reset_x0=False
                        )
     psf_LF.calc(**kwargs_calc)
 

@@ -21,8 +21,7 @@ class VariableWind(BaseTurbineEnv):
         super().__init__(*args, **kwargs)
         self.wind_amplitude = min((self.max_wind_speed - self.min_wind_speed) / 2,
                                   self.max_wind_amplitude) * self.rand_num_gen.rand()
-        self.wind_mean = (
-                                 self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
+        self.wind_mean = (self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
         self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
     def step(self, action):

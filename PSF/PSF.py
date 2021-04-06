@@ -253,7 +253,6 @@ class PSF:
 
         p = SX.sym("p", self.np, 1)
 
-        u_stable = SX.sym('u_stable', self.nu, 1)
         u_prev = SX.sym('u_prev', self.nu, 1)
 
         eps = SX.sym("eps", self.nx, self.N)
@@ -277,7 +276,7 @@ class PSF:
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [u_stable]
+            w0 += [self.K @ x0]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -296,10 +295,11 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)['xf'] + eps[:,
-                                                                                                                  i]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)[
+                    'xf'] + eps[:,
+                            i]]
             else:
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)["xf"]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)["xf"]]
             # State propagation
 
             self.lbg += [0] * g[-1].shape[0]
@@ -324,14 +324,14 @@ class PSF:
         self.lbg += [-inf]
         self.ubg += [0]
 
-        self.eval_w0 = Function("eval_w0", [x0, u_ref, u_stable, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [x0, u_ref, p], [vertcat(*w0)])
 
         self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, x_ref, u_ref, u_prev, p)}
 
     def reset_init_guess(self):
         self._init_guess = np.array([])
 
-    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
+    def calc(self, x, u_L, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
 
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
@@ -341,7 +341,7 @@ class PSF:
         if x_ref is None:
             x_ref = [0] * self.nx
         if self._init_guess.shape[0] == 0:
-            self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))
+            self._init_guess = np.asarray(self.eval_w0(x, u_L, ext_params))
 
         solution = self.solver(p=vertcat(x, x_ref, u_L, u_prev, ext_params),
                                lbg=vertcat(*self.lbg),
@@ -357,9 +357,10 @@ class PSF:
     def get_objective(self, U=None, eps=None, x_ref=None, X=None, u_ref=None):
 
         if self.mpc_flag:
-            objective = (x_ref - X)[:].T @ self.Q @ (x_ref - X)[:]
-            if u_ref is not None:
-                objective += (u_ref - U)[:].T @ self.R @ (u_ref - U)[:]
+            for i in range(self.N):
+                objective = (x_ref - X[:, i + 1]).T @ self.Q @ (x_ref - X[:, i + 1])
+                if u_ref is not None:
+                    objective += (u_ref - U[:, i]).T @ self.R @ (u_ref - U[:, i])
         else:
             objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
         if self.slack_flag:

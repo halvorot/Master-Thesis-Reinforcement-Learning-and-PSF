@@ -4,7 +4,6 @@ from pathlib import Path
 
 import time
 import numpy as np
-import pandas
 
 HERE = Path(__file__).parent
 sys.path.append(HERE.parent)  # to import gym and psf
@@ -13,6 +12,7 @@ from PSF.PSF import PSF
 import gym_rl_mpc.objects.symbolic_model as sym
 import gym_rl_mpc.utils.model_params as params
 
+print("Test Started")
 number_of_iter = 50
 np.random.seed(42)
 kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
@@ -43,7 +43,6 @@ kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
               slew_rate=[1e5, 8 * params.DEG2RAD, 1e6],
               LP_flag=False,
               slack_flag=True,
-              terminal_flag=False,
               jit_flag=False)
 
 psf_HF = PSF(**kwargs)
@@ -71,7 +70,7 @@ for i in range(number_of_iter):
                        ext_params=np.random.uniform(low=3, high=25),
                        reset_x0=True
                        )
-    psf_HF.calc(**kwargs_calc)
+    psf_LF.calc(**kwargs_calc)
 
 end = time.time()
 print(f"Solved {number_of_iter} iterations in {end - start} s, [{(end - start) / number_of_iter} s/step]")

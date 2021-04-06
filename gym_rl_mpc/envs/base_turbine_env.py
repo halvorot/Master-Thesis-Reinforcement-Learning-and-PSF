@@ -90,7 +90,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         }
         ## PSF init ##
         self.psf = PSF(sys=sys, N=20, T=10, ext_step_size=self.step_size, R=R, PK_path=Path("PSF", "stored_PK"),
-                       lin_bounds=lin_bounds, slew_rate=actuation_max_rate, slack_flag=True, terminal_flag=True)
+                       lin_bounds=lin_bounds, slew_rate=actuation_max_rate, slack_flag=True)
 
         ## END PSF init ##
 

@@ -18,22 +18,19 @@ class PSF:
                  PK_path="",
                  param=None,
                  lin_bounds=None,
-                 P=None,
-                 alpha=None,
-                 K=None,
+                 alpha=0.9,
                  slew_rate=None,
                  ext_step_size=1,
                  disc_method="RK",
                  LP_flag=False,
                  slack_flag=True,
-                 terminal_flag=False,
                  jit_flag=False,
                  ):
+        self.alpha = alpha
         if LP_flag:
             raise NotImplementedError("Linear MPC is not implemented")
 
         self.jit_flag = jit_flag
-        self.terminal_flag = terminal_flag
         self.slack_flag = slack_flag
 
         self.LP_flag = LP_flag
@@ -75,13 +72,7 @@ class PSF:
         else:
             self.R = R
 
-        if self.terminal_flag:
-            if P is None:
-                self.set_terminal_set()
-            else:
-                self.P = P
-                self.alpha = alpha
-                self.K = K
+        self.set_terminal_set()
 
         self.set_model_step(disc_method)
         self.formulate_problem()
@@ -103,9 +94,9 @@ class PSF:
         return A_set, B_set
 
     def set_terminal_set(self):
-        self.alpha = 0.9
+
         A_set, B_set = self.create_system_set()
-        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"]))
+        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"], self.ext_step_size))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
@@ -125,7 +116,7 @@ class PSF:
 
             eng = matlab.engine.start_matlab()
             eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.InvariantSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
+            P, K, centroid_Px, centroid_Pu = eng.terminalSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
             eng.quit()
 
             self.P = np.asarray(P)
@@ -290,8 +281,10 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            w0 += [self.model_step(xk=x0, x_lin=x0, u=u_stable, u_lin=u_stable, p=p)["xf"]]
-
+            tmp_x0 = x0
+            for j in range(i + 1):
+                tmp_x0 = self.model_step(xk=tmp_x0, x_lin=tmp_x0, u=self.K @ tmp_x0, u_lin=self.K @ tmp_x0, p=p)["xf"]
+            w0 += [tmp_x0]
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
@@ -321,11 +314,11 @@ class PSF:
                 self.ubg += [np.array(self.slew_rate) * DT]
 
         # Terminal Set constrain
-        if self.terminal_flag:
-            XN_shifted = X[:, self.N] - self._centroid_Px
-            g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
-            self.lbg += [-inf]
-            self.ubg += [0]
+
+        XN_shifted = X[:, self.N] - self._centroid_Px
+        g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
+        self.lbg += [-inf]
+        self.ubg += [0]
 
         self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
 
@@ -335,6 +328,7 @@ class PSF:
         self._init_guess = np.array([])
 
     def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
+
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
 

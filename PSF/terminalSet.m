@@ -112,26 +112,35 @@ Pproj1 = YSet(xplot,(xplot-x0)'*P*(xplot-x0) <= 1);
 Px = Polyhedron(Hx,hx);
 u = PolyUnion([Pproj1.outerApprox,Px]);
 [primal_feas, dual_feas]=check(constraints);
+error_flag = false;
 if any(primal_feas<-eps)
      disp("***")
      disp("WARNING")
      disp("The problem migth be infeasible. Primal feasiblity threshold violated")
      disp("***")
      disp(primal_feas)
+     error_flag = true;
+
 end
 if not(u.isConnected())
      disp("***")
      disp("WARNING")
-     disp("The Ellipse Outer Approx is not connected to constrain polyhedron")
+     disp("The Ellipse Outer Approx is not connected to constrain polyhedron.")
      disp("***")
+     error_flag = true;
+
+end
+if error_flag
+    disp("Debug files are for inspection")
+    figure()
+
+    plot(Polyhedron(Hx,hx),'alpha',0.1);
+    hold on
+    plot(Pproj1,'alpha',0.1);
+    savefig(gcf,'debug_terminal_set.fig');
+    saveas(gcf,'debug_terminal_set', 'pdf');
+    save("debug_PK",'P','K',"Px");
 end
 
-figure()
-hold off
-plot(Polyhedron(Hx,hx),'alpha',0.1);
-hold on
-plot(Pproj1,'alpha',0.1);
-savefig(gcf,'Ellipse.fig');
-save("LastPK",'P','K',"Px");
 end
 

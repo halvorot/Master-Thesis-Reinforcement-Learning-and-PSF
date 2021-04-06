@@ -19,10 +19,6 @@ class ConstantWind(BaseTurbineEnv):
 class VariableWind(BaseTurbineEnv):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.wind_amplitude = min((self.max_wind_speed - self.min_wind_speed) / 2,
-                                  self.max_wind_amplitude) * self.rand_num_gen.rand()
-        self.wind_mean = (self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
-        self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
     def step(self, action):
         t = self.t_step * self.step_size
@@ -39,6 +35,10 @@ class VariableWind(BaseTurbineEnv):
         """
         Generates environment with a turbine and a random wind speed between min and max wind speed in config
         """
+        self.wind_amplitude = min((self.max_wind_speed - self.min_wind_speed) / 2,
+                                  self.max_wind_amplitude) * self.rand_num_gen.rand()
+        self.wind_mean = (self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
+        self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
         self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean
         self.turbine = Turbine(self.wind_speed, self.step_size)

@@ -84,6 +84,8 @@ def run(args):
 
         time = np.array(range(0, len(sim_df['theta']))) * env.step_size
 
+        fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
+
         ax1.plot(time, sim_df['theta'] * RAD2DEG, label='$\\theta$')
         ax1.plot(time, sim_df['theta_dot'] * RAD2DEG, label='$\dot{\\theta}$')
         ax1.plot(time, np.zeros(len(time)), linestyle='--', color='k')
@@ -107,12 +109,13 @@ def run(args):
         ax3_2.plot(time, sim_df['blade_pitch'] * RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
+        # ax3_2.set_ylim([-4,20])
 
         color = 'tab:blue'
         ax4.plot(time, sim_df['F_w'], label='F_w', color=color)
         ax4.plot(time, np.zeros(len(time)), linestyle='--', color='k', linewidth=0.5)
         ax4.set_ylabel('F_w [N]', color=color)
-        ax4.set_title('Wind')
+        ax4.set_title('Wind Force and torque')
         ax4.legend()
 
         color = 'tab:orange'
@@ -122,27 +125,37 @@ def run(args):
         ax4_2.set_ylabel('Q [Nm]', color=color)
         ax4_2.legend()
 
+        ax5.plot(time, sim_df['power'], label="Power")
+        ax5.set_ylabel('P_gen [W]')
+        ax5.set_title('Power generated')
+        ax5.legend()
+
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
-        ax21.plot(time, sim_df['agent_F_thr'] * params.max_thrust_force, label='agent thrust')
-        ax21.plot(time, sim_df['psf_F_thr'] * params.max_thrust_force, label='agent thrust')
+        ax21.plot(time, np.array(env.episode_history['agent_actions'])[:, 0] * params.max_thrust_force,
+                  label='agent thrust')
+        ax21.plot(time, np.array(env.episode_history['psf_actions'])[:, 0] * params.max_thrust_force,
+                  label='PSF thrust')
         ax21.set_ylabel('F_thr [N]')
         ax21.set_title('Commanded Thrust Force')
         ax21.legend()
 
-        ax22.plot(time, np.array(sim_df['agent_power']) * params.max_power_generation, label='agent power')
-        ax22.plot(time, np.array(sim_df['psf_power']) * params.max_power_generation, label='PSF power')
+        ax22.plot(time, np.array(env.episode_history['agent_actions'])[:, 2] * params.max_power_generation,
+                  label='agent power')
+        ax22.plot(time, np.array(env.episode_history['psf_actions'])[:, 2] * params.max_power_generation,
+                  label='PSF power')
         ax22.set_ylabel('Power')
         ax22.set_title('Commanded Power')
         ax22.legend()
 
-        ax23.plot(time, np.array(sim_df['agent_blade_pitch']) * params.max_blade_pitch * RAD2DEG,
+        ax23.plot(time, np.array(env.episode_history['agent_actions'])[:, 1] * params.max_blade_pitch * RAD2DEG,
                   label='agent blade pitch')
-        ax23.plot(time, np.array(sim_df['psf_blade_pitch']) * params.max_blade_pitch * RAD2DEG, label='PSF blade pitch')
+        ax23.plot(time, np.array(env.episode_history['psf_actions'])[:, 1] * params.max_blade_pitch * RAD2DEG,
+                  label='PSF blade pitch')
         ax23.set_ylabel('Blade pitch [deg]')
         ax23.set_title('Commanded blade pitch')
         ax23.legend()
 
-        ax24.plot(time, np.array(sim_df['wind_speed']), label='Wind speed')
+        ax24.plot(time, np.array(env.episode_history['wind_speed']), label='Wind speed')
         ax24.set_ylabel('Wind speed [m/s]')
         ax24.set_title('Wind')
         ax24.legend()

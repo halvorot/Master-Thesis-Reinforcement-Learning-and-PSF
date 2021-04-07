@@ -3,7 +3,7 @@ from pandas import DataFrame
 import gym_rl_mpc.utils.model_params as params
 
 def simulate_episode(env, agent, max_time):
-    global input_labels, state_labels
+    print("Simulating episode...")
     state_labels = [r"theta", r"theta_dot", r"omega"]
     input_labels = [r"F_thr", r"blade_pitch", r"power"]
     agent_action_labels = [r"agent_F_thr", r"agent_blade_pitch", r"agent_power"]

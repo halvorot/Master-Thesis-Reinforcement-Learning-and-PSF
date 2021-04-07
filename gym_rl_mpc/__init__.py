@@ -56,7 +56,7 @@ SCENARIOS = {
     },
     'VariableWind-v2': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',
-        'config': VARIABLE_WIND_CONFIG_lvl3
+        'config': VARIABLE_WIND_CONFIG_lvl1
     },
     'CrazyAgent-v2': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',

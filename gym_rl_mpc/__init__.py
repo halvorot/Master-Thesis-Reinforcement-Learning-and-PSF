@@ -25,6 +25,27 @@ VARIABLE_WIND_CONFIG["wind_period"] = 60
 VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 3
 VARIABLE_WIND_CONFIG["wind_noise"] = False
 
+VARIABLE_WIND_CONFIG_lvl1 = VARIABLE_WIND_CONFIG.copy()
+VARIABLE_WIND_CONFIG_lvl1["max_wind_amplitude"] = 1
+VARIABLE_WIND_CONFIG_lvl1["max_wind_speed"] = 20
+VARIABLE_WIND_CONFIG_lvl1["min_wind_speed"] = 10
+
+VARIABLE_WIND_CONFIG_lvl2 = VARIABLE_WIND_CONFIG.copy()
+VARIABLE_WIND_CONFIG_lvl2["max_wind_amplitude"] = 1
+VARIABLE_WIND_CONFIG_lvl2["max_wind_speed"] = 25
+VARIABLE_WIND_CONFIG_lvl2["min_wind_speed"] = 5
+
+VARIABLE_WIND_CONFIG_lvl3 = VARIABLE_WIND_CONFIG.copy()
+VARIABLE_WIND_CONFIG_lvl3["max_wind_amplitude"] = 3
+VARIABLE_WIND_CONFIG_lvl3["max_wind_speed"] = 25
+VARIABLE_WIND_CONFIG_lvl3["min_wind_speed"] = 5
+
+VARIABLE_WIND_CONFIG_lvl3 = VARIABLE_WIND_CONFIG.copy()
+VARIABLE_WIND_CONFIG_lvl3["max_wind_amplitude"] = 3
+VARIABLE_WIND_CONFIG_lvl3["max_wind_speed"] = 25
+VARIABLE_WIND_CONFIG_lvl3["min_wind_speed"] = 5
+VARIABLE_WIND_CONFIG["wind_noise"] = True
+
 CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
@@ -35,7 +56,7 @@ SCENARIOS = {
     },
     'VariableWind-v2': {
         'entry_point': 'gym_rl_mpc.envs:VariableWind',
-        'config': VARIABLE_WIND_CONFIG
+        'config': VARIABLE_WIND_CONFIG_lvl3
     },
     'CrazyAgent-v2': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',

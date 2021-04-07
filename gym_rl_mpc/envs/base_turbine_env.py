@@ -17,7 +17,7 @@ class BaseTurbineEnv(gym.Env, ABC):
     """
 
     def __init__(self, env_config):
-        # print(colored('Initializing environment...', 'green'))
+        print('Initializing environment...')
         for key in env_config:
             setattr(self, key, env_config[key])
 

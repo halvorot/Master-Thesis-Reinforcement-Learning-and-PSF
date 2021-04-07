@@ -101,6 +101,9 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
 
         self.logger.record("time/custom_time_elapsed", int(time() - self.start_time))
+        episodesList = np.array(self.training_env.get_attr('episode'))
+        num_episodes = np.sum(episodesList)
+        self.logger.record("time/num_episodes", num_episodes)
 
         return True
 

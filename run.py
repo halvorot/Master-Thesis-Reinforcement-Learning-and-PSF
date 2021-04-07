@@ -76,7 +76,7 @@ def run(args):
     env.close()
 
     if args.plot:
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+        fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
         if args.env == 'ConstantWind-v2':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
@@ -84,7 +84,6 @@ def run(args):
 
         time = np.array(range(0, len(sim_df['theta']))) * env.step_size
 
-        fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
 
         ax1.plot(time, sim_df['theta'] * RAD2DEG, label='$\\theta$')
         ax1.plot(time, sim_df['theta_dot'] * RAD2DEG, label='$\dot{\\theta}$')

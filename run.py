@@ -108,7 +108,7 @@ def run(args):
         ax3_2.plot(time, sim_df['blade_pitch'] * RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
-        # ax3_2.set_ylim([-4,20])
+        ax3_2.set_ylim([-params.min_blade_pitch_ratio*params.max_blade_pitch * RAD2DEG,params.max_blade_pitch * RAD2DEG])
 
         color = 'tab:blue'
         ax4.plot(time, sim_df['F_w'], label='F_w', color=color)
@@ -128,6 +128,7 @@ def run(args):
         ax5.set_ylabel('P_gen [W]')
         ax5.set_title('Power generated')
         ax5.legend()
+        ax5.set_ylim([0,params.max_power_generation])
 
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
         ax21.plot(time, np.array(env.episode_history['agent_actions'])[:, 0] * params.max_thrust_force,
@@ -137,6 +138,7 @@ def run(args):
         ax21.set_ylabel('F_thr [N]')
         ax21.set_title('Commanded Thrust Force')
         ax21.legend()
+        ax21.set_ylim([-params.max_thrust_force,params.max_thrust_force])
 
         ax22.plot(time, np.array(env.episode_history['agent_actions'])[:, 2] * params.max_power_generation,
                   label='agent power')
@@ -145,6 +147,7 @@ def run(args):
         ax22.set_ylabel('Power')
         ax22.set_title('Commanded Power')
         ax22.legend()
+        ax22.set_ylim([0,params.max_power_generation])
 
         ax23.plot(time, np.array(env.episode_history['agent_actions'])[:, 1] * params.max_blade_pitch * RAD2DEG,
                   label='agent blade pitch')
@@ -153,6 +156,7 @@ def run(args):
         ax23.set_ylabel('Blade pitch [deg]')
         ax23.set_title('Commanded blade pitch')
         ax23.legend()
+        ax23.set_ylim([-params.min_blade_pitch_ratio*params.max_blade_pitch * RAD2DEG,params.max_blade_pitch * RAD2DEG])
 
         ax24.plot(time, np.array(env.episode_history['wind_speed']), label='Wind speed')
         ax24.set_ylabel('Wind speed [m/s]')

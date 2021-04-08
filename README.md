@@ -5,12 +5,14 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floatin
  - Python 3.7
  - Yalmip 20200930
  - Mosek 9.2
- - MATLAB R2011a or later (Tested with 2020b)
+ - MATLAB R2015a or later (Tested with 2020b)
 
 
 ## Installation
 ### Mosek 
 Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
+
+Note: You need a Mosek licence to use Mosek (free academic)
 
 Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interface.html)
 ```

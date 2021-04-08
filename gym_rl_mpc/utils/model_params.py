@@ -53,7 +53,7 @@ max_power_generation = 15e6
 max_power_rate = 5e6
 max_generator_torque = max_power_generation/omega_setpoint(0)
 tau_thr = 2                             # Thrust force time constant
-tau_blade_pitch = 1.5                     # Blade pitch time constant
+tau_blade_pitch = 1.3                   # Blade pitch time constant
 tau_power = 2                           # Power generator time constant
 
 

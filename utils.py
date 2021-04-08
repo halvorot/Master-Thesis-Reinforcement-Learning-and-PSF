@@ -17,18 +17,18 @@ def simulate_episode(env, agent, max_time):
     env.reset()
     init_blade_pitch = env.turbine.input[1]/params.max_blade_pitch
     while not done and env.t_step < max_time/env.step_size:
-        if env.t_step == 0:
-            thr = 0
-            blade_pitch = init_blade_pitch
-            power = params.power_regime(env.wind_speed)
-        else:
-            thr = 0
-            blade_pitch = 1
-            power = params.power_regime(env.wind_speed)
-
         if agent is not None:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
+            if env.t_step == 0:
+                thr = 0
+                blade_pitch = init_blade_pitch
+                power = params.power_regime(env.wind_speed)
+            else:
+                thr = 0
+                blade_pitch = init_blade_pitch
+                power = params.power_regime(env.wind_speed)
+                
             action = np.array([thr, blade_pitch, power])
         _, _, done, _ = env.step(action)
 

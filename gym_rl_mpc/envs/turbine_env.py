@@ -17,6 +17,9 @@ class ConstantWind(BaseTurbineEnv):
 
 
 class BaseVariableWind(BaseTurbineEnv):
+    """
+    Subclasses must set variables: max_wind_amplitude, max_wind_speed, min_wind_speed, wind_noise
+    """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 

@@ -11,6 +11,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floatin
 ## Installation
 ### Mosek 
 Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
+Get a Mosek licence
 
 Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interface.html)
 ```

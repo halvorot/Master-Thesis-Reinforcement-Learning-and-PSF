@@ -1,8 +1,12 @@
-function [P, K, x0, u0] = InvariantSet(A_set,B_set, Hx, Hu, hx, hu, Ts)
+function [P, K, x0, u0] = terminalSet(A_set,B_set, Hx, Hu, hx, hu, Ts)
 eps=1e-6;
 
 nx = size(Hx,2);
 nu = size(Hu,2);
+
+A_set = reshape(A_set,nx,nx,numel(A_set)/nx^2);
+B_set = reshape(B_set,nx,nu,numel(B_set)/(nx*nu));
+
 opts=optimoptions('fmincon','Algorithm','interior-point', 'Display','off');
 % Finds centroid, x0 u0, of polyhedral constrainst
 fx  = @(x)sum((Hx*x-hx).^2);
@@ -10,6 +14,18 @@ fu  = @(u)sum((Hu*u-hu).^2);
 
 x0 = fmincon(fx,zeros(nx,1),Hx,hx,[],[],[],[],[], opts);
 u0 =  fmincon(fu,zeros(nu,1),Hu,hu,[],[],[],[],[],  opts);
+
+
+
+
+% Scale B for better performance
+B_scale=max(B_set,[],[1,3])-min(B_set,[],[1,3]);
+B_set = B_set./B_scale;
+
+Hu = Hu./B_scale;
+Pu_scale =max([Hu,hu],[],2)-min([Hu,hu],[],2);
+Hu = Hu./Pu_scale;
+hu = hu./Pu_scale;
 
 
 % Shifts the constrainst to x0,u0
@@ -21,20 +37,9 @@ Hx0(end,end+1)=0;
 hu0 = hu-Hu*u0;
 
 Hu0= Hu;
-Hu0(end,end+1)=0;
-
-
-A_set = reshape(A_set,nx,nx,numel(A_set)/nx^2);
-
-B_set = reshape(B_set,nx,nu,numel(B_set)/(nx*nu));
-
-
-% Scale B for better performance
-B_scale=mean(B_set,[1,3]);
-B_set = B_set./B_scale;
 
 E = sdpvar(nx+1);
-Y = sdpvar(nx+1,nu+1);
+Y = sdpvar(nu,nx+1);
 
 
 % Objective: Maximize ellipsoidal volume
@@ -42,7 +47,7 @@ objective = -logdet(E);
 
 constraints = [];
 %%% BEGIN Constraining the problem %%%
-
+size(B_set)
 for k = 1:size(A_set,3)    
     
     Ac = A_set(:,:,k);
@@ -54,23 +59,23 @@ for k = 1:size(A_set,3)
          % Assert controllabilty of the system dyn
         assert(rank(ctrb(A,B))==3)
 
-
-        % Shiftes the dynamics 
-        A0 = [A -A*x0];
-        A0(end+1,end)=1;
-
-        B0 = [B -B*u0];
-        B0(end+1,end)=1;
-
+% 
+%         % Shiftes the dynamics 
+         A0 = [A -A*x0-B*u0];
+         A0(end+1,end)=1-eps;
+% 
+         B0 = B ;
+         B0(end+1,end)=0;
 
         % Positive Definite and Lyapunov Decrease
         constraints= [constraints, [E, (A0*E+B0*Y)'; A0*E+B0*Y, E]>=0];
     else
-        A0 = [A -A*x0];
+        A0 = [Ac -Ac*x0];
         A0(end+1,end)=0;
 
-        B0 = [B -B*u0];
+        B0 = [Bc -Bc*u0];
         B0(end+1,end)=0;
+
         constraints= [constraints, [ E*A0' + A0*E+Y'*B0'+B0*Y]<=0];
     end
 end
@@ -88,23 +93,27 @@ end
 %%% END Constraining the problem %%% 
 
 % Solve
-opts = sdpsettings('verbose',0,'solver','mosek');
-optimize(constraints, objective,opts);   
+opts = sdpsettings('verbose',2,'solver','mosek');
+a=optimize(constraints, objective,opts);
+error_flag = false;
+if a.problem >0
+    error_flag = true;
+    disp("***")
+     disp("WARNING")
+     disp("The problem migth be invalid. Solver did not converge.")
+     disp(a)
+     disp("***")
+end
 
 % Obtain P and K from E and Y
 P = inv(value(E));
 K = value(Y)*P;
 
+K = K(1:nu,1:nx);
+P = P(1:nx,1:nx);
 
-% Project constraints
-P =P(1:nx, 1:nx);
-K = K(1:nx,1:nu);
-
-K = K.*B_scale;
-
-
-
-
+% 
+% 
 %Verify integrity of solution
 xplot = sdpvar(nx,1);
 Pproj1 = YSet(xplot,(xplot-x0)'*P*(xplot-x0) <= 1);
@@ -112,7 +121,6 @@ Pproj1 = YSet(xplot,(xplot-x0)'*P*(xplot-x0) <= 1);
 Px = Polyhedron(Hx,hx);
 u = PolyUnion([Pproj1.outerApprox,Px]);
 [primal_feas, dual_feas]=check(constraints);
-error_flag = false;
 if any(primal_feas<-eps)
      disp("***")
      disp("WARNING")
@@ -131,7 +139,7 @@ if not(u.isConnected())
 
 end
 if error_flag
-    disp("Debug files are for inspection")
+    disp("Debug files are created for inspection")
     figure()
 
     plot(Polyhedron(Hx,hx),'alpha',0.1);

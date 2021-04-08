@@ -100,7 +100,9 @@ class PSF:
     def set_terminal_set(self):
 
         A_set, B_set = self.create_system_set()
-        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"], self.ext_step_size))
+        # from . import py_terminal_set
+        # py_terminal_set.terminal_set(A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"])
+        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"], self.ext_step_size))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:

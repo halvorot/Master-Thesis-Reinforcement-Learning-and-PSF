@@ -34,7 +34,7 @@ kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
               ]),
               PK_path=Path(HERE, "terminalset"),
               ext_step_size=0.1,
-              lin_bounds={"w": [3, 25],
+              lin_bounds={"w": [2, 18],
                           "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
                           "Omega": [params.omega_setpoint(3),
                                     params.omega_setpoint(25)],
@@ -66,7 +66,6 @@ for j in range(number_of_state_perm):
                                2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
                                2 * np.random.uniform(low=0, high=params.max_power_generation)
                            ],
-                           u_stable=[0, 0, 1e6],
                            u_prev=[0, 0, 0],
                            ext_params=np.random.uniform(low=3, high=25),
                            reset_x0=True

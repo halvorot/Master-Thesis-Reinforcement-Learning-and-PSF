@@ -35,7 +35,7 @@ def linear_schedule(initial_value):
 
 hyperparams = {
     'n_steps': 1024,
-    'learning_rate': linear_schedule(1e-4),
+    'learning_rate': linear_schedule(initial_value=1e-4),
     'gae_lambda': 0.95,
     'gamma': 0.99,
     'n_epochs': 4,

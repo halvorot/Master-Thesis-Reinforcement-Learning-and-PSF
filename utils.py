@@ -23,13 +23,13 @@ def simulate_episode(env, agent, max_time):
             power = params.power_regime(env.wind_speed)
         else:
             thr = 0
-            blade_pitch = init_blade_pitch
+            blade_pitch = 1
             power = params.power_regime(env.wind_speed)
 
         if agent is not None:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0, init_blade_pitch, params.power_regime(env.wind_speed)])
+            action = np.array([thr, blade_pitch, power])
         _, _, done, _ = env.step(action)
 
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))

@@ -156,6 +156,7 @@ if __name__ == "__main__":
             agent = PPO.load(args.agent)
         init_blade_pitch = env.turbine.input[1] / params.max_blade_pitch
 
+    print("Animating...")
     animation_speed = 10
     ani = FuncAnimation(fig_ani, animate, interval=1000 * env.step_size / animation_speed, blit=False)
 

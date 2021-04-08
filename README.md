@@ -5,7 +5,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floatin
  - Python 3.7
  - Yalmip 20200930
  - Mosek 9.2
- - MATLAB R2011a or later (Tested with 2020b)
+ - MATLAB R2015a or later (Tested with 2020b)
 
 
 ## Installation

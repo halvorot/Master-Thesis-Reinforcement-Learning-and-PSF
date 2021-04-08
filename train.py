@@ -177,6 +177,8 @@ if __name__ == '__main__':
     with open(os.path.join('logs', env_id, EXPERIMENT_ID, "Note.txt"), "a") as file_object:
         file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]) + "\n")
         file_object.write("hyperparams: " + json.dumps(hyperparams) + "\n")
+        if args.agent:
+            file_object.write(f"Continued training from: {args.agent}\n")
         if args.note:
             file_object.write(args.note)
 

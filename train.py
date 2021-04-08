@@ -14,9 +14,28 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 import gym_rl_mpc
 from gym_rl_mpc import reporting
 
+def linear_schedule(initial_value):
+    """
+    Linear learning rate schedule.
+    :param initial_value: (float or str)
+    :return: (function)
+    """
+    if isinstance(initial_value, str):
+        initial_value = float(initial_value)
+
+    def func(progress):
+        """
+        Progress will decrease from 1 (beginning) to 0
+        :param progress: (float)
+        :return: (float)
+        """
+        return progress * initial_value
+
+    return func
+
 hyperparams = {
     'n_steps': 1024,
-    'learning_rate': 1e-5,
+    'learning_rate': linear_schedule(1e-4),
     'gae_lambda': 0.95,
     'gamma': 0.99,
     'n_epochs': 4,

@@ -3,7 +3,7 @@ from pandas import DataFrame
 import gym_rl_mpc.utils.model_params as params
 
 def simulate_episode(env, agent, max_time):
-    global input_labels, state_labels
+    print("Simulating episode...")
     state_labels = [r"theta", r"theta_dot", r"omega"]
     input_labels = [r"F_thr", r"blade_pitch", r"power"]
     agent_action_labels = [r"agent_F_thr", r"agent_blade_pitch", r"agent_power"]
@@ -20,7 +20,16 @@ def simulate_episode(env, agent, max_time):
         if agent is not None:
             action, _states = agent.predict(env.observation, deterministic=True)
         else:
-            action = np.array([0, init_blade_pitch, params.power_regime(env.wind_speed)])
+            if env.t_step == 0:
+                thr = 0
+                blade_pitch = init_blade_pitch
+                power = params.power_regime(env.wind_speed)
+            else:
+                thr = 0
+                blade_pitch = init_blade_pitch
+                power = params.power_regime(env.wind_speed)
+                
+            action = np.array([thr, blade_pitch, power])
         _, _, done, _ = env.step(action)
 
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))

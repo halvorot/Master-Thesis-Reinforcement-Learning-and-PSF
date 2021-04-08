@@ -33,6 +33,7 @@ class Turbine:
     def __init__(self, init_wind_speed=3, step_size=1):
         """
             state = [theta, theta_dot, omega]^T
+            input = [F_thr, blade_pitch, power]^T
         """
 
         self.state = np.zeros(3)  # Initialize states
@@ -47,6 +48,8 @@ class Turbine:
         self.input = self.u0  # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size / (self.step_size + params.tau_thr)
+        self.alpha_blade_pitch = self.step_size / (self.step_size + params.tau_blade_pitch)
+        self.alpha_power = self.step_size / (self.step_size + params.tau_power)
         self.omega_setpoint = params.omega_setpoint
         self.power_regime = params.power_regime
         self.max_power_generation = params.max_power_generation
@@ -64,15 +67,12 @@ class Turbine:
         commanded_blade_pitch = _un_normalize_blade_pitch_input(action[1])
         commanded_power = _un_normalize_power_input(action[2])
 
-        # Saturate the thrust force rate
-        F_thr = prev_F_thr + np.sign(commanded_F_thr - prev_F_thr) * min(
-            abs(commanded_F_thr - prev_F_thr), params.max_thrust_rate * self.step_size)
-        # Saturate blade pitch rate
-        blade_pitch = prev_blade_pitch + np.sign(commanded_blade_pitch - prev_blade_pitch) * min(
-            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate * self.step_size)
-        # Saturate the power rate
-        power = prev_power + np.sign(commanded_power - prev_power) * min(
-            abs(commanded_power - prev_power), params.max_power_rate * self.step_size)
+        # Low pass on the thrust force
+        F_thr = self.alpha_thr * commanded_F_thr + (1 - self.alpha_thr) * prev_F_thr
+        # Low pass on blade pitch
+        blade_pitch = self.alpha_blade_pitch * commanded_blade_pitch + (1 - self.alpha_blade_pitch) * prev_blade_pitch
+        # Low pass on the power
+        power = self.alpha_power * commanded_power + (1 - self.alpha_power) * prev_power
 
         self.input = np.array([F_thr, blade_pitch, power])
 

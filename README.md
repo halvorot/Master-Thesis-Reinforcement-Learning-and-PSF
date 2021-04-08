@@ -5,12 +5,14 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floatin
  - Python 3.7
  - Yalmip 20200930
  - Mosek 9.2
- - MATLAB R2011a or later (Tested with 2020b)
+ - MATLAB R2015a or later (Tested with 2020b)
 
 
 ## Installation
 ### Mosek 
 Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
+
+Note: You need a Mosek licence to use Mosek (free academic)
 
 Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interface.html)
 ```
@@ -67,6 +69,8 @@ python train.py
 Optional arguments:
 - --agent <path to pretrained agent .zip file to start training from>
 - --timesteps <number of timesteps to train the agent>
+- --env <environment to run (e.g. VariableWindLevel3-v0)>
+- --psf <use PSF corrected actions>
 - --note <Note with additional info about training, gets added to Note.txt>
 - --no_reporting <Skip reporting>
 
@@ -88,6 +92,8 @@ Required arguments:
 Optional arguments:
 - --time <Max simulation time (seconds)>
 - --plot
+- --env <environment to run (e.g. VariableWindLevel3-v0)>
+- --psf <use PSF corrected actions>
 
 
 ### Animating
@@ -101,6 +107,8 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
+- --env <environment to run (e.g. VariableWindLevel3-v0)>
+- --psf <use PSF corrected actions>
 
 Or to show an animation of a simulation run (from file):
 ```
@@ -112,10 +120,6 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
-
-or 
-
-
 
 
 ## Based on

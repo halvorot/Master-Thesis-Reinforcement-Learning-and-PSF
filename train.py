@@ -14,9 +14,28 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 import gym_rl_mpc
 from gym_rl_mpc import reporting
 
+def linear_schedule(initial_value):
+    """
+    Linear learning rate schedule.
+    :param initial_value: (float or str)
+    :return: (function)
+    """
+    if isinstance(initial_value, str):
+        initial_value = float(initial_value)
+
+    def func(progress):
+        """
+        Progress will decrease from 1 (beginning) to 0
+        :param progress: (float)
+        :return: (float)
+        """
+        return progress * initial_value
+
+    return func
+
 hyperparams = {
     'n_steps': 1024,
-    'learning_rate': 1e-5,
+    'learning_rate': 1e-5, #linear_schedule(initial_value=1e-4),
     'gae_lambda': 0.95,
     'gamma': 0.99,
     'n_epochs': 4,
@@ -101,6 +120,9 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
 
         self.logger.record("time/custom_time_elapsed", int(time() - self.start_time))
+        episodesList = np.array(self.training_env.get_attr('episode'))
+        num_episodes = np.sum(episodesList)
+        self.logger.record("time/num_episodes", num_episodes)
 
         return True
 
@@ -121,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--env',
         type=str,
-        default='VariableWind-v1',
+        default='VariableWindLevel3-v0',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )
@@ -174,6 +196,8 @@ if __name__ == '__main__':
     with open(os.path.join('logs', env_id, EXPERIMENT_ID, "Note.txt"), "a") as file_object:
         file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]) + "\n")
         file_object.write("hyperparams: " + json.dumps(hyperparams) + "\n")
+        if args.agent:
+            file_object.write(f"Continued training from: {args.agent}\n")
         if args.note:
             file_object.write(args.note)
 

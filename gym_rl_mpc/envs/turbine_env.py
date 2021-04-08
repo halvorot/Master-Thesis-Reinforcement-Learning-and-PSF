@@ -16,13 +16,12 @@ class ConstantWind(BaseTurbineEnv):
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
 
-class VariableWind(BaseTurbineEnv):
+class BaseVariableWind(BaseTurbineEnv):
+    """
+    Subclasses must set variables: max_wind_amplitude, max_wind_speed, min_wind_speed, wind_noise
+    """
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.wind_amplitude = min((self.max_wind_speed - self.min_wind_speed) / 2,
-                                  self.max_wind_amplitude) * self.rand_num_gen.rand()
-        self.wind_mean = (self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
-        self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
     def step(self, action):
         t = self.t_step * self.step_size
@@ -39,12 +38,58 @@ class VariableWind(BaseTurbineEnv):
         """
         Generates environment with a turbine and a random wind speed between min and max wind speed in config
         """
+        self.wind_amplitude = min((self.max_wind_speed - self.min_wind_speed) / 2,
+                                  self.max_wind_amplitude) * self.rand_num_gen.rand()
+        self.wind_mean = (self.max_wind_speed - self.min_wind_speed - 2 * self.wind_amplitude) * self.rand_num_gen.rand() + self.min_wind_speed + self.wind_amplitude
+        self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
         self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
 
-class CrazyAgent(VariableWind):
+class VariableWindLevel0(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 1
+        self.max_wind_speed = 17
+        self.min_wind_speed = 13
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
+class VariableWindLevel1(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 1
+        self.max_wind_speed = 20
+        self.min_wind_speed = 10
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
+
+class VariableWindLevel2(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 1
+        self.max_wind_speed = 25
+        self.min_wind_speed = 5
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
+
+class VariableWindLevel3(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 3
+        self.max_wind_speed = 25
+        self.min_wind_speed = 5
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
+class VariableWindLevel4(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 3
+        self.max_wind_speed = 25
+        self.min_wind_speed = 5
+        self.wind_noise = True
+        super().__init__(*args, **kwargs)
+
+class CrazyAgent(VariableWindLevel3):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 

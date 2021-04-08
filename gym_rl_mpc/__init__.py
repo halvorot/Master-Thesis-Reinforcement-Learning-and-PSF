@@ -22,43 +22,32 @@ DEFAULT_CONFIG = {
 
 VARIABLE_WIND_CONFIG = DEFAULT_CONFIG.copy()
 VARIABLE_WIND_CONFIG["wind_period"] = 60
-VARIABLE_WIND_CONFIG["max_wind_amplitude"] = 3
-VARIABLE_WIND_CONFIG["wind_noise"] = False
-
-VARIABLE_WIND_CONFIG_lvl1 = VARIABLE_WIND_CONFIG.copy()
-VARIABLE_WIND_CONFIG_lvl1["max_wind_amplitude"] = 1
-VARIABLE_WIND_CONFIG_lvl1["max_wind_speed"] = 20
-VARIABLE_WIND_CONFIG_lvl1["min_wind_speed"] = 10
-
-VARIABLE_WIND_CONFIG_lvl2 = VARIABLE_WIND_CONFIG.copy()
-VARIABLE_WIND_CONFIG_lvl2["max_wind_amplitude"] = 1
-VARIABLE_WIND_CONFIG_lvl2["max_wind_speed"] = 25
-VARIABLE_WIND_CONFIG_lvl2["min_wind_speed"] = 5
-
-VARIABLE_WIND_CONFIG_lvl3 = VARIABLE_WIND_CONFIG.copy()
-VARIABLE_WIND_CONFIG_lvl3["max_wind_amplitude"] = 3
-VARIABLE_WIND_CONFIG_lvl3["max_wind_speed"] = 25
-VARIABLE_WIND_CONFIG_lvl3["min_wind_speed"] = 5
-
-VARIABLE_WIND_CONFIG_lvl4 = VARIABLE_WIND_CONFIG.copy()
-VARIABLE_WIND_CONFIG_lvl4["max_wind_amplitude"] = 3
-VARIABLE_WIND_CONFIG_lvl4["max_wind_speed"] = 25
-VARIABLE_WIND_CONFIG_lvl4["min_wind_speed"] = 5
-VARIABLE_WIND_CONFIG_lvl4["wind_noise"] = True
 
 CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
-    'ConstantWind-v2': {   
+    'ConstantWind-v3': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
-    'VariableWind-v2': {
-        'entry_point': 'gym_rl_mpc.envs:VariableWind',
-        'config': VARIABLE_WIND_CONFIG_lvl1
+    'VariableWindLevel1-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel1',
+        'config': VARIABLE_WIND_CONFIG
     },
-    'CrazyAgent-v2': {
+    'VariableWindLevel2-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel2',
+        'config': VARIABLE_WIND_CONFIG
+    },
+    'VariableWindLevel3-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel3',
+        'config': VARIABLE_WIND_CONFIG
+    },
+    'VariableWindLevel4-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel4',
+        'config': VARIABLE_WIND_CONFIG
+    },
+    'CrazyAgent-v3': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }

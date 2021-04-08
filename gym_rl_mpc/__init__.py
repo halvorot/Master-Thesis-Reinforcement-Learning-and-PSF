@@ -6,7 +6,6 @@ DEFAULT_CONFIG = {
     "use_psf": False,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
-    "crash_reward": -1000,
     "crash_angle_condition": 10*DEG2RAD,
     "crash_omega_max": 15*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
@@ -31,6 +30,10 @@ SCENARIOS = {
     'ConstantWind-v3': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
+    },
+    'VariableWindLevel0-v0': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel0',
+        'config': VARIABLE_WIND_CONFIG
     },
     'VariableWindLevel1-v0': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel1',

@@ -43,6 +43,15 @@ class BaseVariableWind(BaseTurbineEnv):
         self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
+
+class VariableWindLevel0(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.max_wind_amplitude = 1
+        self.max_wind_speed = 17
+        self.min_wind_speed = 13
+        self.wind_noise = False
+
 class VariableWindLevel1(BaseVariableWind):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

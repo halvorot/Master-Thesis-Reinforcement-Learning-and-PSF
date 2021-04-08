@@ -246,6 +246,7 @@ class BaseTurbineEnv(gym.Env, ABC):
             done = True
         if crash_cond_1 or crash_cond_2 or crash_cond_3:
             self.crashed = True
+            step_reward = self.crash_reward
 
         return done, step_reward
 

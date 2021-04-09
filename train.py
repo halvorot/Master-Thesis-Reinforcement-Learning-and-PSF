@@ -133,7 +133,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--timesteps',
         type=int,
-        default=1000000,
+        default=2000000,
         help='Number of timesteps to train the agent. Default=1000000',
     )
     parser.add_argument(

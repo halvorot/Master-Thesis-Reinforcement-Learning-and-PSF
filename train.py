@@ -164,13 +164,13 @@ if __name__ == '__main__':
         action='store_true'
     )
     parser.add_argument(
-        '--single_cpu',
-        help='Use only one CPU (no parallelization)',
-        action='store_true'
+        '--num_cpus',
+        type=int,
+        help='Use only one CPU (no parallelization)'
     )
     args = parser.parse_args()
 
-    NUM_CPUs = multiprocessing.cpu_count() if args.single_cpu == False else 1
+    NUM_CPUs = multiprocessing.cpu_count() if not args.num_cpus else args.num_cpus
 
     # Make environment (NUM_CPUs parallel envs)
     env_id = args.env

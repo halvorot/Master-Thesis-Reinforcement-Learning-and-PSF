@@ -236,6 +236,8 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
             done = True
+        if crash_cond_1 or crash_cond_2 or crash_cond_3:
+            self.crashed = True
 
         # Without crash reward
         step_reward = (self.theta_reward
@@ -259,7 +261,6 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         # Power and crash reward only
         # if crash_cond_1 or crash_cond_2 or crash_cond_3:
-        #     self.crashed = True
         #     step_reward = self.crash_reward
         # else:
         #     step_reward = self.power_reward

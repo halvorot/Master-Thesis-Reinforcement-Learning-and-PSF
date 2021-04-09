@@ -228,14 +228,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         else:
             self.psf_reward = 0
 
-        step_reward = (self.theta_reward
-                       + self.theta_dot_reward
-                       + self.omega_reward
-                       + self.power_reward
-                       + self.input_reward
-                       + self.psf_reward
-                       + self.reward_survival)
-
         # Check if episode is done
         end_cond_2 = self.t_step >= self.max_episode_time / self.step_size
         crash_cond_1 = np.abs(self.turbine.platform_angle) > self.crash_angle_condition
@@ -244,9 +236,34 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
             done = True
-        if crash_cond_1 or crash_cond_2 or crash_cond_3:
-            self.crashed = True
-            #step_reward = self.crash_reward
+
+        # Without crash reward
+        step_reward = (self.theta_reward
+                       + self.theta_dot_reward
+                       + self.omega_reward
+                       + self.power_reward
+                       + self.input_reward
+                       + self.psf_reward
+                       + self.reward_survival)
+
+        # Without theta and crash reward
+        # step_reward = (self.theta_dot_reward
+        #                + self.omega_reward
+        #                + self.power_reward
+        #                + self.input_reward
+        #                + self.psf_reward
+        #                + self.reward_survival)
+
+        # Power only
+        # step_reward = self.power_reward
+
+        # Power and crash reward only
+        # if crash_cond_1 or crash_cond_2 or crash_cond_3:
+        #     self.crashed = True
+        #     step_reward = self.crash_reward
+        # else:
+        #     step_reward = self.power_reward
+        
 
         return done, step_reward
 

@@ -179,7 +179,7 @@ if __name__ == "__main__":
         recorded_disturbance = np.array(recorded_disturbance)
 
         fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
-        if args.env == 'ConstantWind-v3':
+        if args.env == 'ConstantWind-v0':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
             fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")

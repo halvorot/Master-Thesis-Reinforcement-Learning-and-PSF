@@ -6,8 +6,9 @@ DEFAULT_CONFIG = {
     "use_psf": False,
     "step_size": 0.1,
     "max_episode_time": 300,                    # Max time for episode [seconds]
+    "crash_reward": -1000,
     "crash_angle_condition": 10*DEG2RAD,
-    "crash_omega_max": 15*RPM2RAD,
+    "crash_omega_max": 10*RPM2RAD,
     "crash_omega_min": 3*RPM2RAD,
     "max_wind_speed": 25,
     "min_wind_speed": 5,
@@ -29,7 +30,7 @@ CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
-    'ConstantWind-v3': {   
+    'ConstantWind-v0': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
@@ -53,7 +54,7 @@ SCENARIOS = {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel4',
         'config': VARIABLE_WIND_CONFIG
     },
-    'CrazyAgent-v3': {
+    'CrazyAgent-v0': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }

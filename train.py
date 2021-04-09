@@ -35,7 +35,7 @@ def linear_schedule(initial_value):
 
 hyperparams = {
     'n_steps': 1024,
-    'learning_rate': 1e-5, #linear_schedule(initial_value=1e-4),
+    'learning_rate': linear_schedule(initial_value=1e-4),
     'gae_lambda': 0.95,
     'gamma': 0.99,
     'n_epochs': 4,
@@ -194,8 +194,11 @@ if __name__ == '__main__':
 
     # Write note and config to Note.txt file
     with open(os.path.join('logs', env_id, EXPERIMENT_ID, "Note.txt"), "a") as file_object:
+        hyperparams_edit = hyperparams.copy()
+        if hyperparams['learning_rate']:
+            hyperparams_edit['learning_rate'] = str(hyperparams_edit['learning_rate'])
         file_object.write("env_config: " + json.dumps(env.get_attr('config')[0]) + "\n")
-        file_object.write("hyperparams: " + json.dumps(hyperparams) + "\n")
+        file_object.write("hyperparams: " + json.dumps(hyperparams_edit) + "\n")
         if args.agent:
             file_object.write(f"Continued training from: {args.agent}\n")
         if args.note:

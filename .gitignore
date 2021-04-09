@@ -141,3 +141,4 @@ dmypy.json
 .idea/
 .vscode/
 logs/
+old_logs/

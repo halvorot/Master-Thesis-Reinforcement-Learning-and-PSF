@@ -30,31 +30,31 @@ CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
-    'ConstantWind-v0': {   
+    'ConstantWind-v10': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
-    'VariableWindLevel0-v0': {
+    'VariableWindLevel0-v10': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel0',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel1-v0': {
+    'VariableWindLevel1-v10': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel1',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel2-v0': {
+    'VariableWindLevel2-v10': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel2',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel3-v0': {
+    'VariableWindLevel3-v10': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel3',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel4-v0': {
+    'VariableWindLevel4-v10': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel4',
         'config': VARIABLE_WIND_CONFIG
     },
-    'CrazyAgent-v0': {
+    'CrazyAgent-v10': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }

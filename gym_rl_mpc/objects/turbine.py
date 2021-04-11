@@ -83,12 +83,12 @@ class Turbine:
         self._sim(self.adjusted_wind_speed)
 
     def _sim(self, wind_speed):
-        state_o5, state_o4 = odesolver45(self.state_dot, self.state, self.step_size, wind_speed)
+        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, wind_speed)
 
         self.state = state_o5
         self.state[0] = geom.ssa(self.state[0])
 
-    def state_dot(self, state, wind_speed):
+    def state_dot_func(self, state, wind_speed):
         """
         state = [theta, theta_dot, omega]^T
         """
@@ -116,9 +116,16 @@ class Turbine:
     @property
     def omega(self):
         """
-        Returns the angle of the platform
+        Returns the angular velocity of the turbine rotor
         """
         return self.state[2]
+    
+    @property
+    def omega_dot(self):
+        """
+        Returns the angular acceleration of the turbine rotor
+        """
+        return self.state_dot_func(self.state, self.adjusted_wind_speed)[2]
 
     @property
     def blade_pitch(self):

@@ -143,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--env',
         type=str,
-        default='VariableWindLevel3-v0',
+        default='VariableWindLevel3-v10',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )

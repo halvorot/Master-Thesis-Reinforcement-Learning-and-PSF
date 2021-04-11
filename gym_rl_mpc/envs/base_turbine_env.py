@@ -47,6 +47,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                 -np.pi,  # theta
                 -np.finfo(np.float32).max,  # theta_dot
                 0,  # omega
+                -np.finfo(np.float32).max,  # omega_dot
                 0,  # wind speed
             ],
             dtype=np.float32)
@@ -56,6 +57,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                 np.pi,  # theta
                 np.finfo(np.float32).max,  # theta_dot
                 np.finfo(np.float32).max,  # omega
+                np.finfo(np.float32).max,  # omega_dot
                 self.max_wind_speed,  # wind speed
             ],
             dtype=np.float32)
@@ -239,7 +241,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         if crash_cond_1 or crash_cond_2 or crash_cond_3:
             self.crashed = True
 
-        # Without crash reward
+        # Full reward function Without crash reward, V-0
         step_reward = (self.theta_reward
                        + self.theta_dot_reward
                        + self.omega_reward
@@ -248,7 +250,19 @@ class BaseTurbineEnv(gym.Env, ABC):
                        + self.psf_reward
                        + self.reward_survival)
 
-        # Without theta and crash reward
+        # Full reward function with crash reward, V-1
+        # if crash_cond_1 or crash_cond_2 or crash_cond_3:
+        #     step_reward = self.crash_reward
+        # else:
+        #     step_reward = (self.theta_reward
+        #                + self.theta_dot_reward
+        #                + self.omega_reward
+        #                + self.power_reward
+        #                + self.input_reward
+        #                + self.psf_reward
+        #                + self.reward_survival)
+
+        # Without theta and crash reward, V-2
         # step_reward = (self.theta_dot_reward
         #                + self.omega_reward
         #                + self.power_reward
@@ -256,10 +270,10 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.psf_reward
         #                + self.reward_survival)
 
-        # Power only
+        # Power only, V-3
         # step_reward = self.power_reward
 
-        # Power and crash reward only
+        # Power and crash reward only, V-4
         # if crash_cond_1 or crash_cond_2 or crash_cond_3:
         #     step_reward = self.crash_reward
         # else:
@@ -275,7 +289,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         obs : np.ndarray
             The observation of the environment.
         """
-        obs = np.hstack([self.turbine.state, self.wind_speed])
+        obs = np.hstack([self.turbine.state, self.turbine.omega_dot, self.wind_speed])
         return obs
 
     def seed(self, seed=None):

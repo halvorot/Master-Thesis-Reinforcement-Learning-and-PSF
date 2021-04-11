@@ -213,6 +213,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         theta_deg = self.turbine.platform_angle * RAD2DEG
         theta_dot_deg_s = self.turbine.state[1] * RAD2DEG
         omega_rpm = self.turbine.state[2] * RAD2RPM
+        omega_dot_rpm_per_sec = self.turbine.omega_dot * RAD2RPM
         power_error_MegaWatts = np.abs(action[2] - self.turbine.power_regime(self.wind_speed)) * (
                 self.turbine.max_power_generation / 1e6)
 
@@ -222,6 +223,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         # Set each part of the reward
         self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
         self.theta_dot_reward = -self.gamma_theta_dot * theta_dot_deg_s ** 2
+        self.omega_dot_reward = -self.gamma_omega_dot * omega_dot_rpm_per_sec ** 2
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
         self.input_reward = -self.gamma_input * (action[0] ** 2 + action[1] ** 2)
@@ -242,13 +244,13 @@ class BaseTurbineEnv(gym.Env, ABC):
             self.crashed = True
 
         # Full reward function Without crash reward, V-0
-        step_reward = (self.theta_reward
-                       + self.theta_dot_reward
-                       + self.omega_reward
-                       + self.power_reward
-                       + self.input_reward
-                       + self.psf_reward
-                       + self.reward_survival)
+        # step_reward = (self.theta_reward
+        #                + self.theta_dot_reward
+        #                + self.omega_reward
+        #                + self.power_reward
+        #                + self.input_reward
+        #                + self.psf_reward
+        #                + self.reward_survival)
 
         # Full reward function with crash reward, V-1
         # if crash_cond_1 or crash_cond_2 or crash_cond_3:
@@ -278,6 +280,15 @@ class BaseTurbineEnv(gym.Env, ABC):
         #     step_reward = self.crash_reward
         # else:
         #     step_reward = self.power_reward
+
+        # Without theta and crash reward, with omega_dot reward, V-5
+        step_reward = (self.theta_dot_reward
+                       + self.omega_reward
+                       + self.omega_dot_reward
+                       + self.power_reward
+                       + self.input_reward
+                       + self.psf_reward
+                       + self.reward_survival)
         
 
         return done, step_reward
@@ -312,6 +323,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.episode_history.setdefault('theta_reward', []).append(self.theta_reward)
         self.episode_history.setdefault('theta_dot_reward', []).append(self.theta_dot_reward)
         self.episode_history.setdefault('omega_reward', []).append(self.omega_reward)
+        self.episode_history.setdefault('omega_dot_reward', []).append(self.omega_dot_reward)
         self.episode_history.setdefault('power_reward', []).append(self.power_reward)
         self.episode_history.setdefault('input_reward', []).append(self.input_reward)
         self.episode_history.setdefault('psf_reward', []).append(self.psf_reward)
@@ -333,6 +345,7 @@ class BaseTurbineEnv(gym.Env, ABC):
             'theta_reward': np.array(self.episode_history['theta_reward']).mean(),
             'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),
             'omega_reward': np.array(self.episode_history['omega_reward']).mean(),
+            'omega_dot_reward': np.array(self.episode_history['omega_dot_reward']).mean(),
             'power_reward': np.array(self.episode_history['power_reward']).mean(),
             'input_reward': np.array(self.episode_history['input_reward']).mean(),
             'psf_reward': np.array(self.episode_history['psf_reward']).mean(),

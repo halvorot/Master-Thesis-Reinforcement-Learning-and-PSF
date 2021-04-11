@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
     "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
+    "gamma_omega_dot": 4,
     "gamma_psf": 5,
     "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
@@ -30,31 +31,31 @@ CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
-    'ConstantWind-v10': {   
+    'ConstantWind-v15': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
-    'VariableWindLevel0-v10': {
+    'VariableWindLevel0-v15': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel0',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel1-v10': {
+    'VariableWindLevel1-v15': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel1',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel2-v10': {
+    'VariableWindLevel2-v15': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel2',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel3-v10': {
+    'VariableWindLevel3-v15': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel3',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel4-v10': {
+    'VariableWindLevel4-v15': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel4',
         'config': VARIABLE_WIND_CONFIG
     },
-    'CrazyAgent-v10': {
+    'CrazyAgent-v15': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }

@@ -9,7 +9,7 @@ def simulate_episode(env, agent, max_time):
     agent_action_labels = [r"agent_F_thr", r"agent_blade_pitch", r"agent_power"]
     psf_action_labels = [r"psf_F_thr", r"psf_blade_pitch", r"psf_power"]
     wind_labels = [r"F_w", r"Q_w", r"Q_gen", r"wind_speed", r"adjusted_wind_speed"]
-    reward_labels = [r"reward", r"theta_reward", r"theta_dot_reward", r"omega_reward", r"power_reward", r"input_reward", r"psf_reward"]
+    reward_labels = [r"reward", r"theta_reward", r"theta_dot_reward", r"omega_reward", r"omega_dot_reward", r"power_reward", r"input_reward", r"psf_reward"]
     
     labels = np.hstack(["time", state_labels, input_labels, agent_action_labels, psf_action_labels, wind_labels, reward_labels])
 
@@ -41,6 +41,7 @@ def simulate_episode(env, agent, max_time):
     theta_reward = np.array(env.episode_history['theta_reward']).reshape((env.t_step, 1))
     theta_dot_reward = np.array(env.episode_history['theta_dot_reward']).reshape((env.t_step, 1))
     omega_reward = np.array(env.episode_history['omega_reward']).reshape((env.t_step, 1))
+    omega_dot_reward = np.array(env.episode_history['omega_dot_reward']).reshape((env.t_step, 1))
     power_reward = np.array(env.episode_history['power_reward']).reshape((env.t_step, 1))
     input_reward = np.array(env.episode_history['input_reward']).reshape((env.t_step, 1))
     psf_reward = np.array(env.episode_history['psf_reward']).reshape((env.t_step, 1))
@@ -68,6 +69,7 @@ def simulate_episode(env, agent, max_time):
                             theta_reward,
                             theta_dot_reward,
                             omega_reward,
+                            omega_dot_reward,
                             power_reward,
                             input_reward,
                             psf_reward

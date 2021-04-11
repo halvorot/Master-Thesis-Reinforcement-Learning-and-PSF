@@ -115,6 +115,7 @@ class TensorboardCallback(BaseCallback):
                     self.logger.record_mean('custom/theta_reward', history[env_idx]['theta_reward'])
                     self.logger.record_mean('custom/theta_dot_reward', history[env_idx]['theta_dot_reward'])
                     self.logger.record_mean('custom/omega_reward', history[env_idx]['omega_reward'])
+                    self.logger.record_mean('custom/omega_dot_reward', history[env_idx]['omega_dot_reward'])
                     self.logger.record_mean('custom/power_reward', history[env_idx]['power_reward'])
                     self.logger.record_mean('custom/input_reward', history[env_idx]['input_reward'])
                     self.logger.record_mean('custom/psf_reward', history[env_idx]['psf_reward'])
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--env',
         type=str,
-        default='VariableWindLevel3-v10',
+        default='VariableWindLevel3-v15',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )

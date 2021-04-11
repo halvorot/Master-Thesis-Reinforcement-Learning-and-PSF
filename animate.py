@@ -111,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--env',
         type=str,
-        default='VariableWindLevel3-v10',
+        default='VariableWindLevel3-v15',
         choices=gym_rl_mpc.SCENARIOS.keys(),
         help="Environment to run."
     )
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         recorded_disturbance = np.array(recorded_disturbance)
 
         fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
-        if args.env == 'ConstantWind-v10':
+        if args.env == 'ConstantWind-v15':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
             fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")
@@ -203,13 +203,14 @@ if __name__ == "__main__":
         ax3.set_ylabel('F_thr [N]', color=color)
         ax3.set_title('Input')
         ax3.legend()
+        ax3.set_ylim([-params.max_thrust_force*1.05,params.max_thrust_force*1.05])
 
         color = 'tab:orange'
         ax3_2 = ax3.twinx()
         ax3_2.plot(time, recorded_inputs[:, 1] * RAD2DEG, label='Blade pitch', color=color)
         ax3_2.set_ylabel('Blade pitch [Degrees]', color=color)
         ax3_2.legend()
-        # ax3_2.set_ylim([-4,20])
+        ax3_2.set_ylim([-params.min_blade_pitch_ratio*params.max_blade_pitch * RAD2DEG*1.05,params.max_blade_pitch * RAD2DEG*1.05])
 
         color = 'tab:blue'
         ax4.plot(time, recorded_disturbance[:, 0], label='F_w', color=color)
@@ -229,6 +230,7 @@ if __name__ == "__main__":
         ax5.set_ylabel('P_gen [W]')
         ax5.set_title('Power generated')
         ax5.legend()
+        ax5.set_ylim([-0.1e6,params.max_power_generation*1.05])
 
         fig2, ((ax21, ax22), (ax23, ax24)) = plt.subplots(2, 2)
         ax21.plot(time, np.array(env.episode_history['agent_actions'])[:, 0] * params.max_thrust_force,
@@ -238,6 +240,7 @@ if __name__ == "__main__":
         ax21.set_ylabel('F_thr [N]')
         ax21.set_title('Commanded Thrust Force')
         ax21.legend()
+        ax21.set_ylim([-params.max_thrust_force*1.05,params.max_thrust_force*1.05])
 
         ax22.plot(time, np.array(env.episode_history['agent_actions'])[:, 2] * params.max_power_generation,
                   label='agent power')
@@ -246,6 +249,7 @@ if __name__ == "__main__":
         ax22.set_ylabel('Power')
         ax22.set_title('Commanded Power')
         ax22.legend()
+        ax22.set_ylim([-0.1e6,params.max_power_generation*1.05])
 
         ax23.plot(time, np.array(env.episode_history['agent_actions'])[:, 1] * params.max_blade_pitch * RAD2DEG,
                   label='agent blade pitch')
@@ -254,10 +258,12 @@ if __name__ == "__main__":
         ax23.set_ylabel('Blade pitch [deg]')
         ax23.set_title('Commanded blade pitch')
         ax23.legend()
+        ax23.set_ylim([-params.min_blade_pitch_ratio*params.max_blade_pitch * RAD2DEG*1.05,params.max_blade_pitch * RAD2DEG*1.05])
 
         ax24.plot(time, np.array(env.episode_history['wind_speed']), label='Wind speed')
         ax24.set_ylabel('Wind speed [m/s]')
         ax24.set_title('Wind')
         ax24.legend()
+        ax24.set_ylim(4.5,25.5)
 
         plt.show()

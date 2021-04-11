@@ -282,23 +282,23 @@ class BaseTurbineEnv(gym.Env, ABC):
         #     step_reward = self.power_reward
 
         # Without theta and crash reward, with omega_dot reward, V-5
-        step_reward = (self.theta_dot_reward
-                       + self.omega_reward
-                       + self.omega_dot_reward
-                       + self.power_reward
-                       + self.input_reward
-                       + self.psf_reward
-                       + self.reward_survival)
-
-        # Without crash reward, with omega_dot reward, V-6
-        # step_reward = (self.theta_reward
-        #                + self.theta_dot_reward
+        # step_reward = (self.theta_dot_reward
         #                + self.omega_reward
         #                + self.omega_dot_reward
         #                + self.power_reward
         #                + self.input_reward
         #                + self.psf_reward
         #                + self.reward_survival)
+
+        # Without crash reward, with omega_dot reward, V-6
+        step_reward = (self.theta_reward
+                       + self.theta_dot_reward
+                       + self.omega_reward
+                       + self.omega_dot_reward
+                       + self.power_reward
+                       + self.input_reward
+                       + self.psf_reward
+                       + self.reward_survival)
         
 
         return done, step_reward

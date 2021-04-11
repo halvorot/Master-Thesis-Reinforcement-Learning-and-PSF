@@ -61,7 +61,7 @@ for k = 1:size(A_set,3)
 
 % 
 %         % Shiftes the dynamics 
-         A0 = [A -A*x0-B*u0];
+         A0 = [A +A*x0+B*u0];
          A0(end+1,end)=1-eps;
 % 
          B0 = B ;

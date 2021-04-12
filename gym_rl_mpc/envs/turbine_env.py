@@ -102,6 +102,14 @@ class VariableWindLevel6(BaseVariableWind):
     def __init__(self, *args, **kwargs) -> None:
         self.max_wind_amplitude = 3
         self.max_wind_speed = 25
+        self.min_wind_speed = 10
+        self.wind_noise = True
+        super().__init__(*args, **kwargs)
+
+class VariableWindLevel7(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 3
+        self.max_wind_speed = 25
         self.min_wind_speed = 5
         self.wind_noise = True
         super().__init__(*args, **kwargs)

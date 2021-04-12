@@ -36,7 +36,8 @@ class Turbine:
             input = [F_thr, blade_pitch, power]^T
         """
 
-        self.state = np.zeros(3)  # Initialize states
+        self.state = np.zeros(3)                        # Initialize states
+        self.state_dot = np.zeros(len(self.state))      # Initialize state_dot
         self.adjusted_wind_speed = params.wind_inflow_ratio * init_wind_speed
         init_power = params.power_regime(init_wind_speed) * params.max_power_generation
         self.steady_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
@@ -84,6 +85,7 @@ class Turbine:
 
     def _sim(self, wind_speed):
         state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, wind_speed)
+        self.state_dot = self.state_dot_func(self.state, wind_speed)
 
         self.state = state_o5
         self.state[0] = geom.ssa(self.state[0])
@@ -125,7 +127,7 @@ class Turbine:
         """
         Returns the angular acceleration of the turbine rotor
         """
-        return self.state_dot_func(self.state, self.adjusted_wind_speed)[2]
+        return self.state_dot[2]
 
     @property
     def blade_pitch(self):

@@ -99,7 +99,7 @@ class Turbine:
         F_thr = self.input[0]
         u = self.input[1]
         power = self.input[2]
-        omega = self.state[2]
+        omega = state[2]
 
         self.F_w = numerical_F_wind(omega, wind_speed, u)
         self.Q_w = numerical_Q_wind(omega, wind_speed, u)

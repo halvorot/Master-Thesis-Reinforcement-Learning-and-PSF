@@ -44,6 +44,7 @@ class BaseVariableWind(BaseTurbineEnv):
         self.wind_phase_shift = 2 * np.pi * self.rand_num_gen.rand()
 
         self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean
+        self.prev_wind_speed = self.wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
 

@@ -49,6 +49,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                 0,  # omega
                 -np.finfo(np.float32).max,  # omega_dot
                 0,  # wind speed
+                25,  # previous wind speed
             ],
             dtype=np.float32)
 
@@ -58,7 +59,8 @@ class BaseTurbineEnv(gym.Env, ABC):
                 np.finfo(np.float32).max,  # theta_dot
                 np.finfo(np.float32).max,  # omega
                 np.finfo(np.float32).max,  # omega_dot
-                self.max_wind_speed,  # wind speed
+                25,  # wind speed
+                25,  # previous wind speed
             ],
             dtype=np.float32)
 
@@ -190,6 +192,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.last_reward = reward
 
         self.save_latest_step()
+        self.prev_wind_speed = self.wind_speed
 
         self.t_step += 1
 
@@ -310,7 +313,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         obs : np.ndarray
             The observation of the environment.
         """
-        obs = np.hstack([self.turbine.state, self.turbine.omega_dot, self.wind_speed])
+        obs = np.hstack([self.turbine.state, self.turbine.omega_dot, self.wind_speed, self.prev_wind_speed])
         return obs
 
     def seed(self, seed=None):

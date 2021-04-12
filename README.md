@@ -69,7 +69,7 @@ python train.py
 Optional arguments:
 - --agent <path to pretrained agent .zip file to start training from>
 - --timesteps <number of timesteps to train the agent>
-- --env <environment to run (e.g. VariableWindLevel3-v26)>
+- --env <environment to run (e.g. VariableWindLevel3-v16)>
 - --psf <use PSF corrected actions>
 - --note <Note with additional info about training, gets added to Note.txt>
 - --no_reporting <Skip reporting>
@@ -92,7 +92,7 @@ Required arguments:
 Optional arguments:
 - --time <Max simulation time (seconds)>
 - --plot
-- --env <environment to run (e.g. VariableWindLevel3-v26)>
+- --env <environment to run (e.g. VariableWindLevel3-v16)>
 - --psf <use PSF corrected actions>
 
 
@@ -107,7 +107,7 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
-- --env <environment to run (e.g. VariableWindLevel3-v26)>
+- --env <environment to run (e.g. VariableWindLevel3-v16)>
 - --psf <use PSF corrected actions>
 
 Or to show an animation of a simulation run (from file):

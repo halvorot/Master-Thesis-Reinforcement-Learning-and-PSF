@@ -206,7 +206,7 @@ def create_system_set(A, B, v, Hv, hv, full=True):
     return np.stack(A_set), np.stack(B_set)
 
 
-def terminal_set(A_set_list, B_set_list, Hx, Hu, hx, hu):
+def robust_ellipsoid(A_set_list, B_set_list, Hx, Hu, hx, hu):
     nx = Hx.shape[-1]
     nu = Hu.shape[-1]
     E = cp.Variable((nx, nx), symmetric=True)
@@ -222,16 +222,20 @@ def terminal_set(A_set_list, B_set_list, Hx, Hu, hx, hu):
         constraints.append(cp.bmat([
             [hx[j, None] ** 2, Hx[j, None] @ E],
             [(Hx[j, None] @ E).T, E]
-        ]))
+        ]) >> 0)
 
     for k in range(Hu.shape[0]):
         constraints.append(cp.bmat([
             [hu[k, None] ** 2, Hu[k, None] @ Y],
             [(Hu[k, None] @ Y).T, E]
-        ]))
+        ]) >> 0)
 
     prob = cp.Problem(cp.Minimize(objective), constraints)
     prob.solve(solver='MOSEK', verbose=True)
+    P = np.linalg.inv(E.value)
+    K = Y.value@P
+
+    return P,K
 
 
 def nonlinear_to_linear(x_dot, x, u):
@@ -259,8 +263,10 @@ if __name__ == '__main__':
     hw = np.asarray([[10], [25]])
     Hv = block_diag(Hx, Hu, Hw)
     hv = np.vstack([hx, hu, hw])
-    A_set, B_set = create_system_set(A, B, v, Hv, hv * 0.2)
+    A_set, B_set = create_system_set(A, B, v, Hv, hv)
     B_set, B_scale, Hu, hu = row_scale(B_set, Hu, hu)
     Pu, _ = col_scale(np.hstack([Hu, hu]))
     Hu, hu = np.hsplit(Pu, [-1])
-    terminal_set(A_set, B_set, Hx0, Hu, hx, hu)
+    P, K = robust_ellipsoid(A_set, B_set, Hx0, Hu, hx, hu)
+
+

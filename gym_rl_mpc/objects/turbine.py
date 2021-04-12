@@ -84,8 +84,9 @@ class Turbine:
         self._sim(self.adjusted_wind_speed)
 
     def _sim(self, wind_speed):
-        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, wind_speed)
         self.state_dot = self.state_dot_func(self.state, wind_speed)
+        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, wind_speed)
+        
 
         self.state = state_o5
         self.state[0] = geom.ssa(self.state[0])

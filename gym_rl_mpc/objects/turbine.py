@@ -83,15 +83,15 @@ class Turbine:
 
         self._sim(self.adjusted_wind_speed)
 
-    def _sim(self, wind_speed):
-        self.state_dot = self.state_dot_func(self.state, wind_speed)
-        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, wind_speed)
+    def _sim(self, adjusted_wind_speed):
+        self.state_dot = self.state_dot_func(self.state, adjusted_wind_speed)
+        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, adjusted_wind_speed)
         
 
         self.state = state_o5
         self.state[0] = geom.ssa(self.state[0])
 
-    def state_dot_func(self, state, wind_speed):
+    def state_dot_func(self, state, adjusted_wind_speed):
         """
         state = [theta, theta_dot, omega]^T
         """
@@ -101,11 +101,11 @@ class Turbine:
         power = self.input[2]
         omega = state[2]
 
-        self.F_w = numerical_F_wind(omega, wind_speed, u)
-        self.Q_w = numerical_Q_wind(omega, wind_speed, u)
+        self.F_w = numerical_F_wind(omega, adjusted_wind_speed, u)
+        self.Q_w = numerical_Q_wind(omega, adjusted_wind_speed, u)
         self.Q_g = max(0, min(power / omega, params.max_generator_torque))
 
-        state_dot = numerical_x_dot(state, u, F_thr, power, wind_speed)
+        state_dot = numerical_x_dot(state, u, F_thr, power, adjusted_wind_speed)
 
         return state_dot
 

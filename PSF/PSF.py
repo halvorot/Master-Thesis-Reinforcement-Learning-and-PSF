@@ -372,8 +372,21 @@ class PSF:
     def reset_init_guess(self):
         self._init_guess = np.array([])
 
-    def calc(self, x, u_L, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
+    def inside_terminal(self, x, u_L, ext_params):
+        inside = False
+        x0 = np.vstack(x)
+        u_L = np.vstack(u_L)
+        ext_params = np.vstack([ext_params])
+        x1 = np.asarray(self.model_step(xk=x0, x_lin=x0, u=u_L, u_lin=u_L, p=ext_params)['xf'])
+        XN_shifted = np.vstack(x) - self._centroid_Px
+        no_state_violation = self.sys["Hx"] @ x1 < self.sys["hx"]
+        no_input_violation = self.sys["Hu"] @ u_L < self.sys["hu"]
+        inside_terminal = (XN_shifted.T @ self.P @ XN_shifted - self.alpha) < 0
+        return no_state_violation.all() and no_input_violation.all() and inside_terminal.all()
 
+    def calc(self, x, u_L, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
+        if self.inside_terminal(x, u_L, ext_params) and self.mpc_flag is False:
+            return u_L
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
 

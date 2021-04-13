@@ -2,7 +2,6 @@ import itertools
 
 import numpy as np
 from casadi import vertcat, SX, nlpsol, inf, MX, rootfinder, Function, horzcat, jacobian
-from cvxpy import log_det
 from scipy.linalg import block_diag
 import cvxpy as cp
 
@@ -210,7 +209,7 @@ def create_system_set(A, B, v, Hv, hv, full=True):
 def max_ellipsoid(Hx, hx):
     nx = Hx.shape[-1]
     E = cp.Variable((nx, nx), symmetric=True)
-    objective = -log_det(E)
+    objective = -cp.log_det(E)
     constraints = []
     constraints.append(E >> 0)
     for j in range(Hx.shape[0]):
@@ -229,7 +228,7 @@ def robust_ellipsoid(A_set_list, B_set_list, Hx, Hu, hx, hu):
     E = cp.Variable((nx, nx), symmetric=True)
     Y = cp.Variable((nu, nx))
 
-    objective = -log_det(E)
+    objective = -cp.log_det(E)
     constraints = []
 
     for A, B in zip(A_set_list, B_set_list):

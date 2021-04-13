@@ -62,9 +62,9 @@ for j in range(number_of_state_perm):
     for i in range(number_of_input_perm):
         kwargs_calc = dict(x=x,
                            u_L=[
-                               2 * np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
-                               2 * np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
-                               2 * np.random.uniform(low=0, high=params.max_power_generation)
+                               np.random.uniform(low=-params.max_thrust_force, high=params.max_thrust_force),
+                               np.random.uniform(low=-4 * params.DEG2RAD, high=params.max_blade_pitch),
+                               np.random.uniform(low=0, high=params.max_power_generation)
                            ],
                            u_prev=[0, 0, 0],
                            ext_params=np.random.uniform(low=3, high=25),

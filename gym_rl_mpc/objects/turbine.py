@@ -68,12 +68,15 @@ class Turbine:
         commanded_blade_pitch = _un_normalize_blade_pitch_input(action[1])
         commanded_power = _un_normalize_power_input(action[2])
 
-        # Low pass on the thrust force
-        F_thr = self.alpha_thr * commanded_F_thr + (1 - self.alpha_thr) * prev_F_thr
-        # Low pass on blade pitch
-        blade_pitch = self.alpha_blade_pitch * commanded_blade_pitch + (1 - self.alpha_blade_pitch) * prev_blade_pitch
-        # Low pass on the power
-        power = self.alpha_power * commanded_power + (1 - self.alpha_power) * prev_power
+        # Saturate the thrust force rate
+        F_thr = prev_F_thr + np.sign(commanded_F_thr - prev_F_thr) * min(
+            abs(commanded_F_thr - prev_F_thr), params.max_thrust_rate * self.step_size)
+        # Saturate blade pitch rate
+        blade_pitch = prev_blade_pitch + np.sign(commanded_blade_pitch - prev_blade_pitch) * min(
+            abs(commanded_blade_pitch - prev_blade_pitch), params.max_blade_pitch_rate * self.step_size)
+        # Saturate the power rate
+        power = prev_power + np.sign(commanded_power - prev_power) * min(
+            abs(commanded_power - prev_power), params.max_power_rate * self.step_size)
 
         self.input = np.array([F_thr, blade_pitch, power])
 

@@ -23,6 +23,13 @@ def r_omega():
 
     X = np.arange(-10, 10, 0.001)
     Y = np.exp(-gamma_omega*(np.abs(X))) - gamma_omega*np.abs(X)
+    return X, Y
+
+def r_omega_dot():
+    reward_omega_dot = 4
+
+    X = np.arange(-2.5, 2.5, 0.001)
+    Y = -reward_omega_dot*X**2
     return X, Y 
 
 def r_power():
@@ -45,18 +52,18 @@ if __name__ == '__main__':
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    x, y = r_theta_dot()
+    x, y = r_omega_dot()
 
     ax.plot(x, y)
 
     # Add axis labels
-    ax.set_xlabel(r'$\dot{\theta}$ $[\frac{deg}{s}]$')
+    ax.set_xlabel(r'$\dot{\Omega}$ $[\frac{RPM}{s}]$')
     ax.set_ylabel(r'Reward')
     ax.set_xlim([-1.1,1.1])
     ax.set_ylim([-1.1,0.1])
     ax.grid(True)
 
     if args.save:
-        plt.savefig('plots/r_theta_dot.pdf', bbox_inches='tight')
+        plt.savefig('plots/r_omega_dot.pdf', bbox_inches='tight')
 
     plt.show()

@@ -230,7 +230,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.omega_dot_reward = -self.gamma_omega_dot * omega_dot_rpm_per_sec ** 2
         self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
         self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
-        self.input_reward = -self.gamma_input * (action[0] ** 2 + action[1] ** 2)
         if self.use_psf:
             self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
         else:
@@ -257,7 +256,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.theta_dot_reward
         #                + self.omega_reward
         #                + self.power_reward
-        #                + self.input_reward
         #                + self.psf_reward
         #                + self.reward_survival)
 
@@ -269,7 +267,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.theta_dot_reward
         #                + self.omega_reward
         #                + self.power_reward
-        #                + self.input_reward
         #                + self.psf_reward
         #                + self.reward_survival)
 
@@ -277,7 +274,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         # step_reward = (self.theta_dot_reward
         #                + self.omega_reward
         #                + self.power_reward
-        #                + self.input_reward
         #                + self.psf_reward
         #                + self.reward_survival)
 
@@ -295,7 +291,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.omega_reward
         #                + self.omega_dot_reward
         #                + self.power_reward
-        #                + self.input_reward
         #                + self.psf_reward
         #                + self.reward_survival)
 
@@ -305,7 +300,6 @@ class BaseTurbineEnv(gym.Env, ABC):
                        + self.omega_reward
                        + self.omega_dot_reward
                        + self.power_reward
-                       + self.input_reward
                        + self.psf_reward
                        + self.reward_survival)
         
@@ -344,7 +338,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.episode_history.setdefault('omega_reward', []).append(self.omega_reward)
         self.episode_history.setdefault('omega_dot_reward', []).append(self.omega_dot_reward)
         self.episode_history.setdefault('power_reward', []).append(self.power_reward)
-        self.episode_history.setdefault('input_reward', []).append(self.input_reward)
         self.episode_history.setdefault('psf_reward', []).append(self.psf_reward)
 
         self.episode_history.setdefault('agent_actions', []).append(self.agent_action)
@@ -366,7 +359,6 @@ class BaseTurbineEnv(gym.Env, ABC):
             'omega_reward': np.array(self.episode_history['omega_reward']).mean(),
             'omega_dot_reward': np.array(self.episode_history['omega_dot_reward']).mean(),
             'power_reward': np.array(self.episode_history['power_reward']).mean(),
-            'input_reward': np.array(self.episode_history['input_reward']).mean(),
             'psf_reward': np.array(self.episode_history['psf_reward']).mean(),
             'psf_error': int(self.psf_error),
             'crash_cause': self.crash_cause,

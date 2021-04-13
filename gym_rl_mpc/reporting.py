@@ -30,7 +30,6 @@ def format_history(env, lastn=-1):
     omega_rewards = np.array([obj['omega_reward'] for obj in relevant_history])
     omega_dot_rewards = np.array([obj['omega_dot_reward'] for obj in relevant_history])
     power_rewards = np.array([obj['power_reward'] for obj in relevant_history])
-    input_rewards = np.array([obj['input_reward'] for obj in relevant_history])
     psf_rewards = np.array([obj['psf_reward'] for obj in relevant_history])
     psf_errors = np.array([obj['psf_error'] for obj in relevant_history])
 
@@ -50,7 +49,6 @@ def format_history(env, lastn=-1):
                         r"omega_reward",
                         r"omega_dot_reward",
                         r"power_reward", 
-                        r"input_reward",
                         r"psf_reward",
                         r"psf_error"])
 
@@ -71,7 +69,6 @@ def format_history(env, lastn=-1):
     omega_rewards = omega_rewards.reshape((len(relevant_history), 1))
     omega_dot_rewards = omega_dot_rewards.reshape((len(relevant_history), 1))
     power_rewards = power_rewards.reshape((len(relevant_history), 1))
-    input_rewards = input_rewards.reshape((len(relevant_history), 1))
     psf_rewards = psf_rewards.reshape((len(relevant_history), 1))
     psf_errors = psf_errors.reshape((len(relevant_history), 1))
 
@@ -91,7 +88,6 @@ def format_history(env, lastn=-1):
                                 omega_rewards,
                                 omega_dot_rewards,
                                 power_rewards,
-                                input_rewards,
                                 psf_rewards,
                                 psf_errors,
                             ])

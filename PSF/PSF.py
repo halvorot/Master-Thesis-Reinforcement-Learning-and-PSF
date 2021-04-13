@@ -5,6 +5,11 @@ from pathlib import Path
 
 import numpy as np
 from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator
+from scipy.linalg import block_diag
+
+from PSF.py_terminal_set import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
+    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid
+from gym_rl_mpc.objects.symbolic_model import symbolic_x_dot, w
 
 LEN_FILE_STR = 20
 
@@ -97,6 +102,58 @@ class PSF:
 
         return A_set, B_set
 
+    def _set_terminal_set(self, fake=False):
+        " Under construction "
+        A, B = nonlinear_to_linear(self.sys['xdot'], self.sys['x'], self.sys['u'])
+
+        v = vertcat(*[self.sys['x'], self.sys['u'], w])
+
+        Hw = np.asarray([[1], [-1]])
+        hw = np.asarray([[10], [25]])
+        wind = constrain_center(Hw, hw)
+
+        Hv = block_diag(self.sys['Hx'], self.sys['Hu'], Hw)
+        hv = np.vstack([self.sys['hx'], self.sys['hu'], hw])
+
+        A_set, B_set = create_system_set(A, B, v, Hv, hv)
+
+        x_c0, u_c0 = center_optimization(self.sys['xdot'],
+                                         self.sys['x'],
+                                         self.sys['u'],
+                                         w,
+                                         wind,
+                                         self.sys['Hx'],
+                                         self.sys['Hu'],
+                                         self.sys['hx'],
+                                         self.sys['hu'])
+        x_c0 = np.vstack([x_c0, 0])
+        Hx0 = lift_constrain(self.sys['Hx'])
+
+        Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
+                                                         B_set,
+                                                         Hx0,
+                                                         self.sys['Hu'],
+                                                         self.sys['hx'],
+                                                         self.sys['hu'],
+                                                         x_c0,
+                                                         u_c0
+                                                         )
+
+        Bs_set, B_scale, Husr, husr = row_scale(Bc_set, Huc, huc)
+        Pu, _ = col_scale(np.hstack([Husr, husr]))
+        Husrc, husrc = np.hsplit(Pu, [-1])
+        P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Husrc, hxc, husrc)
+        K = K * B_scale[:, None]
+        # Floor after lifing
+        K = K[:, :-1]
+        P = P[:-1, :-1]
+        x_c0 = x_c0[:-1]
+
+        if fake:
+            P = max_ellipsoid(Hxc[:, :-1], hxc)
+
+        return P, K, x_c0, u_c0
+
     def set_terminal_set(self):
 
         A_set, B_set = self.create_system_set()
@@ -109,26 +166,8 @@ class PSF:
             load_tuple = pickle.load(open(path, mode="rb"))
             self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
         except FileNotFoundError:
-            print("Could not find stored KP, using MATLAB.")
-            import matlab.engine
 
-            Hx = matlab.double(self.sys["Hx"].tolist())
-            hx = matlab.double(self.sys["hx"].tolist())
-            Hu = matlab.double(self.sys["Hu"].tolist())
-            hu = matlab.double(self.sys["hu"].tolist())
-
-            m_A = matlab.double(np.hstack(A_set).tolist())
-            m_B = matlab.double(np.hstack(B_set).tolist())
-
-            eng = matlab.engine.start_matlab()
-            eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.terminalSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
-            eng.quit()
-
-            self.P = np.asarray(P)
-            self.K = np.asarray(K)
-            self._centroid_Px = np.asarray(centroid_Px)
-            self._centroid_Pu = np.asarray(centroid_Pu)
+            self.K, self.P, self._centroid_Px, self._centroid_Pu = self._set_terminal_set(True)
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 

@@ -12,7 +12,7 @@ NLP_OPTS = {
     "eval_errors_fatal": True,
     "verbose_init": False,
     "show_eval_warnings": False,
-    "ipopt": {"print_level": 4, },  # "sb": "yes"},
+    "ipopt": {"print_level": 0, "sb": "yes"},
     "print_time": False,
 }
 
@@ -64,7 +64,7 @@ def num_affine_to_linear(Aa, Ba, g):
         # The system seems already to be lifted once, adding to last row of A matrix
         Al = Aa.copy()
         Bl = Ba.copy()
-        Al[..., :, -1] += g.flatten()
+        Al[..., :, -1] += g.reshape(Al[..., :, -1].shape)
     else:
         a_pad = np.tile([0, 0], (Aa.ndim, 1))
         a_pad[-2:, -1] = 1
@@ -74,7 +74,7 @@ def num_affine_to_linear(Aa, Ba, g):
         b_pad[-2, -1] = 1
         Bl = np.pad(Ba, b_pad)
 
-        Al[..., :-1, -1] += g.flatten()
+        Al[..., :-1, -1] += g.reshape(Al[..., :-1, -1].shape)
 
     return Al, Bl
 
@@ -84,7 +84,7 @@ def move_constraint(Hz, hz, z_c0):
 
 
 def lift_constrain(Hx):
-    if  (Hx[:, -1]==0).all():
+    if (Hx[:, -1] == 0).all():
         return Hx
     else:
         return np.hstack([Hx, np.zeros((Hx.shape[0], 1))])
@@ -129,8 +129,8 @@ def center_optimization(x_dot, x, u, p, p_0, Hx, Hu, hx, hu):
     nx = Hx.shape[-1]
     x0 = constrain_center(Hx, hx)
     u0 = constrain_center(Hu, hu)
-    J_x = np.diag(1 / (Hx @ x0 - hx) ** 2)
-    J_u = np.diag(1 / (Hu @ u0 - hu) ** 2)
+    J_x = np.diag((1 / (Hx @ x0 - hx) ** 2).flatten())
+    J_u = np.diag((1 / (Hu @ u0 - hu) ** 2).flatten())
 
     center_normalized_x = (Hx @ x - hx)
     center_normalized_u = (Hu @ u - hu)
@@ -156,8 +156,8 @@ def center_optimization(x_dot, x, u, p, p_0, Hx, Hu, hx, hu):
 
     problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': p}
     solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-
-    z = np.asarray(solver(p=p_0, lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=vertcat(*[x0, u0]))['x'], )
+    sol = solver(p=p_0, lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=vertcat(*[x0, u0]))
+    z = np.asarray(sol['x'])
 
     x_c0, u_c0 = np.vsplit(z, [nx])
 
@@ -188,6 +188,7 @@ def create_system_set(A, B, v, Hv, hv, full=True):
                 AB_delta[row, col] = AB[row, col]
             else:
                 delta_str = 'd_' + str(row) + str(col)
+                # print("Solving for: " + delta_str)
                 delta.append(SX.sym(delta_str))
                 AB_delta[row, col] = delta[-1]
                 delta_bounds[delta_str] = delta_range(AB[row, col], v, Hv, hv)
@@ -204,6 +205,22 @@ def create_system_set(A, B, v, Hv, hv, full=True):
         B_set.append(AB_extreme[:, nx:])
 
     return np.stack(A_set), np.stack(B_set)
+
+
+def max_ellipsoid(Hx, hx):
+    nx = Hx.shape[-1]
+    E = cp.Variable((nx, nx), symmetric=True)
+    objective = -log_det(E)
+    constraints = []
+    constraints.append(E >> 0)
+    for j in range(Hx.shape[0]):
+        constraints.append(cp.bmat([
+            [hx[j, None] ** 2, Hx[j, None] @ E],
+            [(Hx[j, None] @ E).T, E]
+        ]) >> 0)
+    prob = cp.Problem(cp.Minimize(objective), constraints)
+    prob.solve(solver='MOSEK', verbose=False)
+    return np.linalg.inv(E.value)
 
 
 def robust_ellipsoid(A_set_list, B_set_list, Hx, Hu, hx, hu):
@@ -231,11 +248,11 @@ def robust_ellipsoid(A_set_list, B_set_list, Hx, Hu, hx, hu):
         ]) >> 0)
 
     prob = cp.Problem(cp.Minimize(objective), constraints)
-    prob.solve(solver='MOSEK', verbose=True)
+    prob.solve(solver='MOSEK', verbose=False)
     P = np.linalg.inv(E.value)
-    K = Y.value@P
+    K = Y.value @ P
 
-    return P,K
+    return P, K
 
 
 def nonlinear_to_linear(x_dot, x, u):
@@ -247,16 +264,12 @@ def nonlinear_to_linear(x_dot, x, u):
 if __name__ == '__main__':
     from gym_rl_mpc.objects.symbolic_model import *
 
-    wind = 18
+    wind = 15
 
     nabla_x = jacobian(symbolic_x_dot, x)
     nabla_u = jacobian(symbolic_x_dot, u)
-    A, B = nonlinear_to_linear(symbolic_x_dot, x, u)
 
-    x_c0, u_c0 = center_optimization(symbolic_x_dot, x, u, w, wind, Hx, Hu, hx, hu)
-    Hx0 = lift_constrain(Hx)
-    x_c0 = np.vstack([x_c0, 0])
-    Ac, Bc, Hxc, Huc, hxc, huc = move_system(A, B, Hx0, Hu, hx, hu, x_c0, u_c0)
+    A, B = nonlinear_to_linear(symbolic_x_dot, x, u)
 
     v = vertcat(*[x, u, w])
     Hw = np.asarray([[1], [-1]])
@@ -264,9 +277,32 @@ if __name__ == '__main__':
     Hv = block_diag(Hx, Hu, Hw)
     hv = np.vstack([hx, hu, hw])
     A_set, B_set = create_system_set(A, B, v, Hv, hv)
-    B_set, B_scale, Hu, hu = row_scale(B_set, Hu, hu)
-    Pu, _ = col_scale(np.hstack([Hu, hu]))
-    Hu, hu = np.hsplit(Pu, [-1])
-    P, K = robust_ellipsoid(A_set, B_set, Hx0, Hu, hx, hu)
 
+    x_c0, u_c0 = center_optimization(symbolic_x_dot, x, u, w, wind, Hx, Hu, hx, hu)
+    x_c0 = np.vstack([x_c0, 0])
+    Hx0 = lift_constrain(Hx)
 
+    Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set, B_set, Hx0, Hu, hx, hu, x_c0, u_c0)
+
+    Bs_set, B_scale, Hus, hus = row_scale(Bc_set, Huc, huc)
+    Pu, _ = col_scale(np.hstack([Hus, hus]))
+
+    Hus, hus = np.hsplit(Pu, [-1])
+    P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Hus, hxc, hus)
+    P = P[:-1, :-1]
+    d, v = np.linalg.eig(P)
+    volume = 4 / 3 * np.pi * np.prod(d ** (-1 / 2))
+    print(volume)
+    print_flag = True
+    P = max_ellipsoid(Hxc[:, :-1], hxc)
+    if print_flag:
+        import matlab.engine
+
+        P = matlab.double(P.tolist())
+        Hx = matlab.double(Hxc[:, :-1].tolist())
+        hx = matlab.double(hxc.tolist())
+
+        eng = matlab.engine.start_matlab()
+
+        a = eng.plotEllipsoid(P, Hx, hx, )
+        eng.quit()

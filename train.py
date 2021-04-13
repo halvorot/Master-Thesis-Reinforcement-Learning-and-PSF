@@ -93,6 +93,13 @@ class ReportingCallback(BaseCallback):
             if self.verbose:
                 print("Made summary file of training")
 
+            total_history_data = reporting.format_history(report_env)
+            os.makedirs(self.report_dir, exist_ok=True)
+            file_path = os.path.join(self.report_dir, "total_history_data.csv")
+            total_history_data.to_csv(file_path)
+            if self.verbose:
+                print("Made total history file of training")
+
 class TensorboardCallback(BaseCallback):
     """
     Custom callback for plotting additional values in tensorboard.

@@ -132,6 +132,8 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.last_reward = 0
         self.t_step = 0
         self.crashed = False
+        self.psf_error = False
+        self.crash_cause = -1
 
         self.episode_history = {}
 
@@ -172,6 +174,7 @@ class BaseTurbineEnv(gym.Env, ABC):
                 self.turbine.step(self.psf_action, self.wind_speed)
             except RuntimeError:
                 print("Casadi failed to solve step. Using agent action. Episode done")
+                self.psf_error = True
                 force_done = True
                 self.turbine.step(action, self.wind_speed)
                 self.psf_action = [0] * len(action)
@@ -239,10 +242,15 @@ class BaseTurbineEnv(gym.Env, ABC):
         crash_cond_2 = self.turbine.omega > self.crash_omega_max
         crash_cond_3 = self.turbine.omega < self.crash_omega_min
 
-        if end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3:
-            done = True
-        if crash_cond_1 or crash_cond_2 or crash_cond_3:
-            self.crashed = True
+        done = end_cond_2 or crash_cond_1 or crash_cond_2 or crash_cond_3
+        self.crashed = crash_cond_1 or crash_cond_2 or crash_cond_3
+
+        if end_cond_2:
+            self.crash_cause = 0            # No crash, episode just done
+        elif crash_cond_1:
+            self.crash_cause = 1            # Crash because of theta
+        elif crash_cond_2 or crash_cond_3:
+            self.crash_cause = 2            # Crash because of Omega
 
         # Full reward function Without crash reward, V-0
         # step_reward = (self.theta_reward
@@ -360,6 +368,8 @@ class BaseTurbineEnv(gym.Env, ABC):
             'power_reward': np.array(self.episode_history['power_reward']).mean(),
             'input_reward': np.array(self.episode_history['input_reward']).mean(),
             'psf_reward': np.array(self.episode_history['psf_reward']).mean(),
+            'psf_error': int(self.psf_error),
+            'crash_cause': self.crash_cause,
         }
 
         self.total_history.append(self.history)

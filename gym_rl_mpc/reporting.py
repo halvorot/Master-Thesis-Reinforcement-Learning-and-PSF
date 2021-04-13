@@ -16,6 +16,7 @@ def format_history(env, lastn=-1):
     episode_nums = np.array([obj['episode_num'] for obj in relevant_history])
     crashes = np.array([obj['crashed'] for obj in relevant_history])
     no_crashes = crashes == 0
+    crash_causes = np.array([obj['crash_cause'] for obj in relevant_history])
     avg_abs_theta = np.array([obj['avg_abs_theta'] for obj in relevant_history])
     avg_abs_theta_dot = np.array([obj['avg_abs_theta_dot'] for obj in relevant_history])
     std_theta = np.array([obj['std_theta'] for obj in relevant_history])
@@ -31,11 +32,13 @@ def format_history(env, lastn=-1):
     power_rewards = np.array([obj['power_reward'] for obj in relevant_history])
     input_rewards = np.array([obj['input_reward'] for obj in relevant_history])
     psf_rewards = np.array([obj['psf_reward'] for obj in relevant_history])
+    psf_errors = np.array([obj['psf_error'] for obj in relevant_history])
 
     labels = np.array([r"episode", 
                         r"reward", 
                         r"crash", 
-                        r"no_crash", 
+                        r"no_crash",
+                        r"crash_cause",
                         r"theta",
                         r"theta_dot",
                         r"std_theta",
@@ -48,12 +51,14 @@ def format_history(env, lastn=-1):
                         r"omega_dot_reward",
                         r"power_reward", 
                         r"input_reward",
-                        r"psf_reward"])
+                        r"psf_reward",
+                        r"psf_error"])
 
     episode_nums = episode_nums.reshape((len(relevant_history), 1))
     rewards = rewards.reshape((len(relevant_history), 1))
     crashes = crashes.reshape((len(relevant_history), 1))
     no_crashes = no_crashes.reshape((len(relevant_history), 1))
+    crash_causes = crash_causes.reshape((len(relevant_history), 1))
     avg_abs_theta = avg_abs_theta.reshape((len(relevant_history), 1))
     avg_abs_theta_dot = avg_abs_theta_dot.reshape((len(relevant_history), 1))
     std_theta = std_theta.reshape((len(relevant_history), 1))
@@ -68,11 +73,13 @@ def format_history(env, lastn=-1):
     power_rewards = power_rewards.reshape((len(relevant_history), 1))
     input_rewards = input_rewards.reshape((len(relevant_history), 1))
     psf_rewards = psf_rewards.reshape((len(relevant_history), 1))
+    psf_errors = psf_errors.reshape((len(relevant_history), 1))
 
     report_data = np.hstack([   episode_nums,
                                 rewards,
                                 crashes,
                                 no_crashes,
+                                crash_causes,
                                 avg_abs_theta,
                                 avg_abs_theta_dot,
                                 std_theta,
@@ -85,7 +92,8 @@ def format_history(env, lastn=-1):
                                 omega_dot_rewards,
                                 power_rewards,
                                 input_rewards,
-                                psf_rewards
+                                psf_rewards,
+                                psf_errors,
                             ])
 
     df = DataFrame(report_data, columns=labels)

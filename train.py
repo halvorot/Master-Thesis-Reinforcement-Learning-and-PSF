@@ -111,7 +111,6 @@ class TensorboardCallback(BaseCallback):
             for env_idx in range(len(done_array)):
                 if done_array[env_idx]:
                     self.logger.record_mean('custom/crashed', history[env_idx]['crashed'])
-                    self.logger.record_mean('custom/crash_cause', history[env_idx]['crash_cause'])
                     self.logger.record_mean('custom/psf_error', history[env_idx]['psf_error'])
                     self.logger.record_mean('custom/wind_speed', history[env_idx]['wind_speed'])
                     self.logger.record_mean('custom/theta_reward', history[env_idx]['theta_reward'])

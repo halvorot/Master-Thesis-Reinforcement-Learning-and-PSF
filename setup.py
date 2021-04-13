@@ -12,7 +12,6 @@ setup(
         'gym',
         'stable-baselines3[extra]',
         'matplotlib',
-        'termcolor',
         'casadi',
     ]  # And any other dependencies it needs
 )

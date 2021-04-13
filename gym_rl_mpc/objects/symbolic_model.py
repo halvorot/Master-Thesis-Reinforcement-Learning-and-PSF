@@ -116,7 +116,7 @@ def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
     opts = {
         "verbose": False,
         "verbose_init": False,
-        "ipopt": {"print_level": 0,"sb": "yes"},
+        "ipopt": {"print_level": 0},
         "print_time": False,
     }
     solver = nlpsol("S", "ipopt", prob, opts)

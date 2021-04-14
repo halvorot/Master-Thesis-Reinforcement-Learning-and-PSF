@@ -13,5 +13,6 @@ setup(
         'stable-baselines3[extra]',
         'matplotlib',
         'casadi',
+        'mosek',
     ]  # And any other dependencies it needs
 )

@@ -5,6 +5,11 @@ from pathlib import Path
 
 import numpy as np
 from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator
+from scipy.linalg import block_diag
+
+from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
+    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid
+from gym_rl_mpc.objects.symbolic_model import symbolic_x_dot, w
 
 LEN_FILE_STR = 20
 
@@ -15,6 +20,7 @@ class PSF:
                  N,
                  T,
                  R=None,
+                 Q=None,
                  PK_path="",
                  param=None,
                  lin_bounds=None,
@@ -25,13 +31,14 @@ class PSF:
                  LP_flag=False,
                  slack_flag=True,
                  jit_flag=False,
-                 ):
-        self.alpha = alpha
+                 mpc_flag=False):
+
         if LP_flag:
             raise NotImplementedError("Linear MPC is not implemented")
 
         self.jit_flag = jit_flag
         self.slack_flag = slack_flag
+        self.mpc_flag = mpc_flag
 
         self.LP_flag = LP_flag
 
@@ -41,6 +48,7 @@ class PSF:
 
         self.N = N
         self.T = T
+        self.alpha = alpha
 
         self.lin_bounds = lin_bounds
 
@@ -67,6 +75,7 @@ class PSF:
         else:
             self.param = param
 
+        self.Q = Q
         if R is None:
             self.R = np.eye(self.nu)
         else:
@@ -93,36 +102,72 @@ class PSF:
 
         return A_set, B_set
 
+    def _set_terminal_set(self, fake=False):
+        " Under construction "
+        A, B = nonlinear_to_linear(self.sys['xdot'], self.sys['x'], self.sys['u'])
+
+        v = vertcat(*[self.sys['x'], self.sys['u'], w])
+
+        Hw = np.asarray([[1], [-1]])
+        hw = np.asarray([[10], [25]])
+        wind = constrain_center(Hw, hw)
+
+        Hv = block_diag(self.sys['Hx'], self.sys['Hu'], Hw)
+        hv = np.vstack([self.sys['hx'], self.sys['hu'], hw])
+
+        A_set, B_set = create_system_set(A, B, v, Hv, hv)
+
+        x_c0, u_c0 = center_optimization(self.sys['xdot'],
+                                         self.sys['x'],
+                                         self.sys['u'],
+                                         w,
+                                         wind,
+                                         self.sys['Hx'],
+                                         self.sys['Hu'],
+                                         self.sys['hx'],
+                                         self.sys['hu'])
+        x_c0 = np.vstack([x_c0, 0])
+        Hx0 = lift_constrain(self.sys['Hx'])
+
+        Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
+                                                         B_set,
+                                                         Hx0,
+                                                         self.sys['Hu'],
+                                                         self.sys['hx'],
+                                                         self.sys['hu'],
+                                                         x_c0,
+                                                         u_c0
+                                                         )
+
+        Bs_set, B_scale, Husr, husr = row_scale(Bc_set, Huc, huc)
+        Pu, _ = col_scale(np.hstack([Husr, husr]))
+        Husrc, husrc = np.hsplit(Pu, [-1])
+        P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Husrc, hxc, husrc)
+        K = K * B_scale[:, None]
+        # Floor after lifing
+        K = K[:, :-1]
+        P = P[:-1, :-1]
+        x_c0 = x_c0[:-1]
+
+        if fake:
+            P = max_ellipsoid(Hxc[:, :-1], hxc)
+
+        return P, K, x_c0, u_c0
+
     def set_terminal_set(self):
 
         A_set, B_set = self.create_system_set()
-        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["Hx"], self.ext_step_size))
+        # from . import py_terminal_set
+        # py_terminal_set.terminal_set(A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"])
+        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"], self.ext_step_size))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
             load_tuple = pickle.load(open(path, mode="rb"))
             self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
         except FileNotFoundError:
-            print("Could not find stored KP, using MATLAB.")
-            import matlab.engine
 
-            Hx = matlab.double(self.sys["Hx"].tolist())
-            hx = matlab.double(self.sys["hx"].tolist())
-            Hu = matlab.double(self.sys["Hu"].tolist())
-            hu = matlab.double(self.sys["hu"].tolist())
-
-            m_A = matlab.double(np.hstack(A_set).tolist())
-            m_B = matlab.double(np.hstack(B_set).tolist())
-
-            eng = matlab.engine.start_matlab()
-            eng.eval("addpath(genpath('./'))")
-            P, K, centroid_Px, centroid_Pu = eng.terminalSet(m_A, m_B, Hx, Hu, hx, hu, self.ext_step_size, nargout=4)
-            eng.quit()
-
-            self.P = np.asarray(P)
-            self.K = np.asarray(K)
-            self._centroid_Px = np.asarray(centroid_Px)
-            self._centroid_Pu = np.asarray(centroid_Pu)
+            self.K, self.P, self._centroid_Px, self._centroid_Pu = self._set_terminal_set(True)
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 
@@ -240,21 +285,20 @@ class PSF:
     def formulate_problem(self):
 
         x0 = SX.sym('x0', self.nx, 1)
-        X = SX.sym('X', self.nx, self.N + 1)
-        U = SX.sym('U', self.nu, self.N)
 
-        u_L = SX.sym('u_L', self.nu, 1)
+        X = SX.sym('X', self.nx, self.N + 1)
+        x_ref = SX.sym('x_ref', self.nx, 1)
+
+        U = SX.sym('U', self.nu, self.N)
+        u_ref = SX.sym('u_ref', self.nu, 1)
+
         p = SX.sym("p", self.np, 1)
 
-        u_stable = SX.sym('u_stable', self.nu, 1)
         u_prev = SX.sym('u_prev', self.nu, 1)
 
         eps = SX.sym("eps", self.nx, self.N)
 
-        if self.slack_flag:
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0]) + 10e9 * eps[:].T @ eps[:]
-        else:
-            objective = (u_L - U[:, 0]).T @ self.R @ (u_L - U[:, 0])
+        objective = self.get_objective(X=X, x_ref=x_ref, U=U, u_ref=u_ref, eps=eps)
 
         # empty problem
         w = []
@@ -273,7 +317,7 @@ class PSF:
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [u_stable]
+            w0 += [self.K @ x0]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -292,10 +336,11 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)['xf'] + eps[:,
-                                                                                                                  i]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)[
+                    'xf'] + eps[:,
+                            i]]
             else:
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=u_stable, p=p)["xf"]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)["xf"]]
             # State propagation
 
             self.lbg += [0] * g[-1].shape[0]
@@ -320,25 +365,39 @@ class PSF:
         self.lbg += [-inf]
         self.ubg += [0]
 
-        self.eval_w0 = Function("eval_w0", [x0, u_L, u_stable, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [x0, u_ref, p], [vertcat(*w0)])
 
-        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_L, u_prev, p)}
+        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, x_ref, u_ref, u_prev, p)}
 
     def reset_init_guess(self):
         self._init_guess = np.array([])
 
-    def calc(self, x, u_L, u_stable, ext_params, u_prev=None, reset_x0=False, ):
+    def inside_terminal(self, x, u_L, ext_params):
+        inside = False
+        x0 = np.vstack(x)
+        u_L = np.vstack(u_L)
+        ext_params = np.vstack([ext_params])
+        x1 = np.asarray(self.model_step(xk=x0, x_lin=x0, u=u_L, u_lin=u_L, p=ext_params)['xf'])
+        XN_shifted = np.vstack(x) - self._centroid_Px
+        no_state_violation = self.sys["Hx"] @ x1 < self.sys["hx"]
+        no_input_violation = self.sys["Hu"] @ u_L < self.sys["hu"]
+        inside_terminal = (XN_shifted.T @ self.P @ XN_shifted - self.alpha) < 0
+        return no_state_violation.all() and no_input_violation.all() and inside_terminal.all()
 
+    def calc(self, x, u_L, ext_params, u_prev=None, x_ref=None, reset_x0=False, ):
+        if self.inside_terminal(x, u_L, ext_params) and self.mpc_flag is False:
+            return u_L
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is given")
 
         if u_prev is None:
             u_prev = u_L  # Dont care, just for vertcat match
-
+        if x_ref is None:
+            x_ref = [0] * self.nx
         if self._init_guess.shape[0] == 0:
-            self._init_guess = np.asarray(self.eval_w0(x, u_L, u_stable, ext_params))
+            self._init_guess = np.asarray(self.eval_w0(x, u_L, ext_params))
 
-        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
+        solution = self.solver(p=vertcat(x, x_ref, u_L, u_prev, ext_params),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self._init_guess
@@ -348,6 +407,19 @@ class PSF:
             self._init_guess = prev
 
         return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
+
+    def get_objective(self, U=None, eps=None, x_ref=None, X=None, u_ref=None):
+
+        if self.mpc_flag:
+            for i in range(self.N):
+                objective = (x_ref - X[:, i + 1]).T @ self.Q @ (x_ref - X[:, i + 1])
+                if u_ref is not None:
+                    objective += (u_ref - U[:, i]).T @ self.R @ (u_ref - U[:, i])
+        else:
+            objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
+        if self.slack_flag:
+            objective += objective + 10e9 * eps[:].T @ eps[:]
+        return objective
 
 
 if __name__ == '__main__':

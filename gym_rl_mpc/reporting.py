@@ -99,7 +99,6 @@ def format_history(env, lastn=-1):
 def report(env, report_dir):
     try:
         os.makedirs(report_dir, exist_ok=True)
-
         df = format_history(env)
 
         file_path = os.path.join(report_dir, "history_data.csv")
@@ -107,7 +106,7 @@ def report(env, report_dir):
             df.to_csv(file_path)
         else:
             df.to_csv(file_path, mode='a', header=False)
-        print("reported episode to file")
+        # print("reported episode to file")
     except PermissionError as e:
         print('Warning: Report files are open - could not update report: ' + str(repr(e)))
     except OSError as e:

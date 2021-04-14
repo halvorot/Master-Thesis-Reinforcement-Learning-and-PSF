@@ -1,62 +1,27 @@
 # gym-turbine
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floating off-shore wind turbine using Reinforcement Learning and a PSF
 
-## Prerequisites
- - Python 3.7
- - Yalmip 20200930
- - Mosek 9.2
- - MATLAB R2015a or later (Tested with 2020b)
-
-
+Written in `Python 3.7`.
 ## Installation
-### Mosek 
-Install Mosek with the Default Installers ( Link: https://www.mosek.com/downloads/)
+### Mosek
+You will need a Mosek licence to use Mosek (free academic):\
+https://www.mosek.com/license/request/?i=acp
 
-Note: You need a Mosek licence to use Mosek (free academic)
-
-Link Mosek to Matlab (Link : https://docs.mosek.com/9.2/toolbox/install-interface.html)
-```
-addpath <MSKHOME>/mosek/9.2/toolbox/r2015aom
-```
-### Yalmip
-Yalmip is easily through the txbmananger http://tbxmanager.com/. 
-After installation, run the follow command in Matlab:
-```
->> tbxmanager install yalmip
-```
+This is only required when generating a new terminal set.
 
 ### Python dependencies and packages
 
-A virtual enviroment is highly recommended. Conda env was used to develop this project.
+Conda env is highly recommended due to import errors with pip.
+
+Run (w/ conda):
 
 ```
-conda create -n <env_name>
+conda env create -f environment.yml
+conda activate gym-rl-mpc
 ```
-Run
-```
-pip install -e ./gym-rl-mpc
-```
-#### Matlab API 
-This must be done in the virtual env, if used. (link: https://www.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
-```
->>> cd <matlabroot>\extern\engines\python
->>> python setup.py install
-```
+Alternatively, dependencies are listed in
+`environment.yml` and `setup.py`.
 
-## Test
-Run all the test in gym-rl-mpc folder.
-Test Mosek in Matlab:
-```
->> mosekdiag
-```
-Test yalmip in Matlab:
-```
->> yalmiptest
-```
-Test PSF module:
-```
->>> python PSF/PSF.p
-```
 
 ## Running the program
 

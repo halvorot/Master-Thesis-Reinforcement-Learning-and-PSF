@@ -7,6 +7,8 @@ Written in `Python 3.7`.
 You will need a licence to use Mosek (free academic):\
 https://www.mosek.com/license/request/?i=acp
 
+Add the license file to `%USERPROFILE%/mosek/mosek.lic`.
+
 This is only required when generating a new terminal set.
 
 ### Python dependencies and packages

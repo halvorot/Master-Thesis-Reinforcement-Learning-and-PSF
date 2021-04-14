@@ -247,10 +247,9 @@ def robust_ellipsoid(A_set_list, B_set_list, Hx, Hu, hx, hu):
         ]) >> 0)
 
     prob = cp.Problem(cp.Minimize(objective), constraints)
-    prob.solve(solver='MOSEK', verbose=False)
+    prob.solve(solver="MOSEK", verbose=False)
     P = np.linalg.inv(E.value)
     K = Y.value @ P
-
     return P, K
 
 

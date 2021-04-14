@@ -4,7 +4,7 @@ A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floatin
 Written in `Python 3.7`.
 ## Installation
 ### Mosek
-You will need a Mosek licence to use Mosek (free academic):\
+You will need a licence to use Mosek (free academic):\
 https://www.mosek.com/license/request/?i=acp
 
 This is only required when generating a new terminal set.

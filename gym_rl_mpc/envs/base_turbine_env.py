@@ -1,9 +1,11 @@
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import gym
 import numpy as np
 from gym.utils import seeding
+from pandas import DataFrame
 
 import gym_rl_mpc.objects.symbolic_model as sym
 import gym_rl_mpc.utils.model_params as params
@@ -250,6 +252,20 @@ class BaseTurbineEnv(gym.Env, ABC):
             self.crash_cause = 1            # Crash because of theta
         elif crash_cond_2 or crash_cond_3:
             self.crash_cause = 2            # Crash because of Omega
+
+        if self.crashed:
+            report_dir = os.path.join('logs', 'debug')
+            os.makedirs(report_dir, exist_ok=True)
+            file_path = os.path.join(report_dir, "crash_data.csv")
+            data = np.hstack([self.crash_cause, self.psf_error, self.turbine.state, self.agent_action, self.psf_action])
+            data = data.reshape((1, len(data)))
+            labels = [r"crash_cause", r"psf_error", r"theta", r"theta_dot", r"omega", r"agent_F_thr", r"agent_blade_pitch",
+                      r"agent_power", r"psf_F_thr", r"psf_blade_pitch", r"psf_power"]
+            df = DataFrame(data, columns=labels)
+            if not os.path.isfile(file_path):
+                df.to_csv(file_path)
+            else:
+                df.to_csv(file_path, mode='a', header=False)
 
         # Full reward function Without crash reward, V-0
         # step_reward = (self.theta_reward

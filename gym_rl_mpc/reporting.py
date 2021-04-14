@@ -99,7 +99,6 @@ def format_history(env, lastn=-1):
 def report(env, report_dir):
     try:
         os.makedirs(report_dir, exist_ok=True)
-
         df = format_history(env)
 
         file_path = os.path.join(report_dir, "history_data.csv")

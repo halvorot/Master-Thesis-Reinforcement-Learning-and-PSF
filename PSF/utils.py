@@ -124,43 +124,34 @@ def col_un_scale(arr, scale):
     return np.moveaxis(arr, -2, -1)
 
 
-def center_optimization(x_dot, x, u, p, p_0, Hx, Hu, hx, hu):
-    nx = Hx.shape[-1]
-    x0 = constrain_center(Hx, hx)
-    u0 = constrain_center(Hu, hu)
-    J_x = np.diag((1 / (Hx @ x0 - hx) ** 2).flatten())
-    J_u = np.diag((1 / (Hu @ u0 - hu) ** 2).flatten())
+def center_optimization(f, v, Hv, hv, v0=None):
+    nf = f.shape[0]
+    if v0 is None:
+        v0 = constrain_center(Hv, hv)
 
-    center_normalized_x = (Hx @ x - hx)
-    center_normalized_u = (Hu @ u - hu)
-    objective = center_normalized_x.T @ J_x @ center_normalized_x + center_normalized_u.T @ J_u @ center_normalized_u
+    Jv = np.diag((1 / (Hv @ v0 - hv) ** 2).flatten())
 
-    w = [x, u]
+    objective = (Hv @ v - hv).T @ Jv @ (Hv @ v - hv)
 
     g = []
     lbg = []
     ubg = []
 
-    g += [x_dot]
-    lbg += [0] * nx
-    ubg += [0] * nx
+    g += [f]
+    lbg += [0] * nf
+    ubg += [0] * nf
 
-    g += [Hx @ x]
+    g += [Hv @ v]
     lbg += [-inf] * g[-1].shape[0]
-    ubg += [hx]
+    ubg += [hv]
 
-    g += [Hu @ u]
-    lbg += [-inf] * g[-1].shape[0]
-    ubg += [hu]
+    problem = {'f': objective, 'x': v, 'g': vertcat(*g)}
 
-    problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': p}
     solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-    sol = solver(p=p_0, lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=vertcat(*[x0, u0]))
-    z = np.asarray(sol['x'])
+    sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
+    v_c0 = np.asarray(sol['x'])
 
-    x_c0, u_c0 = np.vsplit(z, [nx])
-
-    return x_c0, u_c0
+    return v_c0
 
 
 def min_func(f, v, Hv, hv):
@@ -259,7 +250,27 @@ def nonlinear_to_linear(x_dot, x, u):
     return affine_to_linear(nabla_x, nabla_u, x_dot - nabla_x @ x - nabla_u @ u)
 
 
+def plotEllipsoid(P, Hx, hx):
+    import matlab.engine
+
+    P = matlab.double(P.tolist())
+    Hx = matlab.double(Hx[:, :-1].tolist())
+    hx = matlab.double(hx.tolist())
+
+    eng = matlab.engine.start_matlab()
+
+    a = eng.plotEllipsoid(P, Hx, hx, )
+    eng.quit()
+
+
+def ellipsoid_volume(P):
+    d, v = np.linalg.eig(P)
+    volume = 4 / 3 * np.pi * np.prod(d ** (-1 / 2))
+    return volume
+
+
 if __name__ == '__main__':
+    """
     from gym_rl_mpc.objects.symbolic_model import *
 
     wind = 15
@@ -294,13 +305,6 @@ if __name__ == '__main__':
     print_flag = True
     P = max_ellipsoid(Hxc[:, :-1], hxc)
     if print_flag:
-        import matlab.engine
-
-        P = matlab.double(P.tolist())
-        Hx = matlab.double(Hxc[:, :-1].tolist())
-        hx = matlab.double(hxc.tolist())
-
-        eng = matlab.engine.start_matlab()
-
-        a = eng.plotEllipsoid(P, Hx, hx, )
-        eng.quit()
+       
+    """
+    pass

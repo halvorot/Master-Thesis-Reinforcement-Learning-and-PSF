@@ -8,10 +8,29 @@ from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, 
 from scipy.linalg import block_diag
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
-    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid
-from gym_rl_mpc.objects.symbolic_model import symbolic_x_dot, w
+    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid, NLP_OPTS
+from gym_rl_mpc.objects.symbolic_model import w
 
 LEN_FILE_STR = 20
+
+# JIT
+# How to JIT:
+# https://github.com/casadi/casadi/wiki/FAQ:-how-to-perform-jit-for-function-evaluations-of-my-optimization-problem%3F
+
+# Pick a compiler
+# compiler = "gcc"  # Linux
+# compiler = "clang"  # OSX
+compiler = "cl.exe"  # Windows
+
+flags = ["/O2"]  # Windows
+
+JIT_OPTS = {
+    "compiler": "shell",
+    "jit": False,
+    'jit_options': {"flags": flags, "verbose": True, "compiler": compiler}
+}
+#
+NLP_OPTS = {**NLP_OPTS, **JIT_OPTS}
 
 
 class PSF:
@@ -23,20 +42,17 @@ class PSF:
                  Q=None,
                  PK_path="",
                  param=None,
-                 lin_bounds=None,
                  alpha=0.9,
                  slew_rate=None,
                  ext_step_size=1,
                  disc_method="RK",
                  LP_flag=False,
                  slack_flag=True,
-                 jit_flag=False,
                  mpc_flag=False):
 
         if LP_flag:
             raise NotImplementedError("Linear MPC is not implemented")
 
-        self.jit_flag = jit_flag
         self.slack_flag = slack_flag
         self.mpc_flag = mpc_flag
 
@@ -49,8 +65,6 @@ class PSF:
         self.N = N
         self.T = T
         self.alpha = alpha
-
-        self.lin_bounds = lin_bounds
 
         self.PK_path = PK_path
         self.nx = self.sys["x"].shape[0]
@@ -87,46 +101,17 @@ class PSF:
         self.formulate_problem()
         self.set_solver()
 
-    def create_system_set(self):
-        A_set = []
-        B_set = []
-
-        free_vars = SX.get_free(Function("list_free_vars", [], [self.Ac, self.Bc]))
-        bounds = [self.lin_bounds[k.name()] for k in free_vars]  # relist as given above
-        eval_func = Function("eval_func", free_vars, [self.Ac, self.Bc])
-
-        for product in itertools.product(*bounds):  # creating maximum difference
-            AB_set = eval_func(*product)
-            A_set.append(np.asarray(AB_set[0]))
-            B_set.append(np.asarray(AB_set[1]))
-
-        return A_set, B_set
-
-    def _set_terminal_set(self, fake=False):
-        " Under construction "
+    def _set_terminal_set(self, v, Hv, hv, fake=False):
+        """ Under construction """
         A, B = nonlinear_to_linear(self.sys['xdot'], self.sys['x'], self.sys['u'])
-
-        v = vertcat(*[self.sys['x'], self.sys['u'], w])
-
-        Hw = np.asarray([[1], [-1]])
-        hw = np.asarray([[10], [25]])
-        wind = constrain_center(Hw, hw)
-
-        Hv = block_diag(self.sys['Hx'], self.sys['Hu'], Hw)
-        hv = np.vstack([self.sys['hx'], self.sys['hu'], hw])
 
         A_set, B_set = create_system_set(A, B, v, Hv, hv)
 
-        x_c0, u_c0 = center_optimization(self.sys['xdot'],
-                                         self.sys['x'],
-                                         self.sys['u'],
-                                         w,
-                                         wind,
-                                         self.sys['Hx'],
-                                         self.sys['Hu'],
-                                         self.sys['hx'],
-                                         self.sys['hu'])
+        v_c0 = center_optimization(self.sys["xdot"], v, Hv, hv)
+
+        x_c0, u_c0, _ = np.vsplit(v_c0, [self.nx, self.nx+self.nu])
         x_c0 = np.vstack([x_c0, 0])
+
         Hx0 = lift_constrain(self.sys['Hx'])
 
         Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
@@ -156,18 +141,21 @@ class PSF:
 
     def set_terminal_set(self):
 
-        A_set, B_set = self.create_system_set()
-        # from . import py_terminal_set
-        # py_terminal_set.terminal_set(A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"])
-        s = str((A_set, B_set, self.sys["Hx"], self.sys["Hu"], self.sys["hx"], self.sys["hu"], self.ext_step_size))
+        Hw = np.asarray([[-1], [1]])
+        hw = np.asarray([[-10], [25]])
+
+        Hv = block_diag(self.sys['Hx'], self.sys['Hu'], Hw)
+        hv = np.vstack([self.sys['hx'], self.sys['hu'], hw])
+
+        s = str((Hv, hv))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
             load_tuple = pickle.load(open(path, mode="rb"))
             self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
         except FileNotFoundError:
-
-            self.K, self.P, self._centroid_Px, self._centroid_Pu = self._set_terminal_set(True)
+            v = vertcat(*[self.sys["x"], self.sys["u"], self.sys["p"]])
+            self.K, self.P, self._centroid_Px, self._centroid_Pu = self._set_terminal_set(v, Hv, hv, True)
             dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
             pickle.dump(dump_tuple, open(path, "wb"))
 
@@ -257,30 +245,7 @@ class PSF:
             opts = {"osqp": {"verbose": 0, "polish": False}}
             self.solver = qpsol("solver", "osqp", self.problem, opts)
         else:
-            # JIT
-            # Pick a compiler
-            # compiler = "gcc"  # Linux
-            # compiler = "clang"  # OSX
-            compiler = "cl.exe"  # Windows
-
-            flags = ["/O2"]  # win
-            jit_options = {"flags": flags, "verbose": True, "compiler": compiler}
-
-            # JIT
-            opts = {
-                "warn_initial_bounds": True,
-                "error_on_fail": True,
-                "eval_errors_fatal": True,
-                "verbose_init": False,
-                "show_eval_warnings": False,
-                "ipopt": {"print_level": 0, "sb": "yes"},
-                "print_time": False,
-                "compiler": "shell",
-                "jit": self.jit_flag,
-                'jit_options': jit_options
-            }
-
-            self.solver = nlpsol("solver", "ipopt", self.problem, opts)
+            self.solver = nlpsol("solver", "ipopt", self.problem, NLP_OPTS)
 
     def formulate_problem(self):
 
@@ -329,6 +294,7 @@ class PSF:
             for j in range(i + 1):
                 tmp_x0 = self.model_step(xk=tmp_x0, x_lin=tmp_x0, u=self.K @ tmp_x0, u_lin=self.K @ tmp_x0, p=p)["xf"]
             w0 += [tmp_x0]
+
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
             self.lbg += [-inf] * g[-1].shape[0]
@@ -373,7 +339,6 @@ class PSF:
         self._init_guess = np.array([])
 
     def inside_terminal(self, x, u_L, ext_params):
-        inside = False
         x0 = np.vstack(x)
         u_L = np.vstack(u_L)
         ext_params = np.vstack([ext_params])

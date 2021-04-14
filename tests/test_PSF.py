@@ -44,8 +44,7 @@ kwargs = dict(sys={"xdot": sym.symbolic_x_dot,
                           },
               slew_rate=[1e5, 8 * params.DEG2RAD, 1e6],
               LP_flag=False,
-              slack_flag=True,
-              jit_flag=False)
+              slack_flag=True)
 
 psf_HF = PSF(**kwargs)
 

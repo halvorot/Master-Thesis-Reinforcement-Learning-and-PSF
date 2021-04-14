@@ -9,7 +9,9 @@ from scipy.linalg import block_diag
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
     move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid, NLP_OPTS
-from gym_rl_mpc.objects.symbolic_model import w
+
+ERROR_F_VALUE = 10e5
+WARNING_F_VALUE = 10e3
 
 LEN_FILE_STR = 20
 
@@ -367,11 +369,18 @@ class PSF:
                                ubg=vertcat(*self.ubg),
                                x0=self._init_guess
                                )
+        f = float(solution["f"])
+        if f > ERROR_F_VALUE:
+            raise RuntimeError("Function value supersedes error threshold value.")
+        elif f > WARNING_F_VALUE:
+            RuntimeWarning("Function value supersedes warning threshold value")
         if not reset_x0:
             prev = np.asarray(solution["x"])
             self._init_guess = prev
+        u = np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
-        return np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
+
+        return u
 
     def get_objective(self, U=None, eps=None, x_ref=None, X=None, u_ref=None):
 
@@ -383,7 +392,7 @@ class PSF:
         else:
             objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
         if self.slack_flag:
-            objective += objective + 10e9 * eps[:].T @ eps[:]
+            objective += objective + 10e6 * eps[:].T @ eps[:]
         return objective
 
 

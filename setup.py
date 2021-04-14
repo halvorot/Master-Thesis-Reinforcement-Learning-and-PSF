@@ -15,6 +15,5 @@ setup(
         'termcolor',
         'casadi',
         'mosek',
-        'cvxpy'
     ]  # And any other dependencies it needs
 )

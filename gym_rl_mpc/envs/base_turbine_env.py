@@ -158,12 +158,10 @@ class BaseTurbineEnv(gym.Env, ABC):
             new_adjusted_wind_speed = params.wind_inflow_ratio * self.wind_speed - params.L * np.cos(
                 self.turbine.platform_angle) * self.turbine.state[1]
             psf_params = [new_adjusted_wind_speed]
-            u_stable = self.turbine.u0
             u_prev = self.turbine.input
 
             args = dict(x=self.turbine.state,
                         u_L=action_un_normalized,
-                        u_stable=u_stable,
                         ext_params=psf_params,
                         u_prev=u_prev)
             try:

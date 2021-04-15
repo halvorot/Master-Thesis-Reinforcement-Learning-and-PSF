@@ -1,12 +1,9 @@
 import numpy as np
-from casadi import SX, vertcat, cos, sin, Function, nlpsol, inf
+from casadi import SX, vertcat, cos, sin, Function
 
 import gym_rl_mpc.utils.model_params as params
-from gym_rl_mpc import DEFAULT_CONFIG as CONFIG
-
-LARGE_NUM = 1e9
-RPM2RAD = 1 / 60 * 2 * np.pi
-DEG2RAD = 1 / 360 * 2 * np.pi
+from PSF.utils import center_optimization, Hh_from_disconnected_constraints
+from ..utils.model_params import RPM2RAD, DEG2RAD
 
 # Constants
 w = SX.sym('w')
@@ -33,54 +30,28 @@ Q_wind_simple = g * w - params.b_d_r * Omega * Omega
 # symbolic model
 symbolic_x_dot = vertcat(
     theta_dot,
-    params.C_1 * cos(theta) * sin(theta) + params.C_2 * sin(theta) + params.C_3 * cos(theta) * sin(theta_dot) + params.C_4 * F_thr + params.C_5 * F_wind,
+    params.C_1 * cos(theta) * sin(theta) + params.C_2 * sin(theta) + params.C_3 * cos(theta) * sin(
+        theta_dot) + params.C_4 * F_thr + params.C_5 * F_wind,
     1 / params.J_r * (Q_wind - P_ref / Omega),
 )
 
-symbolic_x_dot_simple = vertcat(
-    theta_dot,
-    (params.C_1 + params.C_2) * theta + params.C_3 * theta_dot + params.C_4 * F_thr + params.C_5 * F_wind_simple,
-    1 / params.J_r * (Q_wind_simple - 1 / Omega * P_ref),
-)
+# Constraints
 
-# MPC constraints
-
-# Hz * z <= hz
-
-Hx = np.asarray([
-    [-1, 0, 0],
-    [1, 0, 0],
-    [0, -1, 0],
-    [0, 1, 0],
-    [0, 0, -1],
-    [0, 0, 1]
+sys_lub_x = np.asarray([
+    [-10 * DEG2RAD, 10 * DEG2RAD],
+    [-10 * DEG2RAD, 10 * DEG2RAD],
+    [5 * RPM2RAD, 7.6 * RPM2RAD]
 ])
 
-hx = np.asarray([[
-    CONFIG["crash_angle_condition"],
-    CONFIG["crash_angle_condition"],
-    45*DEG2RAD,
-    45*DEG2RAD,
-    -params.omega_setpoint(0),
-    params.omega_setpoint(25)
-]]).T
-
-Hu = np.asarray([
-    [-1, 0, 0],
-    [1, 0, 0],
-    [0, -1, 0],
-    [0, 1, 0],
-    [0, 0, -1],
-    [0, 0, 1]
+sys_lub_u = np.asarray([
+    [-params.max_thrust_force, params.max_thrust_force],
+    [-params.min_blade_pitch_ratio * params.max_blade_pitch, params.max_blade_pitch],
+    [0, params.max_power_generation]
 ])
-hu = np.asarray([[
-    params.max_thrust_force,
-    params.max_thrust_force,
-    params.min_blade_pitch_ratio*params.max_blade_pitch,
-    params.max_blade_pitch,
-    0,
-    params.max_power_generation,
-]]).T
+
+sys_lub_p = np.asarray([
+    [10, 25],
+])
 
 _numerical_x_dot = Function("numerical_x_dot",
                             [x, u_p, F_thr, P_ref, w],
@@ -103,32 +74,63 @@ def numerical_x_dot(state, blade_pitch, propeller_thrust, power, wind):
     return np.asarray(_numerical_x_dot(state, blade_pitch, propeller_thrust, power, wind)).flatten()
 
 
-def solve_initial_problem(wind, power=0.0, thruster_force=0.0):
-    objective = symbolic_x_dot.T @ symbolic_x_dot
+def get_sys():
+    Hx, hx = Hh_from_disconnected_constraints(sys_lub_x)
 
-    g = []
+    Hu, hu = Hh_from_disconnected_constraints(sys_lub_u)
 
-    g += [Hx @ x - hx]
+    Hp, hp = Hh_from_disconnected_constraints(sys_lub_p)
 
-    g += [Hu[2:4, 1] @ u_p - hu[2:4]]
-
-    prob = {'f': objective, 'x': vertcat(x, u_p), 'g': vertcat(*g), 'p': vertcat(P_ref, w, F_thr)}
-    opts = {
-        "verbose": False,
-        "verbose_init": False,
-        "ipopt": {"print_level": 0},
-        "print_time": False,
+    sys = {
+        "xdot": symbolic_x_dot,
+        "x": x,
+        "u": u,
+        "p": w,
+        "Hx": Hx,
+        "hx": hx,
+        "Hu": Hu,
+        "hu": hu,
+        "Hp": Hp,
+        "hp": Hp
     }
-    solver = nlpsol("S", "ipopt", prob, opts)
+    return sys
 
-    result = solver(x0=[1, 1, 1, 1], p=vertcat(power, wind, thruster_force), lbg=-inf, ubg=0)
-    state = np.asarray(result["x"])[:3].flatten()
-    blade_pitch = np.asarray(result["x"])[-1].flatten()[0]
-    return state, blade_pitch
+
+# PSF Terminal constraints
+def get_terminal_sys():
+    sys = get_sys()
+
+    term_lub_x = np.asarray([
+        [0 * DEG2RAD, 8 * DEG2RAD],
+        [-1 * DEG2RAD, 1 * DEG2RAD],
+        [6 * RPM2RAD, 7 * RPM2RAD]
+    ])
+
+    term_lub_u = np.asarray([
+        [-params.max_thrust_force, params.max_thrust_force],
+        [0, params.max_blade_pitch],
+        [0, params.max_power_generation]
+    ])
+    # Wind speed
+
+    term_lub = np.vstack((term_lub_x, term_lub_u, sys_lub_p))
+
+    term_Hv, term_hv = Hh_from_disconnected_constraints(term_lub)
+
+    t_sys = {
+        'v': vertcat(*[sys["x"], sys["u"], sys["p"]]),
+        'Hv': term_Hv,
+        'hv': term_hv
+    }
+    return t_sys
+
+
+def solve_initial_problem(wind):
+    Hz, hz = Hh_from_disconnected_constraints(np.vstack([sys_lub_x, sys_lub_u]))
+    z0 = center_optimization(symbolic_x_dot, vertcat(x, u), Hz, hz, p=w, p0=wind)
+    x0, u0 = np.vsplit(z0, [x.shape[0]])
+    return x0, u0
 
 
 if __name__ == '__main__':
-    numerical_F_wind(0, 0, 3)
-    numerical_Q_wind(0, 0, 3)
-    numerical_x_dot([0, 0, 3], 0.0, 0.0, 0.0, 0.0)
-    solve_initial_problem(wind=15, power=15e6, thruster_force=0)
+    solve_initial_problem(wind=25 * 2 / 3)

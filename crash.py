@@ -26,16 +26,8 @@ df[not_input].plot()
 df.drop(labels=not_input, axis=1).plot()
 plt.show()
 
-sys = {
-    "xdot": sym.symbolic_x_dot,
-    "x": sym.x,
-    "u": sym.u,
-    "p": sym.w,
-    "Hx": sym.Hx,
-    "hx": sym.hx,
-    "Hu": sym.Hu,
-    "hu": sym.hu
-}
+sys = sym.get_sys()
+t_sys = sym.get_terminal_sys()
 R = np.diag(
     [
         1 / params.max_thrust_force ** 2,
@@ -45,7 +37,7 @@ R = np.diag(
 actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
 
 ## PSF init ##
-psf = PSF(sys=sys, N=20, T=2, R=R, PK_path=Path("PSF", "stored_PK"), slew_rate=actuation_max_rate,
+psf = PSF(sys=sys, N=20, T=20, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"), slew_rate=actuation_max_rate,
           ext_step_size=DEFAULT_CONFIG["step_size"], slack_flag=True)
 df = pd.read_csv(Path("logs", "debug", "crash_data.csv"))
 for i in range(df.shape[0]):

@@ -66,16 +66,8 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.observation_space = gym.spaces.Box(low=obsv_low, high=obsv_high, dtype=np.float32)
 
-        sys = {
-            "xdot": sym.symbolic_x_dot,
-            "x": sym.x,
-            "u": sym.u,
-            "p": sym.w,
-            "Hx": sym.Hx,
-            "hx": sym.hx,
-            "Hu": sym.Hu,
-            "hu": sym.hu
-        }
+        sys = sym.get_sys()
+        t_sys = sym.get_terminal_sys()
         R = np.diag(
             [
                 1 / params.max_thrust_force ** 2,
@@ -85,7 +77,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
 
         ## PSF init ##
-        self.psf = PSF(sys=sys, N=20, T=2, R=R, PK_path=Path("PSF", "stored_PK"), slew_rate=actuation_max_rate,
+        self.psf = PSF(sys=sys, N=20, T=20, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"), slew_rate=actuation_max_rate,
                        ext_step_size=self.step_size, slack_flag=True)
 
         ## END PSF init ##

@@ -8,10 +8,11 @@ from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, 
 from scipy.linalg import block_diag
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
-    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid, NLP_OPTS
+    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid, NLP_OPTS, plotEllipsoid, \
+    stack_Hh, ellipsoid_volume
 
-ERROR_F_VALUE = 10e5
-WARNING_F_VALUE = 10e3
+ERROR_F_VALUE = 10e4
+WARNING_F_VALUE = 10e2
 
 LEN_FILE_STR = 20
 
@@ -40,6 +41,7 @@ class PSF:
                  sys,
                  N,
                  T,
+                 t_sys,
                  R=None,
                  Q=None,
                  PK_path="",
@@ -61,6 +63,7 @@ class PSF:
         self.LP_flag = LP_flag
 
         self.sys = sys
+        self.t_sys = t_sys
         self.Ac = jacobian(self.sys["xdot"], self.sys["x"])
         self.Bc = jacobian(self.sys["xdot"], self.sys["u"])
 
@@ -103,25 +106,29 @@ class PSF:
         self.formulate_problem()
         self.set_solver()
 
-    def _set_terminal_set(self, v, Hv, hv, fake=False):
+    def _get_terminal_set(self, fake=False):
         """ Under construction """
+
+        v_c0 = center_optimization(self.sys["xdot"], self.t_sys["v"], self.t_sys["Hv"], self.t_sys["hv"])
+        x_c0, u_c0, _ = np.vsplit(v_c0, [self.nx, self.nx + self.nu])
+
+
         A, B = nonlinear_to_linear(self.sys['xdot'], self.sys['x'], self.sys['u'])
 
-        A_set, B_set = create_system_set(A, B, v, Hv, hv)
-
-        v_c0 = center_optimization(self.sys["xdot"], v, Hv, hv)
-
-        x_c0, u_c0, _ = np.vsplit(v_c0, [self.nx, self.nx+self.nu])
+        A_set, B_set = create_system_set(A, B, self.t_sys["v"], self.t_sys["Hv"], self.t_sys["hv"])
         x_c0 = np.vstack([x_c0, 0])
 
-        Hx0 = lift_constrain(self.sys['Hx'])
+        outer_Hx = lift_constrain(self.sys['Hx'])
+        outer_Hu = self.sys['Hu']
+        outer_hx = self.sys['hx']
+        outer_hu = self.sys['hu']
 
         Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
                                                          B_set,
-                                                         Hx0,
-                                                         self.sys['Hu'],
-                                                         self.sys['hx'],
-                                                         self.sys['hu'],
+                                                         outer_Hx,
+                                                         outer_Hu,
+                                                         outer_hx,
+                                                         outer_hu,
                                                          x_c0,
                                                          u_c0
                                                          )
@@ -131,35 +138,28 @@ class PSF:
         Husrc, husrc = np.hsplit(Pu, [-1])
         P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Husrc, hxc, husrc)
         K = K * B_scale[:, None]
-        # Floor after lifing
+        # Ground after lifting
         K = K[:, :-1]
         P = P[:-1, :-1]
         x_c0 = x_c0[:-1]
-
+        Hxc = Hxc[:, :-1]
         if fake:
-            P = max_ellipsoid(Hxc[:, :-1], hxc)
+            P = max_ellipsoid(Hxc, hxc)
 
         return P, K, x_c0, u_c0
 
     def set_terminal_set(self):
 
-        Hw = np.asarray([[-1], [1]])
-        hw = np.asarray([[-10], [25]])
-
-        Hv = block_diag(self.sys['Hx'], self.sys['Hu'], Hw)
-        hv = np.vstack([self.sys['hx'], self.sys['hu'], hw])
-
-        s = str((Hv, hv))
+        s = str((self.sys, self.t_sys))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
-            load_tuple = pickle.load(open(path, mode="rb"))
-            self.K, self.P, self._centroid_Px, self._centroid_Pu = load_tuple
+            terminal_set = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
-            v = vertcat(*[self.sys["x"], self.sys["u"], self.sys["p"]])
-            self.K, self.P, self._centroid_Px, self._centroid_Pu = self._set_terminal_set(v, Hv, hv, True)
-            dump_tuple = (self.K, self.P, self._centroid_Px, self._centroid_Pu)
-            pickle.dump(dump_tuple, open(path, "wb"))
+            terminal_set = self._get_terminal_set(fake=True)
+            pickle.dump(terminal_set, open(path, "wb"))
+
+        self.K, self.P, self._centroid_Px, self._centroid_Pu = terminal_set
 
     def set_cvodes_model_step(self):
 
@@ -284,7 +284,7 @@ class PSF:
 
         for i in range(self.N):
             w += [U[:, i]]
-            w0 += [self.K @ x0]
+            w0 += [0]*w[-1].shape[0]
             # Composite Input constrains
 
             g += [self.sys["Hu"] @ U[:, i]]
@@ -292,10 +292,8 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             w += [X[:, i + 1]]
-            tmp_x0 = x0
-            for j in range(i + 1):
-                tmp_x0 = self.model_step(xk=tmp_x0, x_lin=tmp_x0, u=self.K @ tmp_x0, u_lin=self.K @ tmp_x0, p=p)["xf"]
-            w0 += [tmp_x0]
+            w0 +=[x0]
+
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
@@ -304,11 +302,9 @@ class PSF:
             if self.slack_flag:
                 w += [eps[:, i]]
                 w0 += [0] * self.nx
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)[
-                    'xf'] + eps[:,
-                            i]]
+                g += [X[:, i + 1] - eps[:, i]*self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=[0]*self.nu, p=p)['xf']]
             else:
-                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=self.K @ tmp_x0, p=p)["xf"]]
+                g += [X[:, i + 1] - self.model_step(xk=X[:, i], x_lin=x0, u=U[:, i], u_lin=[0]*self.nu, p=p)["xf"]]
             # State propagation
 
             self.lbg += [0] * g[-1].shape[0]
@@ -378,7 +374,6 @@ class PSF:
             prev = np.asarray(solution["x"])
             self._init_guess = prev
         u = np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
-
 
         return u
 

@@ -11,7 +11,7 @@ NLP_OPTS = {
     "eval_errors_fatal": True,
     "verbose_init": False,
     "show_eval_warnings": False,
-    "ipopt": {"print_level": 0, "sb": "yes"},
+    "ipopt": {"print_level": 2, "sb": "yes"},
     "print_time": False,
 }
 
@@ -124,14 +124,18 @@ def col_un_scale(arr, scale):
     return np.moveaxis(arr, -2, -1)
 
 
-def center_optimization(f, v, Hv, hv, v0=None):
+def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
     nf = f.shape[0]
     if v0 is None:
         v0 = constrain_center(Hv, hv)
 
-    Jv = np.diag((1 / (Hv @ v0 - hv) ** 2).flatten())
+    v_lwb = np.asarray([min_func(v[i], v, Hv, hv) for i in range(v.shape[0])])
+    v_uwb = -np.asarray([min_func(-v[i], v, Hv, hv) for i in range(v.shape[0])])
+    v_span = np.vstack(v_uwb - v_lwb)
 
-    objective = (Hv @ v - hv).T @ Jv @ (Hv @ v - hv)
+    norm_Hh = (Hv @ v - hv) / (Hv @ v_span)
+
+    objective = norm_Hh.T @ norm_Hh
 
     g = []
     lbg = []
@@ -146,9 +150,14 @@ def center_optimization(f, v, Hv, hv, v0=None):
     ubg += [hv]
 
     problem = {'f': objective, 'x': v, 'g': vertcat(*g)}
+    if p is None:
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
+    else:
+        problem["p"] = p
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0, p=p0)
 
-    solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-    sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
     v_c0 = np.asarray(sol['x'])
 
     return v_c0
@@ -171,20 +180,26 @@ def create_system_set(A, B, v, Hv, hv, full=True):
     delta_bounds = {}
     delta = []
     AB = horzcat(A, B)
-    AB_delta = SX(np.zeros(AB.shape))
-    for row in range(AB.shape[0]):
-        for col in range(AB.shape[1]):
-            if AB[row, col].is_constant():
-                AB_delta[row, col] = AB[row, col]
-            else:
-                delta_str = 'd_' + str(row) + str(col)
-                # print("Solving for: " + delta_str)
-                delta.append(SX.sym(delta_str))
-                AB_delta[row, col] = delta[-1]
-                delta_bounds[delta_str] = delta_range(AB[row, col], v, Hv, hv)
+    if full:
+        AB_delta = SX(np.zeros(AB.shape))
+        for row in range(AB.shape[0]):
+            for col in range(AB.shape[1]):
+                if AB[row, col].is_constant():
+                    AB_delta[row, col] = AB[row, col]
+                else:
+                    delta_str = 'd_' + str(row) + str(col)
+                    # print("Solving for: " + delta_str)
+                    delta.append(SX.sym(delta_str))
+                    AB_delta[row, col] = delta[-1]
+                    delta_bounds[delta_str] = delta_range(AB[row, col], v, Hv, hv)
 
-    eval_func = Function("eval_func", delta, [AB_delta])
-
+        eval_func = Function("eval_func", delta, [AB_delta])
+    else:
+        for i in range(v.shape[0]):
+            delta_str = 'd_' + str(i)
+            delta_bounds[delta_str] = delta_range(v[i], v, Hv, hv)
+            delta.append(v[i])
+        eval_func = Function("eval_func", delta, [AB])
     A_set = []
     B_set = []
 
@@ -250,16 +265,18 @@ def nonlinear_to_linear(x_dot, x, u):
     return affine_to_linear(nabla_x, nabla_u, x_dot - nabla_x @ x - nabla_u @ u)
 
 
-def plotEllipsoid(P, Hx, hx):
+def plotEllipsoid(P, Hx, hx, x0=None):
+    if x0 is None:
+        x0 = np.vstack([0] * P.shape[0])
     import matlab.engine
-
     P = matlab.double(P.tolist())
-    Hx = matlab.double(Hx[:, :-1].tolist())
+    Hx = matlab.double(Hx.tolist())
     hx = matlab.double(hx.tolist())
+    x0 = matlab.double(x0.tolist())
 
     eng = matlab.engine.start_matlab()
 
-    a = eng.plotEllipsoid(P, Hx, hx, )
+    a = eng.plotEllipsoid(P, Hx, hx, x0)
     eng.quit()
 
 
@@ -267,6 +284,23 @@ def ellipsoid_volume(P):
     d, v = np.linalg.eig(P)
     volume = 4 / 3 * np.pi * np.prod(d ** (-1 / 2))
     return volume
+
+
+def Hh_from_disconnected_constraints(arr):
+    arr = np.asarray(arr)
+    if any(arr[:, 0] > arr[:, 1]):
+        raise ValueError("Upper bound must be equal or greater than lower bound")
+
+    n = arr.shape[0]
+    H = np.eye(n).repeat(2, axis=0)
+    H[0::2] *= -1
+    h = np.vstack(arr.flatten())
+    h[0::2] *= -1
+    return H, h
+
+
+def stack_Hh(H_list, h_list):
+    return block_diag(*H_list), np.vstack(h_list)
 
 
 if __name__ == '__main__':

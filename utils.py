@@ -1,9 +1,9 @@
 import numpy as np
 from pandas import DataFrame
 import gym_rl_mpc.utils.model_params as params
+import sys
 
-def simulate_episode(env, agent, max_time):
-    print("Simulating episode...")
+def simulate_episode(env, agent, max_time, verbose=False, id=None):
     state_labels = [r"theta", r"theta_dot", r"omega"]
     input_labels = [r"F_thr", r"blade_pitch", r"power"]
     agent_action_labels = [r"agent_F_thr", r"agent_blade_pitch", r"agent_power"]
@@ -35,7 +35,10 @@ def simulate_episode(env, agent, max_time):
                 
             action = np.array([thr, blade_pitch, power])
         _, _, done, _ = env.step(action)
-
+        if verbose:
+            report_msg = '{:<20}{:<20}{:<20.2f}{:<20.2%}\r'.format(id, env.t_step, env.cumulative_reward, env.t_step*env.step_size/max_time)
+            sys.stdout.write(report_msg)
+            sys.stdout.flush()
     time = np.array(env.episode_history['time']).reshape((env.t_step, 1))
     last_reward = np.array(env.episode_history['last_reward']).reshape((env.t_step, 1))
     theta_reward = np.array(env.episode_history['theta_reward']).reshape((env.t_step, 1))

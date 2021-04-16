@@ -7,7 +7,7 @@ import cvxpy as cp
 
 NLP_OPTS = {
     "warn_initial_bounds": True,
-    "error_on_fail": True,
+    "error_on_fail": False,
     "eval_errors_fatal": True,
     "verbose_init": False,
     "show_eval_warnings": False,

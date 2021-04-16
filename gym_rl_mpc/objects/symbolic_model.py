@@ -32,7 +32,7 @@ symbolic_x_dot = vertcat(
     theta_dot,
     params.C_1 * cos(theta) * sin(theta) + params.C_2 * sin(theta) + params.C_3 * cos(theta) * sin(
         theta_dot) + params.C_4 * F_thr + params.C_5 * F_wind,
-    1 / params.J_r * (Q_wind - P_ref / Omega),
+    1 / params.J_r * (Q_wind - P_ref / (Omega+1e-6)),
 )
 
 # Constraints

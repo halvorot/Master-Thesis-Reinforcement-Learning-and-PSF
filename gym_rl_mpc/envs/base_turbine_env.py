@@ -250,7 +250,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         elif crash_cond_2 or crash_cond_3:
             self.crash_cause = 2            # Crash because of Omega
 
-        if self.crashed:
+        if self.crashed and self.use_psf:
             try:
                 report_dir = os.path.join('logs','debug')
                 os.makedirs(report_dir, exist_ok=True)
@@ -312,14 +312,21 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.reward_survival)
 
         # Without crash reward, with omega_dot reward, V-6
+        # step_reward = (self.theta_reward
+        #                + self.theta_dot_reward
+        #                + self.omega_reward
+        #                + self.omega_dot_reward
+        #                + self.power_reward
+        #                + self.psf_reward
+        #                + self.reward_survival)
+        
+        # Without crash reward and survival, with omega_dot reward, V-7
         step_reward = (self.theta_reward
                        + self.theta_dot_reward
                        + self.omega_reward
                        + self.omega_dot_reward
                        + self.power_reward
-                       + self.psf_reward
-                       + self.reward_survival)
-        
+                       + self.psf_reward)
 
         return done, step_reward
 

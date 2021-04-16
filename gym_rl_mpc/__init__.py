@@ -31,51 +31,51 @@ CRAZY_ENV_CONFIG = VARIABLE_WIND_CONFIG.copy()
 CRAZY_ENV_CONFIG["action_space_increase"] = 3 # Violation will happen with N/N+1 and with size N-1 outside
 
 SCENARIOS = {
-    'ConstantWind-v16': {   
+    'ConstantWind-v17': {   
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
-    'VariableWindLevel0-v16': {
+    'VariableWindLevel0-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel0',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel1-v16': {
+    'VariableWindLevel1-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel1',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel2-v16': {
+    'VariableWindLevel2-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel2',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel3-v16': {
+    'VariableWindLevel3-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel3',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel4-v16': {
+    'VariableWindLevel4-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel4',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel5-v16': {
+    'VariableWindLevel5-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel5',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel6-v16': {
+    'VariableWindLevel6-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel6',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel7-v16': {
+    'VariableWindLevel7-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel7',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel8-v16': {
+    'VariableWindLevel8-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel8',
         'config': VARIABLE_WIND_CONFIG
     },
-    'VariableWindLevel9-v16': {
+    'VariableWindLevel9-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel9',
         'config': VARIABLE_WIND_CONFIG
     },
-    'CrazyAgent-v16': {
+    'CrazyAgent-v17': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }

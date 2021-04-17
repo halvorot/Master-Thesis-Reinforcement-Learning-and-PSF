@@ -147,7 +147,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         """
         Simulates the environment one time-step.
         """
-        force_done = False
 
         if self.use_psf:
             F_thr = action[0] * params.max_thrust_force
@@ -174,7 +173,6 @@ class BaseTurbineEnv(gym.Env, ABC):
             except RuntimeError:
                 print("Casadi failed to solve step. Using agent action. Episode done")
                 self.psf_error = True
-                force_done = True
                 self.turbine.step(action, self.wind_speed)
                 self.psf_action = [0] * len(action)
 
@@ -187,6 +185,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(action)
+        done = done or self.psf_error
 
         self.cumulative_reward += reward
         self.last_reward = reward
@@ -196,7 +195,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.t_step += 1
 
-        return self.observation, reward, (done or force_done), {}
+        return self.observation, reward, done, {}
 
     @abstractmethod
     def generate_environment(self):

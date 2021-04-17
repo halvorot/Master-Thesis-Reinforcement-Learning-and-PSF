@@ -63,6 +63,7 @@ def test(args):
     agent_path = args.agent
     agent = PPO.load(agent_path)
     cumulative_rewards = []
+    cumulative_psf_rewards = []
     crashes = []
     print(f'Testing in "{env_id}" for {args.num_episodes} episodes.\n ')
     report_msg_header = '{:<20}{:<20}{:<20}{:<20}'.format('Episode', 'Timesteps', 'Cum. Reward', 'Progress')
@@ -70,13 +71,14 @@ def test(args):
     print('-'*len(report_msg_header)) 
     for episode in range(args.num_episodes):
         sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time, verbose=True, id=f'Episode {episode}')
-        print(env.cumulative_reward)
         cumulative_rewards.append(np.sum(sim_df['reward']))
+        cumulative_psf_rewards.append(np.sum(sim_df['psf_reward']))
         crashes.append(env.crashed)
         print('')
     print(f'Avg. Cumulative reward: {np.sum(cumulative_rewards)/args.num_episodes}')
+    print(f'Crashes: {np.sum(crashes)*100/args.num_episodes}%')
 
-    test_df = DataFrame(cumulative_rewards, columns=['cumulative_reward'])
+    test_df = DataFrame(list(zip(cumulative_rewards, cumulative_psf_rewards, crashes)), columns=['cumulative_reward','cumulative_psf_reward','crash'])
     
     agent_path_list = agent_path.split("\\")
     testdata_dir = os.path.join("logs", agent_path_list[-4], agent_path_list[-3], "test_data")

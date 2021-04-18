@@ -77,8 +77,8 @@ class BaseTurbineEnv(gym.Env, ABC):
         actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
 
         ## PSF init ##
-        self.psf = PSF(sys=sys, N=20, T=20, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"), slew_rate=actuation_max_rate,
-                       ext_step_size=self.step_size, slack_flag=True)
+        self.psf = PSF(sys=sys, N=20, T=10, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"),#slew_rate=actuation_max_rate,
+                       ext_step_size=self.step_size)
 
         ## END PSF init ##
 

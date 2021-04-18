@@ -5,11 +5,11 @@ from pathlib import Path
 import logging
 
 import numpy as np
-from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator
+from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator, norm_1
 from scipy.linalg import block_diag
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
-    move_system, row_scale, col_scale, robust_ellipsoid, constrain_center, max_ellipsoid, NLP_OPTS, plotEllipsoid, \
+    move_system, row_scale, col_scale, robust_ellipsoid, polytope_center, max_ellipsoid, NLP_OPTS, plotEllipsoid, \
     stack_Hh, ellipsoid_volume
 
 ERROR_F_VALUE = 10e4
@@ -49,11 +49,7 @@ class PSF:
                  param=None,
                  alpha=0.9,
                  slew_rate=None,
-                 slack_flag=True
                  ):
-
-        self.slack_flag = slack_flag
-
         self.sys = sys
         self.t_sys = t_sys
 
@@ -231,7 +227,7 @@ class PSF:
         for i in range(N):
 
             w += [U[:, i]]
-            w0 += [self.u_c0]
+            w0 += [u_prev]
 
             # Composite Input constrains
 
@@ -240,12 +236,12 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             if self.slew_rate is not None:
-                g += [ U[:, i]-U[:, i - 1]]
+                g += [U[:, i]-U[:, i - 1]]
                 self.lbg += [-np.array(self.slew_rate) * self.dt[i]]
                 self.ubg += [np.array(self.slew_rate) * self.dt[i]]
 
             w += [X[:, i + 1]]
-            w0 += [self.line(x0, self.x_c0, T[i] / T[-1])]
+            w0 += [x0]
 
             # Composite State constrains
             g += [self.sys["Hx"] @ X[:, i + 1]]
@@ -262,11 +258,11 @@ class PSF:
         # Terminal Set constrain
 
         XN_shifted = X[:, -1] - self.x_c0
-        g += [XN_shifted.T @ self.P @ XN_shifted- [self.alpha]]
+        g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
         self.lbg += [-inf]
         self.ubg += [0]
 
-        self.eval_w0 = Function("eval_w0", [x0, u_ref, u_prev, p], [vertcat(*w0)])
+        self.eval_w0 = Function("eval_w0", [x0, u_prev, p], [vertcat(*w0)])
 
         self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_ref, u_prev, p)}
 
@@ -294,7 +290,7 @@ class PSF:
         if u_prev is None:
             u_prev = self.u_c0
         if self._init_guess.shape[0] == 0:
-            self._init_guess = np.asarray(self.eval_w0(x, u_L, u_prev, ext_params))
+            self._init_guess = np.asarray(self.eval_w0(x, u_prev, ext_params))
 
         solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
                                lbg=vertcat(*self.lbg),
@@ -302,6 +298,7 @@ class PSF:
                                x0=self._init_guess
                                )
         f = float(solution["f"])
+        logging.debug(f"Function value: {f}")
         if f > ERROR_F_VALUE:
             raise RuntimeError("Function value supersedes error threshold value.")
         elif f > WARNING_F_VALUE:
@@ -311,6 +308,7 @@ class PSF:
             self._init_guess = prev
         else:
             self.reset_init_guess()
+
         u = np.asarray(solution["x"][self.nx:self.nx + self.nu]).flatten()
 
         return u
@@ -318,7 +316,7 @@ class PSF:
     def get_objective(self, U=None, eps=None, u_ref=None):
         objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
 
-        objective += objective + 10e6 * eps[:].T@ eps[:]
+        objective += objective + 10e6 * eps[:].T @ eps[:]
         return objective
 
 

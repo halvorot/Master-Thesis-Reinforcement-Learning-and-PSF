@@ -7,7 +7,7 @@ import cvxpy as cp
 
 NLP_OPTS = {
     "warn_initial_bounds": True,
-    "error_on_fail": False,
+    "error_on_fail": True,
     "eval_errors_fatal": True,
     "verbose_init": False,
     "show_eval_warnings": False,
@@ -16,7 +16,7 @@ NLP_OPTS = {
 }
 
 
-def constrain_center(Hz, hz):
+def polytope_center(Hz, hz):
     nz = Hz.shape[-1]
     z0 = SX.sym('z0', nz, 1)
 
@@ -124,11 +124,8 @@ def col_un_scale(arr, scale):
     return np.moveaxis(arr, -2, -1)
 
 
-def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
+def get_solver(f, v, Hv, hv, p=None):
     nf = f.shape[0]
-    if v0 is None:
-        v0 = constrain_center(Hv, hv)
-
     v_lwb = np.asarray([min_func(v[i], v, Hv, hv) for i in range(v.shape[0])])
     v_uwb = -np.asarray([min_func(-v[i], v, Hv, hv) for i in range(v.shape[0])])
     v_span = np.vstack(v_uwb - v_lwb)
@@ -152,10 +149,16 @@ def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
     problem = {'f': objective, 'x': v, 'g': vertcat(*g)}
     if p is None:
         solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
     else:
         problem["p"] = p
         solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+    return solver, lbg, ubg
+
+
+def solve(solver, lbg, ubg, v0, p0=None):
+    if p0 is None:
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
+    else:
         sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0, p=p0)
 
     v_c0 = np.asarray(sol['x'])
@@ -163,10 +166,20 @@ def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
     return v_c0
 
 
+def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
+    if v0 is None:
+        v0 = polytope_center(Hv, hv)
+
+    solver, lbg, ubg = get_solver(f, v, Hv, hv, p)
+    v_c0 = solve(solver, lbg, ubg, v0, p0)
+
+    return v_c0
+
+
 def min_func(f, v, Hv, hv):
     problem = {'f': f, 'x': v, 'g': Hv @ v}
     solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-    return float(solver(lbg=-inf, ubg=hv, x0=constrain_center(Hv, hv))['f'])
+    return float(solver(lbg=-inf, ubg=hv, x0=polytope_center(Hv, hv))['f'])
 
 
 def delta_range(delta, v, Hv, hv):

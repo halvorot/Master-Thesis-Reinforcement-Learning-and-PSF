@@ -147,7 +147,6 @@ class BaseTurbineEnv(gym.Env, ABC):
         """
         Simulates the environment one time-step.
         """
-        force_done = False
 
         if self.use_psf:
             F_thr = action[0] * params.max_thrust_force
@@ -174,7 +173,6 @@ class BaseTurbineEnv(gym.Env, ABC):
             except RuntimeError:
                 print("Casadi failed to solve step. Using agent action. Episode done")
                 self.psf_error = True
-                force_done = True
                 self.turbine.step(action, self.wind_speed)
                 self.psf_action = [0] * len(action)
 
@@ -187,6 +185,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.observation = self.observe()
 
         done, reward = self.calculate_reward(action)
+        done = done or self.psf_error
 
         self.cumulative_reward += reward
         self.last_reward = reward
@@ -196,7 +195,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.t_step += 1
 
-        return self.observation, reward, (done or force_done), {}
+        return self.observation, reward, done, {}
 
     @abstractmethod
     def generate_environment(self):
@@ -250,7 +249,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         elif crash_cond_2 or crash_cond_3:
             self.crash_cause = 2            # Crash because of Omega
 
-        if self.crashed:
+        if self.crashed and self.use_psf:
             try:
                 report_dir = os.path.join('logs','debug')
                 os.makedirs(report_dir, exist_ok=True)
@@ -312,14 +311,21 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.reward_survival)
 
         # Without crash reward, with omega_dot reward, V-6
+        # step_reward = (self.theta_reward
+        #                + self.theta_dot_reward
+        #                + self.omega_reward
+        #                + self.omega_dot_reward
+        #                + self.power_reward
+        #                + self.psf_reward
+        #                + self.reward_survival)
+        
+        # Without crash reward and survival, with omega_dot reward, V-7
         step_reward = (self.theta_reward
                        + self.theta_dot_reward
                        + self.omega_reward
                        + self.omega_dot_reward
                        + self.power_reward
-                       + self.psf_reward
-                       + self.reward_survival)
-        
+                       + self.psf_reward)
 
         return done, step_reward
 

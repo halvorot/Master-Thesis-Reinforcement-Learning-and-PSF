@@ -27,12 +27,12 @@ L = 144.45
 L_thr = 50
 
 # Rotor parameters
-B = 0.97                                # Tip loss parameter (table 5.1 Pedersen)
-lambda_star = 9                       # (table 5.1 Pedersen)
-C_P_star = 0.489                         # (table 5.1 Pedersen)
-C_F = 0.8                            # (table 5.1 Pedersen)
-rho = 1.225                             # Air density (table 5.1 Pedersen)
-R = 120                                  # Blade length
+B = 0.97                                # Tip loss parameter From 15MW turbine documentation
+lambda_star = 9                         # From 15MW turbine documentation
+C_P_star = 0.489                        # From 15MW turbine documentation
+C_F = 0.8                               # From 15MW turbine documentation
+rho = 1.225                             # Air density
+R = 120                                 # Blade length From 15MW turbine documentation
 A = np.pi*R**2
 R_p = B*R
 A_p = np.pi*R_p**2

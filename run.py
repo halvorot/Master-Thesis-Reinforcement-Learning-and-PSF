@@ -62,14 +62,14 @@ def run(args):
         agent = PPO.load(agent_path)
         sim_df = utils.simulate_episode(env=env, agent=agent, max_time=args.time)
         agent_path_list = agent_path.split("\\")
-        simdata_dir = os.path.join("logs", env_id, agent_path_list[-3], "sim_data")
+        simdata_dir = os.path.join("logs", agent_path_list[-4], agent_path_list[-3], "sim_data")
         os.makedirs(simdata_dir, exist_ok=True)
 
         # Save file to logs\env_id\<EXPERIMENT_ID>\sim_data\<agent_file_name>_simdata.csv
         i = 0
-        while os.path.exists(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
+        while os.path.exists(os.path.join(simdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + f"_simdata_{i}.csv")):
             i += 1
-        sim_df.to_csv(os.path.join(simdata_dir, agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))
+        sim_df.to_csv(os.path.join(simdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + f"_simdata_{i}.csv"))
     else:
         sim_df = utils.simulate_episode(env=env, agent=None, max_time=args.time)
 
@@ -77,7 +77,7 @@ def run(args):
 
     if args.plot:
         fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3)
-        if args.env == 'ConstantWind-v16':
+        if args.env == 'ConstantWind-v17':
             fig.suptitle(f"Wind speed: {env.wind_speed:.1f} m/s")
         else:
             fig.suptitle(f"Wind mean: {env.wind_mean:.1f} m/s, Wind amplitude: {env.wind_amplitude:.1f} m/s")

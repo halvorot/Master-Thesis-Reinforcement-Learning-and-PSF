@@ -11,12 +11,12 @@ NLP_OPTS = {
     "eval_errors_fatal": True,
     "verbose_init": False,
     "show_eval_warnings": False,
-    "ipopt": {"print_level": 0, "sb": "yes"},
+    "ipopt": {"print_level": 2, "sb": "yes"},
     "print_time": False,
 }
 
 
-def constrain_center(Hz, hz):
+def polytope_center(Hz, hz):
     nz = Hz.shape[-1]
     z0 = SX.sym('z0', nz, 1)
 
@@ -124,49 +124,62 @@ def col_un_scale(arr, scale):
     return np.moveaxis(arr, -2, -1)
 
 
-def center_optimization(x_dot, x, u, p, p_0, Hx, Hu, hx, hu):
-    nx = Hx.shape[-1]
-    x0 = constrain_center(Hx, hx)
-    u0 = constrain_center(Hu, hu)
-    J_x = np.diag((1 / (Hx @ x0 - hx) ** 2).flatten())
-    J_u = np.diag((1 / (Hu @ u0 - hu) ** 2).flatten())
+def get_solver(f, v, Hv, hv, p=None):
+    nf = f.shape[0]
+    v_lwb = np.asarray([min_func(v[i], v, Hv, hv) for i in range(v.shape[0])])
+    v_uwb = -np.asarray([min_func(-v[i], v, Hv, hv) for i in range(v.shape[0])])
+    v_span = np.vstack(v_uwb - v_lwb)
 
-    center_normalized_x = (Hx @ x - hx)
-    center_normalized_u = (Hu @ u - hu)
-    objective = center_normalized_x.T @ J_x @ center_normalized_x + center_normalized_u.T @ J_u @ center_normalized_u
+    norm_Hh = (Hv @ v - hv) / (Hv @ v_span)
 
-    w = [x, u]
+    objective = norm_Hh.T @ norm_Hh
 
     g = []
     lbg = []
     ubg = []
 
-    g += [x_dot]
-    lbg += [0] * nx
-    ubg += [0] * nx
+    g += [f]
+    lbg += [0] * nf
+    ubg += [0] * nf
 
-    g += [Hx @ x]
+    g += [Hv @ v]
     lbg += [-inf] * g[-1].shape[0]
-    ubg += [hx]
+    ubg += [hv]
 
-    g += [Hu @ u]
-    lbg += [-inf] * g[-1].shape[0]
-    ubg += [hu]
+    problem = {'f': objective, 'x': v, 'g': vertcat(*g)}
+    if p is None:
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+    else:
+        problem["p"] = p
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+    return solver, lbg, ubg
 
-    problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': p}
-    solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-    sol = solver(p=p_0, lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=vertcat(*[x0, u0]))
-    z = np.asarray(sol['x'])
 
-    x_c0, u_c0 = np.vsplit(z, [nx])
+def solve(solver, lbg, ubg, v0, p0=None):
+    if p0 is None:
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
+    else:
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0, p=p0)
 
-    return x_c0, u_c0
+    v_c0 = np.asarray(sol['x'])
+
+    return v_c0
+
+
+def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
+    if v0 is None:
+        v0 = polytope_center(Hv, hv)
+
+    solver, lbg, ubg = get_solver(f, v, Hv, hv, p)
+    v_c0 = solve(solver, lbg, ubg, v0, p0)
+
+    return v_c0
 
 
 def min_func(f, v, Hv, hv):
     problem = {'f': f, 'x': v, 'g': Hv @ v}
     solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
-    return float(solver(lbg=-inf, ubg=hv, x0=constrain_center(Hv, hv))['f'])
+    return float(solver(lbg=-inf, ubg=hv, x0=polytope_center(Hv, hv))['f'])
 
 
 def delta_range(delta, v, Hv, hv):
@@ -180,20 +193,26 @@ def create_system_set(A, B, v, Hv, hv, full=True):
     delta_bounds = {}
     delta = []
     AB = horzcat(A, B)
-    AB_delta = SX(np.zeros(AB.shape))
-    for row in range(AB.shape[0]):
-        for col in range(AB.shape[1]):
-            if AB[row, col].is_constant():
-                AB_delta[row, col] = AB[row, col]
-            else:
-                delta_str = 'd_' + str(row) + str(col)
-                # print("Solving for: " + delta_str)
-                delta.append(SX.sym(delta_str))
-                AB_delta[row, col] = delta[-1]
-                delta_bounds[delta_str] = delta_range(AB[row, col], v, Hv, hv)
+    if full:
+        AB_delta = SX(np.zeros(AB.shape))
+        for row in range(AB.shape[0]):
+            for col in range(AB.shape[1]):
+                if AB[row, col].is_constant():
+                    AB_delta[row, col] = AB[row, col]
+                else:
+                    delta_str = 'd_' + str(row) + str(col)
+                    # print("Solving for: " + delta_str)
+                    delta.append(SX.sym(delta_str))
+                    AB_delta[row, col] = delta[-1]
+                    delta_bounds[delta_str] = delta_range(AB[row, col], v, Hv, hv)
 
-    eval_func = Function("eval_func", delta, [AB_delta])
-
+        eval_func = Function("eval_func", delta, [AB_delta])
+    else:
+        for i in range(v.shape[0]):
+            delta_str = 'd_' + str(i)
+            delta_bounds[delta_str] = delta_range(v[i], v, Hv, hv)
+            delta.append(v[i])
+        eval_func = Function("eval_func", delta, [AB])
     A_set = []
     B_set = []
 
@@ -259,7 +278,46 @@ def nonlinear_to_linear(x_dot, x, u):
     return affine_to_linear(nabla_x, nabla_u, x_dot - nabla_x @ x - nabla_u @ u)
 
 
+def plotEllipsoid(P, Hx, hx, x0=None):
+    if x0 is None:
+        x0 = np.vstack([0] * P.shape[0])
+    import matlab.engine
+    P = matlab.double(P.tolist())
+    Hx = matlab.double(Hx.tolist())
+    hx = matlab.double(hx.tolist())
+    x0 = matlab.double(x0.tolist())
+
+    eng = matlab.engine.start_matlab()
+
+    a = eng.plotEllipsoid(P, Hx, hx, x0)
+    eng.quit()
+
+
+def ellipsoid_volume(P):
+    d, v = np.linalg.eig(P)
+    volume = 4 / 3 * np.pi * np.prod(d ** (-1 / 2))
+    return volume
+
+
+def Hh_from_disconnected_constraints(arr):
+    arr = np.asarray(arr)
+    if any(arr[:, 0] > arr[:, 1]):
+        raise ValueError("Upper bound must be equal or greater than lower bound")
+
+    n = arr.shape[0]
+    H = np.eye(n).repeat(2, axis=0)
+    H[0::2] *= -1
+    h = np.vstack(arr.flatten())
+    h[0::2] *= -1
+    return H, h
+
+
+def stack_Hh(H_list, h_list):
+    return block_diag(*H_list), np.vstack(h_list)
+
+
 if __name__ == '__main__':
+    """
     from gym_rl_mpc.objects.symbolic_model import *
 
     wind = 15
@@ -294,13 +352,6 @@ if __name__ == '__main__':
     print_flag = True
     P = max_ellipsoid(Hxc[:, :-1], hxc)
     if print_flag:
-        import matlab.engine
-
-        P = matlab.double(P.tolist())
-        Hx = matlab.double(Hxc[:, :-1].tolist())
-        hx = matlab.double(hxc.tolist())
-
-        eng = matlab.engine.start_matlab()
-
-        a = eng.plotEllipsoid(P, Hx, hx, )
-        eng.quit()
+       
+    """
+    pass

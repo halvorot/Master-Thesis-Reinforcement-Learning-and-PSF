@@ -75,18 +75,31 @@ def test(args):
         cumulative_psf_rewards.append(np.sum(sim_df['psf_reward']))
         crashes.append(env.crashed)
         print('')
+    performances = np.subtract(cumulative_rewards, cumulative_psf_rewards)
+    crash_indexes = []
+    for i in range(len(crashes)):
+        if crashes[i]:
+            crash_indexes.append(i)
+    performances_no_crash = np.delete(performances,crash_indexes)
+    print(performances_no_crash)
     print(f'Avg. Cumulative reward: {np.sum(cumulative_rewards)/args.num_episodes}')
+    if args.num_episodes-np.sum(crashes) != 0:
+        print(f'Avg. Performance: {np.sum(performances_no_crash)/(args.num_episodes-np.sum(crashes))}')
     print(f'Crashes: {np.sum(crashes)*100/args.num_episodes}%')
 
-    test_df = DataFrame(list(zip(cumulative_rewards, cumulative_psf_rewards, crashes)), columns=['cumulative_reward','cumulative_psf_reward','crash'])
+    test_df = DataFrame(list(zip(cumulative_rewards, cumulative_psf_rewards, performances, crashes)), columns=['cumulative_reward','cumulative_psf_reward','performance','crash'])
     
     agent_path_list = agent_path.split("\\")
     testdata_dir = os.path.join("logs", agent_path_list[-4], agent_path_list[-3], "test_data")
     os.makedirs(testdata_dir, exist_ok=True)
+    if args.psf:
+        psf_prefix = "_PSF"
+    else:
+        psf_prefix = ""
     i = 0
-    while os.path.exists(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + f"_testdata_{i}.csv")):
+    while os.path.exists(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + f"_testdata_{i}.csv")):
         i += 1
-    test_df.to_csv(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + f"_testdata_{i}.csv"))
+    test_df.to_csv(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + f"_testdata_{i}.csv"))
     print(f'Reported to file in: {testdata_dir}')
     env.close()
 

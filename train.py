@@ -174,7 +174,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--num_cpus',
         type=int,
-        help='Use only one CPU (no parallelization)'
+        help='Manually set number of CPUs to use'
     )
     args = parser.parse_args()
 

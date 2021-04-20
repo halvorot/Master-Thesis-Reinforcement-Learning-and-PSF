@@ -81,7 +81,6 @@ def test(args):
         if crashes[i]:
             crash_indexes.append(i)
     performances_no_crash = np.delete(performances,crash_indexes)
-    print(performances_no_crash)
     print(f'Avg. Cumulative reward: {np.sum(cumulative_rewards)/args.num_episodes}')
     if args.num_episodes-np.sum(crashes) != 0:
         print(f'Avg. Performance: {np.sum(performances_no_crash)/(args.num_episodes-np.sum(crashes))}')

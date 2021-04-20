@@ -11,4 +11,4 @@ module load Anaconda3/2020.07
 conda init
 conda env create -f environment.yml
 conda activate gym-rl-mpc
-python train.py --timesteps 3000000 --env VariableWindLevel0-v17 --psf --note "learning rate linear schedule, init_value=1e-4"lue=1e-4"
+python train.py --timesteps 3000000 --env VariableWindLevel0-v17 --psf --note "learning rate linear schedule, init_value=1e-4"

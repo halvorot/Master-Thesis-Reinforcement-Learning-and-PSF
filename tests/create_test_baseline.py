@@ -1,47 +1,33 @@
-import os
-import sys
+import pickle
+import git
 from pathlib import Path
-import logging
-import time
 import numpy as np
 from casadi import vertcat
 from tqdm import tqdm
 
-from PSF.utils import get_solver, Hh_from_disconnected_constraints, polytope_center, solve
-
-HERE = Path(__file__).parent
-sys.path.append(HERE.parent)  # to import gym and psf
-os.chdir(HERE.parent)
-from PSF.PSF import PSF
 import gym_rl_mpc.objects.symbolic_model as sym
 import gym_rl_mpc.utils.model_params as params
+from PSF.PSF import PSF
+from PSF.utils import solve, Hh_from_disconnected_constraints, polytope_center, get_solver
 
-logging.basicConfig(level=logging.DEBUG)
+HERE = Path(__file__).parent
+init_psf = dict(sys="sym.get_sys()",
+                N=20,
+                T=10,
+                t_sys="sym.get_terminal_sys()",
+                R=np.diag([
+                    1 / params.max_thrust_force ** 2,
+                    1 / params.max_blade_pitch ** 2,
+                    1 / params.max_power_generation ** 2
+                ]),
+                PK_path=Path(HERE, "terminalset"),
+                ext_step_size=0.1,
+                slew_rate=[1e6, 8 * params.DEG2RAD, 1e6],
+                )
 
-print("Test Started")
 number_of_state_perm = 20
 number_of_input_perm = 20
-np.random.seed(42)
-init_psf_args = dict(sys=sym.get_sys(),
-                     N=20,
-                     T=10,
-                     t_sys=sym.get_terminal_sys(),
-                     R=np.diag([
-                         1 / params.max_thrust_force ** 2,
-                         1 / params.max_blade_pitch ** 2,
-                         1 / params.max_power_generation ** 2
-                     ]),
-                     PK_path=Path(HERE, "terminalset"),
-                     ext_step_size=0.1,
-                     slew_rate=[1e6, 8 * params.DEG2RAD, 1e6],
-                     )
-
-
-psf = PSF(**init_psf_args)
-args_list=[]
-nx = sym.x.shape[0]
-nu = sym.u.shape[0]
-start = time.time()
+args_list = []
 for j in range(number_of_state_perm):
 
     x = [np.random.uniform(low=-7, high=7) * params.DEG2RAD,
@@ -63,11 +49,29 @@ for j in range(number_of_state_perm):
 
         args_list.append(kwargs_calc)
 
+repo = git.Repo(search_parent_directories=True)
+sha = repo.head.object.hexsha
+
+test_case = dict(
+    git_hex=sha,
+    psf_init_kwargs=init_psf,
+    list_calc_kwargs=args_list
+)
+
+pickle.dump(test_case, open("test_case.dat", "wb"))
+
+print("Assumes sym.get_sys and sym.get_terminal_sys is static across time and tests")
+test_case=pickle.load(open("test_case.dat", "rb"))
+
+psf_init_kwargs = test_case["psf_init_kwargs"]
+list_calc_kwargs = test_case["list_calc_kwargs"]
+
 Hz, hz = Hh_from_disconnected_constraints(np.vstack([sym.sys_lub_x, sym.sys_lub_u]))
 
 z0 = polytope_center(Hz, hz)
 solver, lbg, ubg = get_solver(sym.symbolic_x_dot, vertcat(sym.x, sym.u), Hz, hz, p=sym.w)
 
+psf = PSF(**psf_init_kwargs)
 for kwargs in tqdm(args_list[:]):
     # print(sym.solve_initial_problem(kwargs["ext_params"]))
     z0 = solve(solver, lbg, ubg, 1, kwargs["ext_params"])
@@ -76,7 +80,3 @@ for kwargs in tqdm(args_list[:]):
     u = psf.calc(**kwargs)
     # logging.info(u)
 
-end = time.time()
-number_of_iter = number_of_input_perm * number_of_state_perm
-print(f"Number of state permutations: {number_of_state_perm}\n Number of input permutations: {number_of_input_perm}")
-print(f"Solved {number_of_iter} iterations in {end - start} s. {(end - start) / number_of_iter} s/step]")

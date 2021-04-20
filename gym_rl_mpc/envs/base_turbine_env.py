@@ -12,6 +12,7 @@ from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, DEG2RAD
 import os
 from pandas import DataFrame
 
+
 class BaseTurbineEnv(gym.Env, ABC):
     """
     Creates an environment with a turbine.
@@ -65,16 +66,8 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.observation_space = gym.spaces.Box(low=obsv_low, high=obsv_high, dtype=np.float32)
 
-        sys = {
-            "xdot": sym.symbolic_x_dot,
-            "x": sym.x,
-            "u": sym.u,
-            "p": sym.w,
-            "Hx": sym.Hx,
-            "hx": sym.hx,
-            "Hu": sym.Hu,
-            "hu": sym.hu
-        }
+        sys = sym.get_sys()
+        t_sys = sym.get_terminal_sys()
         R = np.diag(
             [
                 1 / params.max_thrust_force ** 2,
@@ -83,17 +76,9 @@ class BaseTurbineEnv(gym.Env, ABC):
             ])
         actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
 
-        lin_bounds = {
-            "w": [self.min_wind_speed * params.wind_inflow_ratio, self.max_wind_speed * params.wind_inflow_ratio],
-            "u_p": [0 * params.max_blade_pitch, params.max_blade_pitch],
-            "Omega": [params.omega_setpoint(self.min_wind_speed), params.omega_setpoint(self.max_wind_speed)],
-            "P_ref": [0, params.max_power_generation],
-            "theta": [-self.crash_angle_condition, self.crash_angle_condition],
-            "theta_dot": [-45 * DEG2RAD, 45 * DEG2RAD]
-        }
         ## PSF init ##
-        self.psf = PSF(sys=sys, N=20, T=10, ext_step_size=self.step_size, R=R, PK_path=Path("PSF", "stored_PK"),
-                       lin_bounds=lin_bounds, slew_rate=actuation_max_rate, slack_flag=True)
+        self.psf = PSF(sys=sys, N=20, T=10, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"),#slew_rate=actuation_max_rate,
+                       ext_step_size=self.step_size)
 
         ## END PSF init ##
 
@@ -243,20 +228,24 @@ class BaseTurbineEnv(gym.Env, ABC):
         self.crashed = crash_cond_1 or crash_cond_2 or crash_cond_3
 
         if end_cond_2:
-            self.crash_cause = 0            # No crash, episode just done
+            self.crash_cause = 0  # No crash, episode just done
         elif crash_cond_1:
-            self.crash_cause = 1            # Crash because of theta
+            self.crash_cause = 1  # Crash because of theta
         elif crash_cond_2 or crash_cond_3:
-            self.crash_cause = 2            # Crash because of Omega
+            self.crash_cause = 2  # Crash because of Omega
 
         if self.crashed and self.use_psf:
             try:
-                report_dir = os.path.join('logs','debug')
+                report_dir = os.path.join('logs', 'debug')
                 os.makedirs(report_dir, exist_ok=True)
                 file_path = os.path.join(report_dir, "crash_data.csv")
-                data = np.hstack([self.crash_cause, self.psf_error, self.turbine.state, self.agent_action, self.psf_action, self.wind_speed, self.turbine.adjusted_wind_speed])
-                data = data.reshape((1,len(data)))
-                labels = [r"crash_cause", r"psf_error", r"theta", r"theta_dot", r"omega", r"agent_F_thr", r"agent_blade_pitch", r"agent_power",r"psf_F_thr", r"psf_blade_pitch", r"psf_power", r"wind_speed", r"adjusted_wind_speed"]
+                data = np.hstack(
+                    [self.crash_cause, self.psf_error, self.turbine.state, self.agent_action, self.psf_action,
+                     self.wind_speed, self.turbine.adjusted_wind_speed])
+                data = data.reshape((1, len(data)))
+                labels = [r"crash_cause", r"psf_error", r"theta", r"theta_dot", r"omega", r"agent_F_thr",
+                          r"agent_blade_pitch", r"agent_power", r"psf_F_thr", r"psf_blade_pitch", r"psf_power",
+                          r"wind_speed", r"adjusted_wind_speed"]
                 df = DataFrame(data, columns=labels)
                 if not os.path.isfile(file_path):
                     df.to_csv(file_path)
@@ -318,7 +307,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.power_reward
         #                + self.psf_reward
         #                + self.reward_survival)
-        
+
         # Without crash reward and survival, with omega_dot reward, V-7
         step_reward = (self.theta_reward
                        + self.theta_dot_reward

@@ -39,13 +39,12 @@ class Turbine:
         self.state = np.zeros(3)                        # Initialize states
         self.state_dot = np.zeros(len(self.state))      # Initialize state_dot
         self.adjusted_wind_speed = params.wind_inflow_ratio * init_wind_speed
-        init_power = params.power_regime(init_wind_speed) * params.max_power_generation
-        self.steady_state, blade_pitch = solve_initial_problem(wind=self.adjusted_wind_speed,
-                                                               power=init_power,
-                                                               thruster_force=0)
 
+        steady_state, u0 = solve_initial_problem(wind=self.adjusted_wind_speed)
+        self.steady_state = steady_state.flatten()
         self.state = self.steady_state
-        self.u0 = [0, blade_pitch, init_power]
+        self.u0 = u0.flatten()
+        init_power = u0[-1]
         self.input = self.u0  # Initialize control input
         self.step_size = step_size
         self.alpha_thr = self.step_size / (self.step_size + params.tau_thr)

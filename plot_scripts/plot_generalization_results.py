@@ -1,8 +1,12 @@
 import argparse
 
-import matplotlib.pyplot as plt
+import plotly.io as pio
 import plotly.graph_objects as go
 
+font_dict=dict(family='Arial',
+            size=18,
+            color='black'
+            )
 
 def plot_gen_performance(save=False):
 
@@ -11,40 +15,34 @@ def plot_gen_performance(save=False):
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[0,1,1,1,1,1],
+        y=[6193.86,6184.24,6041.56,1,1,1],
         name='Level 0',
-        marker_color='lightblue',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[1,0,1,1,1,1],
+        y=[6073.30,6043.18,5952.68,1,1,1],
         name='Level 1',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[1,1,0,1,1,1],
+        y=[5867.92,5736.11,5163.92,1,1,1],
         name='Level 2',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[1,1,1,0,1,1],
+        y=[6108.16,6060.25,5953.56,0,1,1],
         name='Level 3',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[1,1,1,1,0,1],
+        y=[5855.94,5791.88,5783.19,1,0,1],
         name='Level 4',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[1,1,1,1,1,0],
+        y=[5815.67,5681.88,5598.68,1,1,0],
         name='Level 5',
     ))
-
-    font_dict=dict(family='Arial',
-            size=26,
-            color='black'
-            )
 
     fig.update_layout(  barmode='group', 
                         margin=dict(l=0, r=0, t=0, b=0),
@@ -68,6 +66,7 @@ def plot_gen_performance(save=False):
                     linecolor='black',
                     linewidth=2.4,
                     ticks='outside',
+                    tickson="boundaries",
                     tickfont=font_dict,
                     mirror='allticks',
                     tickwidth=2.4,
@@ -77,6 +76,76 @@ def plot_gen_performance(save=False):
 
     if save:
         fig.write_image("plots/generalization_performance_bar.pdf")
+
+def plot_gen_crash(save=False):
+
+    xlabels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[0,0,0,0,0,0],
+        name='Level 0',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[0,0,6,0,0,0],
+        name='Level 1',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[22,25,14,0,0,0],
+        name='Level 2',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[0,0,1,0,0,0],
+        name='Level 3',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[0,0,0,0,0,0],
+        name='Level 4',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[23,19,17,0,0,0],
+        name='Level 5',
+    ))
+
+    fig.update_layout(  barmode='group', 
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        font=font_dict,  # font formatting
+                        plot_bgcolor='white',
+                        template="simple_white")
+    # x and y-axis formatting
+    fig.update_yaxes(title_text='Crashes [%]',  # axis label
+                    showline=True,  # add line at x=0
+                    linecolor='black',  # line color
+                    linewidth=2.4, # line size
+                    ticks='outside',  # ticks outside axis
+                    tickfont=font_dict, # tick label font
+                    mirror='allticks',  # add ticks to top/right axes
+                    tickwidth=2.4,  # tick width
+                    tickcolor='black',  # tick color
+                    range=[0, 100],
+                    )
+    fig.update_xaxes(title_text='Agent Train Level',
+                    showline=True,
+                    showticklabels=True,
+                    linecolor='black',
+                    linewidth=2.4,
+                    ticks='outside',
+                    tickson="boundaries",
+                    tickfont=font_dict,
+                    mirror='allticks',
+                    tickwidth=2.4,
+                    tickcolor='black',
+                    )
+    fig.show()
+
+    if save:
+        fig.write_image("plots/generalization_crash_bar.pdf")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -88,3 +157,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     plot_gen_performance(save=args.save)
+    plot_gen_crash(save=args.save)

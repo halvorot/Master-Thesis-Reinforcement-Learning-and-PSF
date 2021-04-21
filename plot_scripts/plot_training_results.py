@@ -28,7 +28,7 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         ax.legend()
 
     if save:
-        plt.savefig('plots/r_omega_dot.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_len_mean_10M.pdf', bbox_inches='tight')
     
     plt.show()
 

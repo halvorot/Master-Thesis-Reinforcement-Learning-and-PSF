@@ -7,8 +7,9 @@ setup(
     python_requires='>=3.7, <3.8',
     url='https://github.com/halvorot/gym-rl-mpc',
     install_requires=[
+        'cvxpy',
         'tensorflow',
-        'numpy>=1.19.2,<1.20',
+        'numpy==1.19.3',
         'gym',
         'stable-baselines3[extra]',
         'matplotlib',

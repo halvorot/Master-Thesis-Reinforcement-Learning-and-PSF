@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=1     # 1 task per node
 #SBATCH --gres=gpu:1
 ##SBATCH -c 1
-#SBATCH -t 00:01:00          # Upper time limit for the job
+#SBATCH -t 00:05:00          # Upper time limit for the job
 #SBATCH -p GPUQ
 module load fosscuda/2020b
 module load Anaconda3/2020.07

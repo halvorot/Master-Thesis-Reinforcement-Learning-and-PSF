@@ -1,49 +1,82 @@
 import argparse
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+import plotly.graph_objects as go
 
 
 def plot_gen_performance(save=False):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
 
     xlabels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
 
-    level0test = [0,1,1,1,1,1]
-    level1test = [1,0,1,1,1,1]
-    level2test = [1,1,0,1,1,1]
-    level3test = [1,1,1,0,1,1]
-    level4test = [1,1,1,1,0,1]
-    level5test = [1,1,1,1,1,0]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[0,1,1,1,1,1],
+        name='Level 0',
+        marker_color='lightblue',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[1,0,1,1,1,1],
+        name='Level 1',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[1,1,0,1,1,1],
+        name='Level 2',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[1,1,1,0,1,1],
+        name='Level 3',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[1,1,1,1,0,1],
+        name='Level 4',
+    ))
+    fig.add_trace(go.Bar(
+        x=xlabels,
+        y=[1,1,1,1,1,0],
+        name='Level 5',
+    ))
 
-    x = np.arange(len(xlabels))     # the label locations
-    bar_width = 0.1                 # the width of the bars
+    font_dict=dict(family='Arial',
+            size=26,
+            color='black'
+            )
 
-    r1 = np.arange(len(level0test))
-    r2 = [x + bar_width for x in r1]
-    r3 = [x + bar_width for x in r2]
-    r4 = [x + bar_width for x in r3]
-    r5 = [x + bar_width for x in r4]
-    r6 = [x + bar_width for x in r5]
-
-    ax.bar(r1, level0test, width=bar_width, edgecolor='white', label='Level 0')
-    ax.bar(r2, level1test, width=bar_width, edgecolor='white', label='Level 1')
-    ax.bar(r3, level2test, width=bar_width, edgecolor='white', label='Level 2')
-    ax.bar(r3, level3test, width=bar_width, edgecolor='white', label='Level 3')
-    ax.bar(r3, level4test, width=bar_width, edgecolor='white', label='Level 4')
-    ax.bar(r3, level5test, width=bar_width, edgecolor='white', label='Level 5')
-    # Add axis labels
-    ax.set_xlabel('Agent Train Level', fontweight='bold')
-    ax.set_ylabel('Performance')
-    ax.set_xticks(x)
-    ax.set_xticklabels(xlabels)
+    fig.update_layout(  barmode='group', 
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        font=font_dict,  # font formatting
+                        plot_bgcolor='white',
+                        template="simple_white")
+    # x and y-axis formatting
+    fig.update_yaxes(title_text='Performance',  # axis label
+                    showline=True,  # add line at x=0
+                    linecolor='black',  # line color
+                    linewidth=2.4, # line size
+                    ticks='outside',  # ticks outside axis
+                    tickfont=font_dict, # tick label font
+                    mirror='allticks',  # add ticks to top/right axes
+                    tickwidth=2.4,  # tick width
+                    tickcolor='black',  # tick color
+                    )
+    fig.update_xaxes(title_text='Agent Train Level',
+                    showline=True,
+                    showticklabels=True,
+                    linecolor='black',
+                    linewidth=2.4,
+                    ticks='outside',
+                    tickfont=font_dict,
+                    mirror='allticks',
+                    tickwidth=2.4,
+                    tickcolor='black',
+                    )
+    fig.show()
 
     if save:
-        plt.savefig('plots/ep_rew_mean_10M.pdf', bbox_inches='tight')
-    
-    plt.show()
+        fig.write_image("plots/generalization_performance_bar.pdf")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -14,5 +14,7 @@ setup(
         'matplotlib',
         'casadi',
         'mosek',
+        'plotly',
+        'kaleido',
     ]  # And any other dependencies it needs
 )

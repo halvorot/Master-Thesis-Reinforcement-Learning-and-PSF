@@ -8,8 +8,8 @@ DEFAULT_CONFIG = {
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_reward": -1000,
     "crash_angle_condition": 10*DEG2RAD,
-    "crash_omega_max": 7.6*RPM2RAD,
-    "crash_omega_min": 5*RPM2RAD,
+    "crash_omega_max": 10*RPM2RAD,
+    "crash_omega_min": 3*RPM2RAD,
     "max_wind_speed": 25,
     "min_wind_speed": 5,
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward

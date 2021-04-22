@@ -15,32 +15,32 @@ def plot_gen_performance(save=False):
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[6193.86,6184.24,6041.56,1,1,1],
+        y=[6193.86,6184.24,6041.56,6156.46,1,1],
         name='Level 0',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[6073.30,6043.18,5952.68,1,1,1],
+        y=[6073.30,6043.18,5952.68,6098.61,1,1],
         name='Level 1',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[5867.92,5736.11,5163.92,1,1,1],
+        y=[5867.92,5736.11,5163.92,5772.30,1,1],
         name='Level 2',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[6108.16,6060.25,5953.56,0,1,1],
+        y=[6108.16,6060.25,5953.56,6100.28,1,1],
         name='Level 3',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[5855.94,5791.88,5783.19,1,0,1],
+        y=[5855.94,5791.88,5783.19,5850.98,0,1],
         name='Level 4',
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[5815.67,5681.88,5598.68,1,1,0],
+        y=[5815.67,5681.88,5598.68,5837.25,1,0],
         name='Level 5',
     ))
 
@@ -94,7 +94,7 @@ def plot_gen_crash(save=False):
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[22,25,14,0,0,0],
+        y=[22,25,14,22,0,0],
         name='Level 2',
     ))
     fig.add_trace(go.Bar(
@@ -109,7 +109,7 @@ def plot_gen_crash(save=False):
     ))
     fig.add_trace(go.Bar(
         x=xlabels,
-        y=[23,19,17,0,0,0],
+        y=[23,19,17,31,0,0],
         name='Level 5',
     ))
 

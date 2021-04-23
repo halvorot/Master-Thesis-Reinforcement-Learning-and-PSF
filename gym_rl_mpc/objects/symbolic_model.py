@@ -32,7 +32,7 @@ symbolic_x_dot = vertcat(
     theta_dot,
     params.C_1 * cos(theta) * sin(theta) + params.C_2 * sin(theta) + params.C_3 * cos(theta) * sin(
         theta_dot) + params.C_4 * F_thr + params.C_5 * F_wind,
-    1 / params.J_r * (Q_wind - P_ref / (Omega+1e-6)),
+    1 / params.J_r * (Q_wind - P_ref / (Omega + 1e-6)),
 )
 
 # Constraints
@@ -74,12 +74,16 @@ def numerical_x_dot(state, blade_pitch, propeller_thrust, power, wind):
     return np.asarray(_numerical_x_dot(state, blade_pitch, propeller_thrust, power, wind)).flatten()
 
 
-def get_sys():
-    Hx, hx = Hh_from_disconnected_constraints(sys_lub_x)
+def get_sys(
+        custom_sys_lub_x=sys_lub_x,
+        custom_sys_lub_u=sys_lub_u,
+        custom_sys_lub_p=sys_lub_p
+):
+    Hx, hx = Hh_from_disconnected_constraints(custom_sys_lub_x)
 
-    Hu, hu = Hh_from_disconnected_constraints(sys_lub_u)
+    Hu, hu = Hh_from_disconnected_constraints(custom_sys_lub_u)
 
-    Hp, hp = Hh_from_disconnected_constraints(sys_lub_p)
+    Hp, hp = Hh_from_disconnected_constraints(custom_sys_lub_p)
 
     sys = {
         "xdot": symbolic_x_dot,
@@ -97,26 +101,24 @@ def get_sys():
 
 
 # PSF Terminal constraints
-def get_terminal_sys():
-    sys = get_sys()
-
-    term_lub_x = np.asarray([
-        [0 * DEG2RAD, 8 * DEG2RAD],
-        [-1 * DEG2RAD, 1 * DEG2RAD],
-        [6 * RPM2RAD, 7 * RPM2RAD]
-    ])
-
-    term_lub_u = np.asarray([
-        [-params.max_thrust_force, params.max_thrust_force],
-        [0, params.max_blade_pitch],
-        [0, params.max_power_generation]
-    ])
-    # Wind speed
-
-    term_lub = np.vstack((term_lub_x, term_lub_u, sys_lub_p))
+def get_terminal_sys(
+        term_lub_x=np.asarray([
+            [0 * DEG2RAD, 8 * DEG2RAD],
+            [-1 * DEG2RAD, 1 * DEG2RAD],
+            [6 * RPM2RAD, 7 * RPM2RAD]
+        ]),
+        term_lub_u=np.asarray([
+            [-params.max_thrust_force, params.max_thrust_force],
+            [0, params.max_blade_pitch],
+            [0, params.max_power_generation]
+        ]),
+        term_lub_p=sys_lub_p
+):
+    term_lub = np.vstack((term_lub_x, term_lub_u, term_lub_p))
 
     term_Hv, term_hv = Hh_from_disconnected_constraints(term_lub)
 
+    sys = get_sys()
     t_sys = {
         'v': vertcat(*[sys["x"], sys["u"], sys["p"]]),
         'Hv': term_Hv,

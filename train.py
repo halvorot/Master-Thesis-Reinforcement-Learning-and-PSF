@@ -176,19 +176,42 @@ if __name__ == '__main__':
         type=int,
         help='Manually set number of CPUs to use'
     )
+    parser.add_argument(
+        '--psf_T',
+        type=int,
+        default=None,
+        help='psf horizon'
+    )
+    parser.add_argument(
+        '--psf_lb_omega',
+        type=float,
+        default=None,
+        help='omega lower bound'
+    )
+    parser.add_argument(
+        '--psf_ub_omega',
+        type=float,
+        default=None,
+        help='upper bound omega'
+    )
     args = parser.parse_args()
 
     NUM_CPUs = multiprocessing.cpu_count() if not args.num_cpus else args.num_cpus
 
     # Make environment (NUM_CPUs parallel envs)
     env_id = args.env
+    customconfig = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
+    if args.psf_lb_omega:
+        customconfig['psf_lb_omega'] = args.psf_lb_omega
+    if args.psf_ub_omega:
+        customconfig['psf_ub_omega'] = args.psf_ub_omega
+    if args.psf_T:
+        customconfig['psf_T'] = args.psf_T
     if args.psf:
-        customconfig = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
         customconfig['use_psf'] = True
-        env_kwargs = {'env_config': customconfig}
         print("Using PSF corrected actions")
-    else:
-        env_kwargs = None
+
+    env_kwargs = {'env_config': customconfig}
 
     env = make_vec_env(env_id, n_envs=NUM_CPUs, vec_env_cls=SubprocVecEnv, env_kwargs=env_kwargs)
 

@@ -81,7 +81,7 @@ def plot_gen_performance(save=False, group_by_test_level=False):
                     mirror='allticks',  # add ticks to top/right axes
                     tickwidth=2.4,  # tick width
                     tickcolor='black',  # tick color
-                    range=[3000, 6200]
+                    range=[4000, 6300]
                     )
     fig.update_xaxes(title_text='Test Level' if group_by_test_level else 'Agent Train Level',
                     showline=True,
@@ -250,6 +250,6 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
+    plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    plot_gen_heatmap(save=args.save)
+    # plot_gen_heatmap(save=args.save)

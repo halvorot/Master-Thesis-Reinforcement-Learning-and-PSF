@@ -5,8 +5,7 @@ from pathlib import Path
 import logging
 
 import numpy as np
-from casadi import SX, Function, vertcat, inf, nlpsol, jacobian, mpower, qpsol, vertsplit, integrator, norm_1
-from scipy.linalg import block_diag
+from casadi import SX, Function, vertcat, inf, nlpsol
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
     move_system, row_scale, col_scale, robust_ellipsoid, polytope_center, max_ellipsoid, NLP_OPTS, plotEllipsoid, \

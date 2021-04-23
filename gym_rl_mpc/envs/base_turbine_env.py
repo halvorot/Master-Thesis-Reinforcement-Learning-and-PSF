@@ -66,7 +66,13 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         self.observation_space = gym.spaces.Box(low=obsv_low, high=obsv_high, dtype=np.float32)
 
-        sys = sym.get_sys()
+        sys_lub_x = sym.sys_lub_x
+        sys_lub_x[2] = np.asarray([self.psf_lb_omega, self.psf_ub_omega])
+
+        T = self.psf_T
+        N = T*2
+        sys = sym.get_sys(sys_lub_x)
+
         t_sys = sym.get_terminal_sys()
         R = np.diag(
             [
@@ -77,7 +83,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         actuation_max_rate = [params.max_thrust_rate, params.max_blade_pitch_rate, params.max_power_rate]
 
         ## PSF init ##
-        self.psf = PSF(sys=sys, N=20, T=10, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"),#slew_rate=actuation_max_rate,
+        self.psf = PSF(sys=sys, N=N, T=T, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"),#slew_rate=actuation_max_rate,
                        ext_step_size=self.step_size)
 
         ## END PSF init ##
@@ -201,18 +207,19 @@ class BaseTurbineEnv(gym.Env, ABC):
         theta_dot_deg_s = self.turbine.state[1] * RAD2DEG
         omega_rpm = self.turbine.state[2] * RAD2RPM
         omega_dot_rpm_per_sec = self.turbine.omega_dot * RAD2RPM
-        power_error_MegaWatts = np.abs(action[2] - self.turbine.power_regime(self.wind_speed)) * (
-                self.turbine.max_power_generation / 1e6)
+        power_error_MegaWatts = np.abs(action[2] - self.turbine.power_regime(self.wind_speed)) * (self.turbine.max_power_generation / 1e6)
 
         omega_ref_rpm = self.turbine.omega_setpoint(self.wind_speed) * RAD2RPM
         omega_error_rpm = np.abs(omega_rpm - omega_ref_rpm)
 
         # Set each part of the reward
-        self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
-        self.theta_dot_reward = -self.gamma_theta_dot * theta_dot_deg_s ** 2
-        self.omega_dot_reward = -self.gamma_omega_dot * omega_dot_rpm_per_sec ** 2
-        self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
-        self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
+        self.theta_reward = np.exp(-np.abs(theta_deg)*self.gamma_theta)
+        self.theta_dot_reward = np.exp(-np.abs(theta_dot_deg_s)*self.gamma_theta_dot)
+
+        self.omega_reward = np.exp(-np.abs(omega_error_rpm)*self.gamma_omega)
+        self.omega_dot_reward = np.exp(-np.abs(omega_dot_rpm_per_sec)*self.gamma_omega_dot)
+
+        self.power_reward = np.exp(-np.abs(power_error_MegaWatts)*self.gamma_power)
         if self.use_psf:
             self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
         else:
@@ -309,8 +316,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.reward_survival)
 
         # Without crash reward and survival, with omega_dot reward, V-7
-        step_reward = (self.theta_reward
-                       + self.theta_dot_reward
+        step_reward = (self.theta_dot_reward
                        + self.omega_reward
                        + self.omega_dot_reward
                        + self.power_reward

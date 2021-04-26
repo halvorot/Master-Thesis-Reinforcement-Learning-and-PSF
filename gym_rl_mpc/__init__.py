@@ -15,9 +15,9 @@ DEFAULT_CONFIG = {
     "gamma_theta": 0.12,                        # Exponential coefficient for platform_angle angle reward
     "gamma_omega": 0.285,                        # Exponential coefficient for omega reward
     "gamma_power": 0.1,                        # Exponential coefficient for power reward
-    "gamma_theta_dot": 1,                      # Coefficient for angular rate penalty
-    "gamma_omega_dot": 0.4,
-    "gamma_psf": 0.1,
+    "gamma_theta_dot": 3,                      # Coefficient for angular rate penalty
+    "gamma_omega_dot": 4,
+    "gamma_psf": 5,
     "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
     "psf_T": 20,

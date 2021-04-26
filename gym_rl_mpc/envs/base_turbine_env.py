@@ -261,7 +261,7 @@ class BaseTurbineEnv(gym.Env, ABC):
             except OSError as e:
                 print('Warning: Ignoring OSError: ' + str(repr(e)))
 
-        # Full reward function Without crash reward, V-0
+        # reward function (without omega_dot an crash reward), V-0
         # step_reward = (self.theta_reward
         #                + self.theta_dot_reward
         #                + self.omega_reward
@@ -269,7 +269,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.psf_reward
         #                + self.reward_survival)
 
-        # Full reward function with crash reward, V-1
+        # reward function with crash reward (without omega_dot), V-1
         # if crash_cond_1 or crash_cond_2 or crash_cond_3:
         #     step_reward = self.crash_reward
         # else:
@@ -280,7 +280,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.psf_reward
         #                + self.reward_survival)
 
-        # Without theta and crash reward, V-2
+        # reward function without omega_dot, crash reward and theta, V-2
         # step_reward = (self.theta_dot_reward
         #                + self.omega_reward
         #                + self.power_reward
@@ -296,7 +296,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         # else:
         #     step_reward = self.power_reward
 
-        # Without theta and crash reward, with omega_dot reward, V-5
+        # Without theta and crash reward, V-5
         # step_reward = (self.theta_dot_reward
         #                + self.omega_reward
         #                + self.omega_dot_reward
@@ -304,7 +304,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.psf_reward
         #                + self.reward_survival)
 
-        # Without crash reward, with omega_dot reward, V-6
+        # Without crash reward, V-6
         # step_reward = (self.theta_reward
         #                + self.theta_dot_reward
         #                + self.omega_reward
@@ -313,7 +313,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         #                + self.psf_reward
         #                + self.reward_survival)
 
-        # Without crash reward and survival, with omega_dot reward, V-7
+        # Without crash reward and survival, V-7
         step_reward = (self.theta_reward
                        + self.theta_dot_reward
                        + self.omega_reward

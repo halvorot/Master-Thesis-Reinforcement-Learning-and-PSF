@@ -6,6 +6,7 @@ import pandas as pd
 
 
 def plot_ep_rew_mean(filepaths, labels=None, save=False):
+    max_timesteps = 0
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -17,11 +18,12 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
             ax.plot(X, Y, label=labels[i])
         else:
             ax.plot(X, Y)
+        max_timesteps = np.maximum(max_timesteps, np.max(X))
 
     # Add axis labels
     ax.set_xlabel(r'Timestep (in million)')
     ax.set_ylabel(r'Episode Reward Mean')
-    ax.set_xlim([0,np.max(X)])
+    ax.set_xlim([0,max_timesteps])
     ax.grid(True)
     
     if labels:
@@ -29,6 +31,37 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
 
     if save:
         plt.savefig('plots/ep_rew_mean_10M.pdf', bbox_inches='tight')
+    
+    plt.show()
+
+def plot_ep_crash_mean(filepaths, labels=None, save=False):
+    max_timesteps = 0
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    for i in range(len(filepaths)):
+        df = pd.read_csv(filepaths[i])
+        X = df['Step']/1e6
+        Y = df['Value']
+        if labels:
+            ax.plot(X, Y, label=labels[i])
+        else:
+            ax.plot(X, Y)
+        max_timesteps = np.maximum(max_timesteps, np.max(X))
+
+    # Add axis labels
+    ax.set_xlabel(r'Timestep (in million)')
+    ax.set_ylabel(r'Episode crash mean')
+    plt.yticks([1.0, 0.0], ["True","False"])
+    ax.set_xlim([0,max_timesteps])
+    ax.grid(True)
+    
+    if labels:
+        ax.legend()
+
+    if save:
+        plt.savefig('plots/ep_crash_mean_psf_5M.pdf', bbox_inches='tight')
     
     plt.show()
 

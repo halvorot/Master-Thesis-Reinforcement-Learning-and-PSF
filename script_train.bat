@@ -1,4 +1,5 @@
 @echo off
+rem running NTNU19771 27.04
 python train.py --timesteps 5000000 --env VariableWindLevel0-v17   --note "baseline "
 python train.py --timesteps 5000000 --env VariableWindLevel1-v17   --note "baseline "
 python train.py --timesteps 5000000 --env VariableWindLevel2-v17   --note "baseline "

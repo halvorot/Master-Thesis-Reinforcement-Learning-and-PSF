@@ -10,7 +10,7 @@ rem running on NTNU16535 27.04.2021
 rem python train.py --timesteps 2000000 --env VariableWindLevel10-v17 --psf --psf_T 10 --note "Horizon results . psf_T 10"
 rem python train.py --timesteps 2000000 --env VariableWindLevel10-v17 --psf --psf_T 20 --note "Horizon results . psf_T 20"
 
-rem running NTNU19867
+rem running NTNU19780
 python train.py --timesteps 2000000 --env VariableWindLevel0-v17 --psf  --note "baseline w/psf"
 python train.py --timesteps 2000000 --env VariableWindLevel1-v17 --psf  --note "baseline w/psf"
 python train.py --timesteps 2000000 --env VariableWindLevel2-v17 --psf  --note "baseline w/psf"

@@ -82,11 +82,20 @@ SCENARIOS = {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel10',
         'config': VARIABLE_WIND_CONFIG
     },
+    'VariableWindLevel11-v17': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel11',
+        'config': VARIABLE_WIND_CONFIG
+    },
+    'VariableWindLevel12-v17': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindLevel12',
+        'config': VARIABLE_WIND_CONFIG
+    },
     'CrazyAgent-v17': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG
     }
 }
+
 
 for scenario in SCENARIOS:
     register(

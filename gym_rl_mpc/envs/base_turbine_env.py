@@ -213,13 +213,15 @@ class BaseTurbineEnv(gym.Env, ABC):
         omega_error_rpm = np.abs(omega_rpm - omega_ref_rpm)
 
         # Set each part of the reward
-        self.theta_reward = np.exp(-self.gamma_theta * (np.abs(theta_deg))) - self.gamma_theta * np.abs(theta_deg)
-        self.theta_dot_reward = -self.gamma_theta_dot * theta_dot_deg_s ** 2
-        self.omega_dot_reward = -self.gamma_omega_dot * omega_dot_rpm_per_sec ** 2
-        self.omega_reward = np.exp(-self.gamma_omega * omega_error_rpm) - self.gamma_omega * omega_error_rpm
-        self.power_reward = np.exp(-self.gamma_power * power_error_MegaWatts) - self.gamma_power * power_error_MegaWatts
+        self.theta_reward = np.exp(-theta_deg**2 * self.gamma_theta)
+        self.theta_dot_reward = np.exp(-np.abs(theta_dot_deg_s) * self.gamma_theta_dot)
+
+        self.omega_reward = np.exp(-np.abs(omega_error_rpm) * self.gamma_omega)
+        self.omega_dot_reward = np.exp(-np.abs(omega_dot_rpm_per_sec) * self.gamma_omega_dot)
+
+        self.power_reward = np.exp(-np.abs(power_error_MegaWatts) * self.gamma_power)
         if self.use_psf:
-            self.psf_reward = -self.gamma_psf * np.sum(np.abs(np.subtract(self.agent_action, self.psf_action)))
+            self.psf_reward = np.sum(np.exp(-np.abs(np.subtract(self.agent_action, self.psf_action))*self.gamma_psf))
         else:
             self.psf_reward = 0
 

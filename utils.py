@@ -24,7 +24,7 @@ def simulate_episode(env, agent, max_time, verbose=False, id=None):
                 thr = 0
                 blade_pitch = init_blade_pitch
                 power = params.power_regime(env.wind_speed)
-            elif env.t_step in range(0,30):
+            elif env.t_step in range(0,500):
                 thr = 0
                 blade_pitch = params.max_blade_pitch
                 power = params.power_regime(env.wind_speed)

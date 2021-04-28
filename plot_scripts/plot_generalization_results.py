@@ -184,17 +184,17 @@ def plot_gen_heatmap(save=False):
     global performance_data, crash_data
     textcolors=["white","black"]
 
-    data = performance_data #*np.subtract(1,crash_data/100)
+    data = performance_data
     ylabel = "Performance"
     filename = "plots/generalization_performance_heatmap.pdf"
     format = "{:.0f}".format
-    cmap = 'viridis'
+    cmap = 'autumn'
     
     data = crash_data
     ylabel = "Crash rate"
     filename = "plots/generalization_crash_heatmap.pdf"
     format = mtick.PercentFormatter(decimals=0)
-    cmap = 'viridis_r'
+    cmap = 'autumn_r'
     textcolors.reverse()
     
     labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
@@ -250,6 +250,6 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
+    # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    # plot_gen_heatmap(save=args.save)
+    plot_gen_heatmap(save=args.save)

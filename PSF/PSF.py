@@ -249,7 +249,7 @@ class PSF:
 
             w += [eps[:, i]]
             w0 += [0] * w[-1].shape[0]
-            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf'] + eps[:, i]]
+            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf']] #+ eps[:, i]]
 
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
@@ -315,7 +315,7 @@ class PSF:
     def get_objective(self, U=None, eps=None, u_ref=None):
         objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
 
-        objective += objective + 10e6 * eps[:].T @ eps[:]
+        objective += objective #+ 10e6 * eps[:].T @ eps[:]
         return objective
 
 

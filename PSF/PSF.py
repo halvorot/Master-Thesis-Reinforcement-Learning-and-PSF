@@ -142,7 +142,7 @@ class PSF:
             terminal_set = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
             logging.info("Could not find stored files, creating a new one.")
-            terminal_set = self._get_terminal_set(fake=True)
+            terminal_set = self._get_terminal_set(fake=False)
             pickle.dump(terminal_set, open(path, "wb"))
 
         self.P, self.K, self.x_c0, self.u_c0 = terminal_set

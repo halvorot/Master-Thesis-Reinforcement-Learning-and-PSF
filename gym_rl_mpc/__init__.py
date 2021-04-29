@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
     "gamma_psf": 5,
     "gamma_input": 0,                        # Coefficient for control input penalty
     "reward_survival": 1,
-    "psf_T": 20,
+    "psf_T": 10,
     "psf_lb_omega": 5*RPM2RAD,
     "psf_ub_omega": 7.6*RPM2RAD,
 }

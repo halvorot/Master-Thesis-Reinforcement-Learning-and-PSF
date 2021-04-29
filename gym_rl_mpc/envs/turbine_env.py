@@ -142,6 +142,14 @@ class VariableWindLevel10(BaseVariableWind):
         self.wind_noise = False
         super().__init__(*args, **kwargs)
 
+class VariableWindPSFtest(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 3
+        self.max_wind_speed = 25
+        self.min_wind_speed = 11
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
 class CrazyAgent(VariableWindLevel4):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

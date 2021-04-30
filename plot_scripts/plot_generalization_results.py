@@ -10,13 +10,13 @@ font_dict=dict(family='Arial',
             size=18,
             color='black'
             )
-
-performance_data_3000 = np.array([  [6193.86, 6073.30, 5867.92, 6108.16, 5855.94, 5815.67], 
-                                    [6184.24, 6043.18, 5736.11, 6060.25, 5791.88, 5681.88],
-                                    [6041.56,5952.68,5163.92,5953.56,5783.19,5598.68],
-                                    [6156.46,6098.61,5772.30,6100.28,5850.98,5837.25],
-                                    [6163.32,6055.70,5835.18,6089.63,5883.88,5760.50],
-                                    [5995.40,5738.16,5138.83,5651.29,5126.57,4954.20]
+#                           Test Lvl 0, Test Lvl 1, Test Lvl 2, Test Lvl 3, Test Lvl 4, Test Lvl 5 
+performance_data_3000 = np.array([  [6193.86, 6073.30, 5867.92, 6108.16, 5855.94, 5815.67], # Agent level 0
+                                    [6184.24, 6043.18, 5736.11, 6060.25, 5791.88, 5681.88], # Agent level 1
+                                    [6041.56,5952.68,5163.92,5953.56,5783.19,5598.68], # Agent level 2
+                                    [6156.46,6098.61,5772.30,6100.28,5850.98,5837.25], # Agent level 3
+                                    [6163.32,6055.70,5835.18,6089.63,5883.88,5760.50], # Agent level 4
+                                    [5995.40,5738.16,5138.83,5651.29,5126.57,4954.20] # Agent level 5
                                     ])
 
 crash_data_3000 = np.array([[0,0,22,0,0,23], 
@@ -28,21 +28,21 @@ crash_data_3000 = np.array([[0,0,22,0,0,23],
                             ])
 
 # 6000 timesteps
-performance_data = np.array([   [], 
-                                [],
-                                [],
-                                [],
-                                [],
-                                []
+performance_data = np.array([   [12427.57,12262.73,11765.28,12241.83,11820.11,11743.90], 
+                                [12395.82,12149.57,11720.24,12149.67,11544.79,11651.32],
+                                [12136.35,11956.19,10221.33,12006.35,11600.21,10912.29],
+                                [12384.29,12141.83,11686.95,12241.95,11795.42,11775.06],
+                                [12409.96,12340.44,11774.98,12190.39,11764.91,11684.04],
+                                [12009.11,11416.92,9759.69,11434.15,10335.79,9938.75]
                                 ])
 performance_data = performance_data/6000
 
-crash_data = np.array([ [], 
-                        [],
-                        [],
-                        [],
-                        [],
-                        []
+crash_data = np.array([ [0,0,24,0,0,27], 
+                        [0,1,36,0,0,27],
+                        [0,1,10,2,1,22],
+                        [0,0,31,0,1,28],
+                        [0,0,28,0,0,32],
+                        [0,4,20,2,1,22]
                         ])
 
 
@@ -209,12 +209,12 @@ def plot_gen_heatmap(save=False):
     format = "{:.3f}".format
     cmap = 'autumn'
     
-    # data = crash_data
-    # ylabel = "Crash rate"
-    # filename = "plots/generalization_crash_heatmap_6000.pdf"
-    # format = mtick.PercentFormatter(decimals=0)
-    # cmap = 'autumn_r'
-    # textcolors.reverse()
+    data = crash_data
+    ylabel = "Crash rate"
+    filename = "plots/generalization_crash_heatmap_6000.pdf"
+    format = mtick.PercentFormatter(decimals=0)
+    cmap = 'autumn_r'
+    textcolors.reverse()
     
     labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
     fig, ax = plt.subplots()
@@ -255,6 +255,30 @@ def plot_gen_heatmap(save=False):
         plt.savefig(filename, bbox_inches='tight')
     plt.show()
 
+def plot_training_performance(save=False):
+    global performance_data, crash_data
+
+    labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
+    fig, ax = plt.subplots()
+    new_performance_data = [performance_data[i][i] for i in range(len(performance_data[0]))]
+    new_crash_data = [crash_data[i][i] for i in range(len(crash_data[0]))]
+
+    ax.bar(labels, new_performance_data, width=0.5, color="darkorange")
+    ax.set_ylabel('Performance')
+    # ax.tick_params(axis='y', colors='darkorange')
+
+    ax2 = ax.twinx()
+    ax2.bar(labels, new_crash_data, width=0.5, color="blue")
+    ax2.set_ylabel('Crash rate')
+    ax2.set_ylim([0,100])
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=0))
+    ax2.tick_params(axis='y', colors='blue')
+
+    fig.tight_layout()
+    if save:
+        plt.savefig("plots/training_performance_bar_6000.pdf", bbox_inches='tight')
+    plt.show()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -272,3 +296,4 @@ if __name__ == '__main__':
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
     plot_gen_heatmap(save=args.save)
+    # plot_training_performance(save=args.save)

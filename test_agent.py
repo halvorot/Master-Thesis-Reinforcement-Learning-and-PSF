@@ -51,12 +51,11 @@ def parse_argument():
 def test(args):
     if isinstance(args, dict):
         args = argparse.Namespace(**args)
+    config = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
+    config['max_episode_time'] = args.time
     if args.psf:
-        config = gym_rl_mpc.SCENARIOS[args.env]['config'].copy()
         config['use_psf'] = True
         print("Using PSF corrected actions")
-    else:
-        config = gym_rl_mpc.SCENARIOS[args.env]['config']
     env = gym.make(args.env, env_config=config)
     env_id = env.unwrapped.spec.id
 
@@ -92,13 +91,13 @@ def test(args):
     testdata_dir = os.path.join("logs", agent_path_list[-4], agent_path_list[-3], "test_data")
     os.makedirs(testdata_dir, exist_ok=True)
     if args.psf:
-        psf_prefix = "_PSF"
+        psf_prefix = "_PSF_"
     else:
-        psf_prefix = ""
+        psf_prefix = "_"
     i = 0
-    while os.path.exists(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + f"_testdata_{i}.csv")):
+    while os.path.exists(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + str(args.time*10) + f"_testdata_{i}.csv")):
         i += 1
-    test_df.to_csv(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + f"_testdata_{i}.csv"))
+    test_df.to_csv(os.path.join(testdata_dir, env_id + "_" + agent_path_list[-1][0:-4] + psf_prefix + str(args.time*10) + f"_testdata_{i}.csv"))
     print(f'Reported to file in: {testdata_dir}')
     env.close()
 

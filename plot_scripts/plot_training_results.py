@@ -5,6 +5,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.ticker as mtick
 
+def smooth(scalars, weight):  # Weight between 0 and 1
+    last = scalars[0]  # First value in the plot (first timestep)
+    smoothed = list()
+    for point in scalars:
+        smoothed_val = last * weight + (1 - weight) * point  # Calculate smoothed value
+        smoothed.append(smoothed_val)                        # Save it
+        last = smoothed_val                                  # Anchor the last smoothed value
+
+    return smoothed
+
 def plot_ep_rew_mean(filepaths, labels=None, save=False):
     max_timesteps = 0
     fig = plt.figure()
@@ -15,22 +25,25 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         X = df['Step']/1e6
         Y = df['Value']
         if labels:
-            ax.plot(X, Y, label=labels[i])
+            if "with psf" in labels[i].lower():
+                ax.plot(X, Y, label=labels[i], linestyle='dashed')
+            else:
+                ax.plot(X, Y, label=labels[i])
         else:
             ax.plot(X, Y)
         max_timesteps = np.maximum(max_timesteps, np.max(X))
 
     # Add axis labels
     ax.set_xlabel(r'Timestep (in million)')
-    ax.set_ylabel(r'Episode Length Mean')
+    ax.set_ylabel(r'Episode Reward Mean')
     ax.set_xlim([0,max_timesteps])
     ax.grid(True)
     
     if labels:
-        ax.legend()
+        ax.legend(loc='lower right')
 
     if save:
-        plt.savefig('plots/ep_len_mean_reward_funcs_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_rew_mean_PSFtest_10M.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -44,6 +57,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         df = pd.read_csv(filepaths[i])
         X = df['Step']/1e6
         Y = df['Value']*100
+        Y = smooth(Y,0.8)
         if labels:
             ax.plot(X, Y, label=labels[i])
         else:
@@ -63,7 +77,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         ax.legend()
 
     if save:
-        plt.savefig('plots/ep_crash_mean_psf_5M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_crash_mean_reward_funcs_10M.pdf', bbox_inches='tight')
     
     plt.show()
 

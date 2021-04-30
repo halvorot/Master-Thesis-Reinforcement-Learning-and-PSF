@@ -56,15 +56,15 @@ def create_run_files():
     )
     args = parser.parse_args()
 
-    s_config = ("#!/bin/sh\n"
+    s_config = ["#!/bin/sh\n"
                 "# SBATCH -J RL_w_PSF\n"  # Sensible name for the job"
                 "# SBATCH -N 1\n"  # Allocate 2 nodes for the job"
                 "# SBATCH --ntasks-per-node=1\n"  # 1 task per node"
                 f"# SBATCH -c {args.num_cpus}\n"
                 "# SBATCH -t 24:00:00\n"  # Upper time limit for the job"
-                "# SBATCH -p CPUQ\n")
+                "# SBATCH -p CPUQ\n"]
 
-    modules = ("module load fosscuda/2020b\n")
+    modules = "module load fosscuda/2020b\n"
 
     conda_hack = "source /cluster/apps/eb/software/Anaconda3/2020.07/etc/profile.d/conda.sh\n"
     conda = "conda activate gym-rl-mpc\n"
@@ -91,11 +91,11 @@ def create_run_files():
     return sbatch_dir
 
 
-def call_sbatch(loc):
-    filenames = os.listdir(loc)
+def call_sbatch(batch_loc):
+    filenames = os.listdir(batch_loc)
     for f in filenames:
-        print(Path(loc, f).absolute())
-        subprocess.run(["sbatch", str(Path(loc, f))])
+        print(Path(batch_loc, f).absolute())
+        subprocess.run(["sbatch", str(Path(batch_loc, f))])
 
 
 if __name__ == '__main__':

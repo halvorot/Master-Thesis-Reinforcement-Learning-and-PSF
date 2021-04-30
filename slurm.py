@@ -56,13 +56,13 @@ def create_run_files():
     )
     args = parser.parse_args()
 
-    s_config = ["#!/bin/sh\n"
+    s_config = ("#!/bin/sh\n"
                 "# SBATCH -J RL_w_PSF\n"  # Sensible name for the job"
                 "# SBATCH -N 1\n"  # Allocate 2 nodes for the job"
                 "# SBATCH --ntasks-per-node=1\n"  # 1 task per node"
                 f"# SBATCH -c {args.num_cpus}\n"
                 "# SBATCH -t 24:00:00\n"  # Upper time limit for the job"
-                "# SBATCH -p CPUQ\n"]
+                "# SBATCH -p CPUQ\n")
 
     modules = "module load fosscuda/2020b\n"
 

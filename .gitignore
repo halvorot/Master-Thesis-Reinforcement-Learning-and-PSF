@@ -1,10 +1,13 @@
+# custom stuff
+sbatch
+.idea/
+.vscode/
+logs/
+old_logs/
+.ou
+
 #PyCharm idea
 .idea
-
-# Matlab caches
-*.asv
-slprj/
-*.slxc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -135,11 +138,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-
-# custom stuff
-.idea/
-.vscode/
-logs/
-old_logs/
-.out/
+t/
+/sbatch/

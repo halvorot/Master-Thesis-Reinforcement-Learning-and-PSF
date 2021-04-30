@@ -79,8 +79,8 @@ def create_run_files():
     os.mkdir(sbatch_dir)
     opts = ""
     for k, v in args.__dict__.items():
-        opts += f" --{k} {v}" if v is not None else ''
-    for psf_opt in ["", "--psf"]:
+        opts += f" --{k} {v}" if v else ''
+    for psf_opt in ["", " --psf"]:
         for env in ENVS:
             train_str = f'python train.py --env {env}' + psf_opt + opts
             text = common_setup + train_str

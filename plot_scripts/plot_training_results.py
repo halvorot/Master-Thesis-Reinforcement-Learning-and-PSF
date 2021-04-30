@@ -25,7 +25,10 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         X = df['Step']/1e6
         Y = df['Value']
         if labels:
-            ax.plot(X, Y, label=labels[i])
+            if "with psf" in labels[i].lower():
+                ax.plot(X, Y, label=labels[i], linestyle='dashed')
+            else:
+                ax.plot(X, Y, label=labels[i])
         else:
             ax.plot(X, Y)
         max_timesteps = np.maximum(max_timesteps, np.max(X))

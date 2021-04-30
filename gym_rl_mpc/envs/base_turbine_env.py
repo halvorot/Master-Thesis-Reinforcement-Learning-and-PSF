@@ -371,7 +371,7 @@ class BaseTurbineEnv(gym.Env, ABC):
             'reward': self.cumulative_reward,
             'timesteps': self.t_step,
             'duration': self.t_step * self.step_size,
-            'wind_speed': self.wind_speed,
+            'wind_speed': np.array(self.episode_history['wind_speed']).mean(),
             'theta_reward': np.array(self.episode_history['theta_reward']).mean(),
             'theta_dot_reward': np.array(self.episode_history['theta_dot_reward']).mean(),
             'omega_reward': np.array(self.episode_history['omega_reward']).mean(),

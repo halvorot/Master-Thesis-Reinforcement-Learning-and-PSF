@@ -43,7 +43,7 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         ax.legend(loc='lower right')
 
     if save:
-        plt.savefig('plots/ep_rew_mean_PSFtest_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_rew_mean_10M.pdf', bbox_inches='tight')
     
     plt.show()
 

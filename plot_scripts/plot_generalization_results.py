@@ -35,7 +35,7 @@ performance_data = np.array([   [12427.57,12262.73,11765.28,12241.83,11820.11,11
                                 [12409.96,12340.44,11774.98,12190.39,11764.91,11684.04],
                                 [12009.11,11416.92,9759.69,11434.15,10335.79,9938.75]
                                 ])
-performance_data = performance_data/6000
+performance_data = 100*performance_data/(3*6000)
 
 crash_data = np.array([ [0,0,24,0,0,27], 
                         [0,1,36,0,0,27],
@@ -206,15 +206,15 @@ def plot_gen_heatmap(save=False):
     data = performance_data
     ylabel = "Performance"
     filename = "plots/generalization_performance_heatmap_6000.pdf"
-    format = "{:.3f}".format
+    format = "{:.2f}".format
     cmap = 'autumn'
     
-    data = crash_data
-    ylabel = "Crash rate"
-    filename = "plots/generalization_crash_heatmap_6000.pdf"
-    format = mtick.PercentFormatter(decimals=0)
-    cmap = 'autumn_r'
-    textcolors.reverse()
+    # data = crash_data
+    # ylabel = "Crash rate"
+    # filename = "plots/generalization_crash_heatmap_6000.pdf"
+    # format = mtick.PercentFormatter(decimals=0)
+    # cmap = 'autumn_r'
+    # textcolors.reverse()
     
     labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
     fig, ax = plt.subplots()
@@ -263,16 +263,17 @@ def plot_training_performance(save=False):
     new_performance_data = [performance_data[i][i] for i in range(len(performance_data[0]))]
     new_crash_data = [crash_data[i][i] for i in range(len(crash_data[0]))]
 
-    ax.bar(labels, new_performance_data, width=0.5, color="darkorange")
+    ax.bar(labels, new_performance_data, width=0.5)
     ax.set_ylabel('Performance')
+    # ax.set_ylim([0,100])
     # ax.tick_params(axis='y', colors='darkorange')
 
     ax2 = ax.twinx()
-    ax2.bar(labels, new_crash_data, width=0.5, color="blue")
+    ax2.bar(labels, new_crash_data, width=0.5, color="red")
     ax2.set_ylabel('Crash rate')
     ax2.set_ylim([0,100])
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=0))
-    ax2.tick_params(axis='y', colors='blue')
+    ax2.tick_params(axis='y', colors='red')
 
     fig.tight_layout()
     if save:
@@ -295,5 +296,5 @@ if __name__ == '__main__':
 
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    plot_gen_heatmap(save=args.save)
-    # plot_training_performance(save=args.save)
+    # plot_gen_heatmap(save=args.save)
+    plot_training_performance(save=args.save)

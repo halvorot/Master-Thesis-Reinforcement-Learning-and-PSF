@@ -263,17 +263,27 @@ def plot_training_performance(save=False):
     new_performance_data = [performance_data[i][i] for i in range(len(performance_data[0]))]
     new_crash_data = [crash_data[i][i] for i in range(len(crash_data[0]))]
 
-    ax.bar(labels, new_performance_data, width=0.5)
+    lns1 = ax.bar(labels, new_performance_data, width=0.5, label='Performance')
     ax.set_ylabel('Performance')
+    ax.set_ylim([0,100])
+    ax.set_axisbelow(True)
+    ax.grid(True, color='gray', axis='y', linestyle='dashed')
+    ax.set_yticks(np.arange(0,101,5))
     # ax.set_ylim([0,100])
     # ax.tick_params(axis='y', colors='darkorange')
 
     ax2 = ax.twinx()
-    ax2.bar(labels, new_crash_data, width=0.5, color="red")
+    lns2 = ax2.bar(labels, new_crash_data, width=0.5, color="red", label='Crash Rate')
     ax2.set_ylabel('Crash rate')
     ax2.set_ylim([0,100])
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=0))
     ax2.tick_params(axis='y', colors='red')
+    ax2.set_yticks(np.arange(0,101,5))
+    
+    # ask matplotlib for the plotted objects and their labels
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc=0)
 
     fig.tight_layout()
     if save:

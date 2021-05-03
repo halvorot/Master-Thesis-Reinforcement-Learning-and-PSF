@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -14,10 +15,45 @@ ENVS = [
     'VariableWindLevel5-v17'
 ]
 
-sbatch_dir = Path("sbatch")
+SBATCH_DIR = Path("sbatch")
+
+SBATCH_CONFIG = ("#!/bin/sh\n"
+                 "#SBATCH -J RL_w_PSF\n"  # Sensible name for the job"
+                 "#SBATCH -N 1\n"  # Allocate 2 nodes for the job"
+                 "#SBATCH --ntasks-per-node=1\n"  # 1 task per node"
+                 f"#SBATCH -c {12}\n"
+                 "#SBATCH -t 24:00:00\n"  # days-hours:minutes:seconds Upper time limit for the job"
+                 "#SBATCH -p CPUQ\n")
+
+MODULES = "module load fosscuda/2020b\n"
+
+CONDA_HACK = "source /cluster/apps/eb/software/Anaconda3/2020.07/etc/profile.d/conda.sh\n"
+CONDA_ACT = "conda activate gym-rl-mpc\n"
 
 
-def create_run_files():
+def create_run_files(
+        run_list,
+        sbatch_config=SBATCH_CONFIG,
+        modules=MODULES,
+        sbatch_dir=SBATCH_DIR
+):
+    common_setup = sbatch_config + modules + CONDA_HACK + CONDA_ACT
+
+    try:
+        shutil.rmtree(sbatch_dir)
+    except FileNotFoundError:
+        pass
+
+    os.mkdir(sbatch_dir)
+
+    for run_str in run_list:
+        text = common_setup + run_str
+        filename = hashlib.md5(text.encode()).hexdigest()
+        with open(Path(sbatch_dir, filename + '.sh'), 'w') as f:
+            f.write(text)
+
+
+def create_train_files():
     parser = argparse.ArgumentParser("Python implementation of spawning a lot of sbatches on train."
                                      "The env currently to run are ENVS. Queues with and without PSF")
 
@@ -55,40 +91,47 @@ def create_run_files():
         help='psf horizon'
     )
     args = parser.parse_args()
-
     s_config = ("#!/bin/sh\n"
-                "# SBATCH -J RL_w_PSF\n"  # Sensible name for the job"
-                "# SBATCH -N 1\n"  # Allocate 2 nodes for the job"
-                "# SBATCH --ntasks-per-node=1\n"  # 1 task per node"
-                f"# SBATCH -c {args.num_cpus}\n"
-                "# SBATCH -t 24:00:00\n"  # Upper time limit for the job"
-                "# SBATCH -p CPUQ\n")
+                "#SBATCH -J RL_w_PSF\n"  # Sensible name for the job"
+                "#SBATCH -N 1\n"  # Allocate 2 nodes for the job"
+                "#SBATCH --ntasks-per-node=1\n"  # 1 task per node"
+                f"#SBATCH -c {args.num_cpus}\n"
+                "#SBATCH -t 01-10:00:00\n"  # days-hours:minutes:seconds Upper time limit for the job"
+                "#SBATCH -p CPUQ\n")
 
-    modules = "module load fosscuda/2020b\n"
-
-    conda_hack = "source /cluster/apps/eb/software/Anaconda3/2020.07/etc/profile.d/conda.sh\n"
-    conda = "conda activate gym-rl-mpc\n"
-
-    common_setup = s_config + modules + conda_hack + conda
-
-    try:
-        shutil.rmtree(sbatch_dir)
-    except FileNotFoundError:
-        pass
-
-    os.mkdir(sbatch_dir)
     opts = ""
     for k, v in args.__dict__.items():
         opts += f" --{k} {v}" if v else ''
+
+    run_list = []
     for psf_opt in ["", " --psf"]:
         for env in ENVS:
-            train_str = f'python train.py --env {env}' + psf_opt + opts
-            text = common_setup + train_str
-            filename = hashlib.md5(text.encode()).hexdigest()
-            with open(Path(sbatch_dir, filename + '.sh'), 'w') as f:
-                f.write(text)
+            run_list += [f'python train.py --env {env}' + psf_opt + opts]
 
-    return sbatch_dir
+    create_run_files(run_list, s_config)
+
+
+def bat_to_sbatch(pattern=".?gen_."):
+    files = [f.name for f in os.scandir() if f.is_file()]
+    bat_gen_files = []
+    for s in files:
+        if re.search(".?gen_.", s):
+            bat_gen_files.append(s)
+    run_commands = []
+
+    for bat_gen in bat_gen_files:
+        with open(bat_gen) as f:
+            run_commands += [s for s in f.readlines() if "python" in s]
+
+    s_config = ("#!/bin/sh\n"
+                "#SBATCH -J bat_run\n"  # Sensible name for the job"
+                "#SBATCH -N 1\n"  # Allocate 2 nodes for the job"
+                "#SBATCH --ntasks-per-node=1\n"  # 1 task per node"
+                f"#SBATCH -c {1}\n"
+                "#SBATCH -t 12:00:00\n"  # days-hours:minutes:seconds Upper time limit for the job"
+                "#SBATCH -p CPUQ\n")
+
+    create_run_files(run_commands, s_config)
 
 
 def call_sbatch(batch_loc):

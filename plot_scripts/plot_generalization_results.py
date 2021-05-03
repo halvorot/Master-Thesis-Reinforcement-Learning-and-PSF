@@ -199,8 +199,7 @@ def plot_gen_crash(save=False, group_by_test_level=False):
         else:
             fig.write_image("plots/generalization_crash_bar_group_by_agent_level.pdf")
 
-def plot_gen_heatmap(save=False):
-    global performance_data, crash_data
+def plot_gen_heatmap(performance_data, crash_data, save=False):
     textcolors=["white","black"]
 
     data = performance_data
@@ -255,8 +254,7 @@ def plot_gen_heatmap(save=False):
         plt.savefig(filename, bbox_inches='tight')
     plt.show()
 
-def plot_training_performance(save=False):
-    global performance_data, crash_data
+def plot_training_performance(performance_data, crash_data, save=False):
 
     labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
     fig, ax = plt.subplots()
@@ -306,5 +304,5 @@ if __name__ == '__main__':
 
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    # plot_gen_heatmap(save=args.save)
-    plot_training_performance(save=args.save)
+    # plot_gen_heatmap(performance_data, crash_data, save=args.save)
+    plot_training_performance(performance_data, crash_data, save=args.save)

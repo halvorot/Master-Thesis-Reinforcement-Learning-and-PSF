@@ -19,7 +19,7 @@ agent_paths = {
         'level3_agent': r"..\logs\VariableWindLevel3-v17\1618934307ppo",
         'level4_agent': r"..\logs\VariableWindLevel4-v17\1618940658ppo",
         'level5_agent': r"..\logs\VariableWindLevel5-v17\1618946704ppo",
-        'levelPSFtest_agent': r"..\logs\VariableWindPSFtest-v17\1619770390ppo"
+        # 'levelPSFtest_agent': r"..\logs\VariableWindPSFtest-v17\1619770390ppo"
     }
 agent_paths_psf = {
         'level0_agent_psf': r"..\logs\VariableWindLevel0-v17\1619804074ppo",
@@ -28,7 +28,7 @@ agent_paths_psf = {
         'level3_agent_psf': r"..\logs\VariableWindLevel3-v17\1619826109ppo",
         'level4_agent_psf': r"..\logs\VariableWindLevel4-v17\1619817419ppo",
         'level5_agent_psf': r"..\logs\VariableWindLevel5-v17\1619809322ppo",
-        'levelPSFtest_agent_psf': r"..\logs\VariableWindPSFtest-v17\1619696400ppo"
+        # 'levelPSFtest_agent_psf': r"..\logs\VariableWindPSFtest-v17\1619696400ppo"
     }
 
 def get_data(paths_dict):
@@ -282,7 +282,11 @@ def plot_gen_heatmap(performance_data, crash_data, save=False):
     # Change the text's color depending on the data.
     for i in range(data.shape[0]):
         for j in range(data.shape[1]):
-            ax.text(j, i, format(data[i, j]),ha="center", va="center", color=textcolors[int(data[i, j] > threshold)])
+            if False:#i==j:
+                ax.text(j, i, '-',ha="center", va="center", color='black')
+            else:
+                ax.text(j, i, format(data[i, j]),ha="center", va="center", color=textcolors[int(data[i, j] > threshold)])
+                
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
@@ -353,9 +357,8 @@ if __name__ == '__main__':
     
     performance_data = 100*np.array(performance_data)/(3*6000)
 
-    
 
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    # plot_gen_heatmap(performance_data, crash_data, save=args.save)
-    plot_training_performance(performance_data, crash_data, save=args.save)
+    plot_gen_heatmap(performance_data, crash_data, save=args.save)
+    # plot_training_performance(performance_data, crash_data, save=args.save)

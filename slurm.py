@@ -111,11 +111,11 @@ def create_train_files():
     create_run_files(run_list, s_config)
 
 
-def bat_to_sbatch(pattern=".?gen_."):
+def bat_to_sbatch(pattern=".*?gen_.*psf"):
     files = [f.name for f in os.scandir() if f.is_file()]
     bat_gen_files = []
     for s in files:
-        if re.search(".?gen_.", s):
+        if re.search(pattern, s):
             bat_gen_files.append(s)
     run_commands = []
 
@@ -134,7 +134,7 @@ def bat_to_sbatch(pattern=".?gen_."):
     create_run_files(run_commands, s_config)
 
 
-def call_sbatch(batch_loc):
+def call_sbatch(batch_loc=SBATCH_DIR):
     filenames = os.listdir(batch_loc)
     for f in filenames:
         print(Path(batch_loc, f).absolute())
@@ -142,5 +142,5 @@ def call_sbatch(batch_loc):
 
 
 if __name__ == '__main__':
-    loc = create_run_files()
-    call_sbatch(loc)
+    bat_to_sbatch()
+

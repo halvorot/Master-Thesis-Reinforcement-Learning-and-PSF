@@ -27,13 +27,6 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         Y = df['Value']
         if labels:
             if "with psf" in labels[i].lower():
-                # if i<2:
-                #     df2 = pd.read_csv(r"C:\Users\halvorot\Downloads\run-VariableWindLevel0-v17_1619804074ppo_tensorboard_PPO_1-tag-custom_psf_reward.csv")
-                # else:
-                #     df2 = pd.read_csv(r"C:\Users\halvorot\Downloads\run-VariableWindPSFtest-v17_1619696400ppo_tensorboard_PPO_1-tag-custom_psf_reward.csv")
-                # psf_interp = interp.interp1d(np.arange(df2['Value'].size),df2['Value'])
-                # psf_rew = psf_interp(np.linspace(0,df2['Value'].size-1,Y.size))
-                # Y = Y-psf_rew*3000
                 ax.plot(X, Y, label=labels[i], linestyle='dashed')#, color="C"+str(i-1))
             else:
                 ax.plot(X, Y, label=labels[i])

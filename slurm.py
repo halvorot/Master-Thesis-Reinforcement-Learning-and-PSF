@@ -111,8 +111,8 @@ def create_train_files():
     create_run_files(run_list, s_config)
 
 
-def bat_to_sbatch(pattern=".*?gen_.*psf"):
-    files = [f.name for f in os.scandir() if f.is_file()]
+def bat_to_sbatch(bat_dir="batfolder", pattern=".*?gen_.*psf"):
+    files = [f.name for f in os.scandir(bat_dir) if f.is_file()]
     bat_gen_files = []
     for s in files:
         if re.search(pattern, s):
@@ -120,7 +120,7 @@ def bat_to_sbatch(pattern=".*?gen_.*psf"):
     run_commands = []
 
     for bat_gen in bat_gen_files:
-        with open(bat_gen) as f:
+        with open(Path(bat_dir, bat_gen)) as f:
             run_commands += [s for s in f.readlines() if "python" in s]
 
     s_config = ("#!/bin/sh\n"

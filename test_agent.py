@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 
 import gym
 import numpy as np
@@ -59,7 +60,7 @@ def test(args):
     env = gym.make(args.env, env_config=config)
     env_id = env.unwrapped.spec.id
 
-    agent_path = args.agent
+    agent_path = Path(args.agent)
     agent = PPO.load(agent_path)
     cumulative_rewards = []
     cumulative_psf_rewards = []
@@ -87,8 +88,8 @@ def test(args):
 
     test_df = DataFrame(list(zip(cumulative_rewards, cumulative_psf_rewards, performances, crashes)), columns=['cumulative_reward','cumulative_psf_reward','performance','crash'])
     
-    agent_path_list = agent_path.split("\\")
-    testdata_dir = os.path.join("logs", agent_path_list[-4], agent_path_list[-3], "test_data")
+    agent_path_list = agent_path.parts
+    testdata_dir = Path("logs", agent_path_list[-4], agent_path_list[-3], "test_data")
     os.makedirs(testdata_dir, exist_ok=True)
     if args.psf:
         psf_prefix = "_PSF_"

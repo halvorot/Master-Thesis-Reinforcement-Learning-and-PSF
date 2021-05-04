@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import matplotlib.ticker as mtick
+import scipy.interpolate as interp
 
 def smooth(scalars, weight):  # Weight between 0 and 1
     last = scalars[0]  # First value in the plot (first timestep)
@@ -26,7 +27,14 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         Y = df['Value']
         if labels:
             if "with psf" in labels[i].lower():
-                ax.plot(X, Y, label=labels[i], linestyle='dashed')
+                # if i<2:
+                #     df2 = pd.read_csv(r"C:\Users\halvorot\Downloads\run-VariableWindLevel0-v17_1619804074ppo_tensorboard_PPO_1-tag-custom_psf_reward.csv")
+                # else:
+                #     df2 = pd.read_csv(r"C:\Users\halvorot\Downloads\run-VariableWindPSFtest-v17_1619696400ppo_tensorboard_PPO_1-tag-custom_psf_reward.csv")
+                # psf_interp = interp.interp1d(np.arange(df2['Value'].size),df2['Value'])
+                # psf_rew = psf_interp(np.linspace(0,df2['Value'].size-1,Y.size))
+                # Y = Y-psf_rew*3000
+                ax.plot(X, Y, label=labels[i], linestyle='dashed')#, color="C"+str(i-1))
             else:
                 ax.plot(X, Y, label=labels[i])
         else:
@@ -43,7 +51,7 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         ax.legend(loc='lower right')
 
     if save:
-        plt.savefig('plots/ep_rew_mean_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_rew_mean_noPSF_vs_PSF_10M.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -57,11 +65,11 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         df = pd.read_csv(filepaths[i])
         X = df['Step']/1e6
         Y = df['Value']*100
-        Y = smooth(Y,0.8)
+        Y = smooth(Y,0.89)
         if labels:
-            ax.plot(X, Y, label=labels[i])
+            ax.plot(X, Y, label=labels[i], zorder=i if i!=0 else 10)
         else:
-            ax.plot(X, Y)
+            ax.plot(X, Y, zorder=i)
         max_timesteps = np.maximum(max_timesteps, np.max(X))
 
     # Add axis labels
@@ -69,6 +77,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
     ax.set_ylabel(r'Crash rate mean')
     ax.set_xlim([0,max_timesteps])
     ax.grid(True)
+    ax.set_ylim([0,100])
 
     formater = mtick.PercentFormatter(decimals=0)
     ax.yaxis.set_major_formatter(formater)
@@ -77,7 +86,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         ax.legend()
 
     if save:
-        plt.savefig('plots/ep_crash_mean_reward_funcs_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_crash_mean_psf_10M.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -88,7 +97,6 @@ if __name__ == '__main__':
         nargs='+',
         help='Path to the CSV file.',
         type=str,
-        required=True
     )
     parser.add_argument(
         '--label',
@@ -106,4 +114,43 @@ if __name__ == '__main__':
     if args.label:
         assert len(args.file)==len(args.label)
 
-    plot_ep_rew_mean(args.file, labels=args.label, save=args.save)
+    if args.file:
+        filepaths = args.file
+    else:
+        filepaths = [   r"C:\Users\halvorot\Downloads\run-VariableWindLevel0-v17_1618915245ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel1-v17_1618921752ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel2-v17_1618928488ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel3-v17_1618934307ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel4-v17_1618940658ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel5-v17_1618946704ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindPSFtest-v17_1619770390ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean (1).csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel0-v17_1619804074ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv", 
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel1-v17_1619817419ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv", 
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel2-v17_1619805498ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv", 
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel3-v17_1619826109ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv", 
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel4-v17_1619817419ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv", 
+                        r"C:\Users\halvorot\Downloads\run-VariableWindLevel5-v17_1619809322ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean.csv",
+                        r"C:\Users\halvorot\Downloads\run-VariableWindPSFtest-v17_1619696400ppo_tensorboard_PPO_1-tag-rollout_ep_rew_mean (2).csv"
+                    ]
+        filepaths = [filepaths[0],filepaths[7], filepaths[6], filepaths[13]]
+    if args.label:
+        labels = args.label
+    else:
+        labels = [  "Level 0",
+                    "Level 1",
+                    "Level 2",
+                    "Level 3",
+                    "Level 4",
+                    "Level 5",
+                    "Level HighWinds",
+                    "Level 0 with PSF",
+                    "Level 1 with PSF",
+                    "Level 2 with PSF",
+                    "Level 3 with PSF",
+                    "Level 4 with PSF",
+                    "Level 5 with PSF",
+                    "Level HighWinds with PSF"
+                    ]
+        labels = [labels[0], labels[7], labels[6], labels[13]]
+    
+    plot_ep_rew_mean(filepaths, labels, save=args.save)

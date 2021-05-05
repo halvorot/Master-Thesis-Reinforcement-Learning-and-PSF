@@ -262,7 +262,7 @@ def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
     
     # data = crash_data
     # ylabel = "Crash rate"
-    # filename = "plots/generalization_crash_heatmap_6000_psf.pdf"
+    # filename = "plots/generalization_crash_heatmap_6000.pdf"
     # format = mtick.PercentFormatter(decimals=0)
     # cmap = 'autumn_r'
     # textcolors.reverse()
@@ -287,7 +287,7 @@ def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
     ax.set_xlabel("Test Level")
 
     # Normalize the threshold to the images color range.
-    threshold = data.min()+(data.max()-data.min())/2.
+    threshold = limits[0]+(limits[1]-limits[0])/2.
 
     # Set default alignment to center, but allow it to be
     # overwritten by textkw.

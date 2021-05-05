@@ -142,5 +142,6 @@ def call_sbatch(batch_loc=SBATCH_DIR):
 
 
 if __name__ == '__main__':
-    bat_to_sbatch()
+    create_train_files()
+    call_sbatch()
 

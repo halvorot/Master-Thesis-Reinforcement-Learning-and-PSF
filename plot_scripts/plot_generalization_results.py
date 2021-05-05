@@ -35,7 +35,7 @@ def get_data(paths_dict):
 
     performance_data = []
     crash_data = []
-    for _, path in agent_paths.items():
+    for _, path in paths_dict.items():
         agent_folder = os.path.join(path,'test_data')
         agent_performances = []
         agent_crashes = []
@@ -243,20 +243,24 @@ def plot_gen_heatmap(performance_data, crash_data, save=False):
 
     data = performance_data
     ylabel = "Performance"
-    filename = "plots/generalization_performance_heatmap_6000.pdf"
+    filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
     format = "{:.2f}".format
     cmap = 'autumn'
+    limits = [54,70]
     
     # data = crash_data
     # ylabel = "Crash rate"
-    # filename = "plots/generalization_crash_heatmap_6000.pdf"
+    # filename = "plots/generalization_crash_heatmap_6000_psf.pdf"
     # format = mtick.PercentFormatter(decimals=0)
     # cmap = 'autumn_r'
     # textcolors.reverse()
+    # limits = [0, 45]
     
-    labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5"]
+    labels = ["Level 0", "Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level HighWinds"]
+    labels = labels[:len(data)]
+
     fig, ax = plt.subplots()
-    im = ax.imshow(data, cmap=cmap)
+    im = ax.imshow(data, cmap=cmap, clim=limits)
 
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax, format=format)
@@ -328,7 +332,10 @@ def plot_training_performance(performance_data, crash_data, save=False):
 
     fig.tight_layout()
     if save:
-        plt.savefig("plots/training_performance_bar_6000.pdf", bbox_inches='tight')
+        if args.psf:
+            plt.savefig("plots/training_performance_bar_6000_psf.pdf", bbox_inches='tight')
+        else:
+            plt.savefig("plots/training_performance_bar_6000.pdf", bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':
@@ -356,9 +363,10 @@ if __name__ == '__main__':
         performance_data, crash_data = get_data(agent_paths)
     
     performance_data = 100*np.array(performance_data)/(3*6000)
+    crash_data = np.array(crash_data)
 
 
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    plot_gen_heatmap(performance_data, crash_data, save=args.save)
-    # plot_training_performance(performance_data, crash_data, save=args.save)
+    # plot_gen_heatmap(performance_data, crash_data, save=args.save)
+    plot_training_performance(performance_data, crash_data, save=args.save)

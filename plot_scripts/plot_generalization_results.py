@@ -35,19 +35,23 @@ def get_data(paths_dict):
 
     performance_data = []
     crash_data = []
+    psf_reward_data = []
     for _, path in paths_dict.items():
         agent_folder = os.path.join(path,'test_data')
         agent_performances = []
         agent_crashes = []
+        agent_psf_rewards = []
         for filename in os.listdir(agent_folder):
             if filename.endswith(".csv") and '6000' in filename and 'PSFtest' not in filename:
                 file = os.path.join(agent_folder, filename)
-                perf, crash = calculate_avg_performance(file)
+                perf, crash, psf_reward = calculate_avg_performance(file)
                 agent_performances.append(perf)
                 agent_crashes.append(crash)
+                agent_psf_rewards.append(psf_reward)
         performance_data.append(agent_performances)
         crash_data.append(agent_crashes)
-    return performance_data, crash_data
+        psf_reward_data.append(agent_psf_rewards)
+    return np.array(performance_data), np.array(crash_data), np.array(psf_reward_data)
 
 #                           Test Lvl 0, Test Lvl 1, Test Lvl 2, Test Lvl 3, Test Lvl 4, Test Lvl 5 
 performance_data_3000 = np.array([  [6193.86, 6073.30, 5867.92, 6108.16, 5855.94, 5815.67], # Agent level 0
@@ -238,15 +242,23 @@ def plot_gen_crash(save=False, group_by_test_level=False):
         else:
             fig.write_image("plots/generalization_crash_bar_group_by_agent_level.pdf")
 
-def plot_gen_heatmap(performance_data, crash_data, save=False):
+def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
     textcolors=["white","black"]
 
-    data = performance_data
-    ylabel = "Performance"
-    filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
-    format = "{:.2f}".format
-    cmap = 'autumn'
-    limits = [54,70]
+    data = psf_reward_data
+    ylabel = "$\\frac{PSF reward}{Min. PSF reward}$"
+    filename = "plots/generalization_psf_reward_heatmap_6000_psf.pdf"
+    format = mtick.PercentFormatter(decimals=2)
+    cmap = 'autumn_r'
+    textcolors.reverse()
+    limits = [0,0.5]
+
+    # data = performance_data
+    # ylabel = "Performance"
+    # filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
+    # format = "{:.2f}".format
+    # cmap = 'autumn'
+    # limits = [54,70]
     
     # data = crash_data
     # ylabel = "Crash rate"
@@ -358,15 +370,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.psf:
-        performance_data, crash_data = get_data(agent_paths_psf)
+        performance_data, crash_data, psf_reward_data = get_data(agent_paths_psf)
     else:
-        performance_data, crash_data = get_data(agent_paths)
+        performance_data, crash_data, psf_reward_data = get_data(agent_paths)
     
-    performance_data = 100*np.array(performance_data)/(3*6000)
-    crash_data = np.array(crash_data)
+    performance_data = 100*performance_data/(3*6000)
+    psf_reward_data = 100*psf_reward_data/(-1*5*4.2*6000)
 
 
     # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
     # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
-    # plot_gen_heatmap(performance_data, crash_data, save=args.save)
-    plot_training_performance(performance_data, crash_data, save=args.save)
+    plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=args.save)
+    # plot_training_performance(performance_data, crash_data, save=args.save)

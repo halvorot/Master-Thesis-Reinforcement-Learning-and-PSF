@@ -248,19 +248,26 @@ class PSF:
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
 
-            w += [eps[:, i]]
-            w0 += [0] * w[-1].shape[0]
-            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf'] + eps[:, i]]
+            #w += [eps[:, i]]
+            #w0 += [0] * w[-1].shape[0]
+            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf']] #+ eps[:, i]]
 
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
         # Terminal Set constrain
-
+        '''
         XN_shifted = X[:, -1] - self.x_c0
         g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
         self.lbg += [-inf]
         self.ubg += [0]
+
+        '''
+        from gym_rl_mpc.objects.symbolic_model import _numerical_x_dot
+
+        g += [_numerical_x_dot(x=X[:, -1], F_thr=U[0, -1], u_p=U[1, -1], P_ref=U[2, -1], w=p)["x_dot"]]
+        self.lbg += [0]*g[-1].shape[0]
+        self.ubg += [0] * g[-1].shape[0]
 
         self.eval_w0 = Function("eval_w0", [x0, u_prev, p], [vertcat(*w0)])
 
@@ -283,6 +290,7 @@ class PSF:
     def calc(self, x, u_L, ext_params, u_prev=None, reset_x0=False, ):
         if self.inside_terminal(x, u_L, ext_params):
             logging.debug("Inside Terminal no need to recalculate.")
+            self.reset_init_guess()
             return u_L
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is .")
@@ -316,7 +324,7 @@ class PSF:
     def get_objective(self, U=None, eps=None, u_ref=None):
         objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
 
-        objective += objective + 10e6 * eps[:].T @ eps[:]
+        objective += objective# + 10e6 * eps[:].T @ eps[:]
         return objective
 
 

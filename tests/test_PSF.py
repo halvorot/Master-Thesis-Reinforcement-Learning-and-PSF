@@ -23,8 +23,8 @@ number_of_state_perm = 20
 number_of_input_perm = 20
 np.random.seed(42)
 init_psf_args = dict(sys=sym.get_sys(),
-                     N=20,
-                     T=10,
+                     N=140,
+                     T=70,
                      t_sys=sym.get_terminal_sys(),
                      R=np.diag([
                          1 / params.max_thrust_force ** 2,

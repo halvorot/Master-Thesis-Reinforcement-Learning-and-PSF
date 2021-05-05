@@ -13,8 +13,8 @@ def odesolver45(f, y, h, wind_speed):
         y: float. Current position.
         h: float. Step length.
     Returns:
-        q: float. Order 4 approx.
-        w: float. Order 5 approx.
+        q: float. Order 5 approx.
+        w: float. Order 4 approx.
     """
     s1 = f(y, wind_speed)
     s2 = f(y + h * s1 / 4.0, wind_speed)
@@ -84,10 +84,10 @@ class Turbine:
 
     def _sim(self, adjusted_wind_speed):
         self.state_dot = self.state_dot_func(self.state, adjusted_wind_speed)
-        state_o5, state_o4 = odesolver45(self.state_dot_func, self.state, self.step_size, adjusted_wind_speed)
+        state_o4, state_o5 = odesolver45(self.state_dot_func, self.state, self.step_size, adjusted_wind_speed)
         
 
-        self.state = state_o5
+        self.state = state_o4
         self.state[0] = geom.ssa(self.state[0])
 
     def state_dot_func(self, state, adjusted_wind_speed):

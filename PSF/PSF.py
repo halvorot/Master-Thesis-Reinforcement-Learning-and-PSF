@@ -288,10 +288,10 @@ class PSF:
         return no_state_violation.all() and no_input_violation.all() and inside_terminal.all()
 
     def calc(self, x, u_L, ext_params, u_prev=None, reset_x0=False, ):
-        if self.inside_terminal(x, u_L, ext_params):
-            logging.debug("Inside Terminal no need to recalculate.")
-            self.reset_init_guess()
-            return u_L
+        #if self.inside_terminal(x, u_L, ext_params):
+        #    logging.debug("Inside Terminal no need to recalculate.")
+        #    self.reset_init_guess()
+        #    return u_L
         if u_prev is None and self.slew_rate is not None:
             raise ValueError("'u_prev' must be set if 'slew_rate' is .")
 

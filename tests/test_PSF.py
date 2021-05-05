@@ -33,7 +33,7 @@ init_psf_args = dict(sys=sym.get_sys(),
                      ]),
                      PK_path=Path(HERE, "terminalset"),
                      ext_step_size=0.1,
-                     slew_rate=[1e6, 8 * params.DEG2RAD, 1e6],
+                     #slew_rate=[1e6, 8 * params.DEG2RAD, 1e6],
                      )
 
 

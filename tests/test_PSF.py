@@ -7,7 +7,7 @@ import numpy as np
 from casadi import vertcat
 from tqdm import tqdm
 
-from PSF.utils import get_solver, Hh_from_disconnected_constraints, polytope_center, solve
+from PSF.utils import formulate_center_problem, Hh_from_disconnected_constraints, polytope_center, solve
 
 HERE = Path(__file__).parent
 sys.path.append(HERE.parent)  # to import gym and psf
@@ -66,7 +66,7 @@ for j in range(number_of_state_perm):
 Hz, hz = Hh_from_disconnected_constraints(np.vstack([sym.sys_lub_x, sym.sys_lub_u]))
 
 z0 = polytope_center(Hz, hz)
-solver, lbg, ubg = get_solver(sym.symbolic_x_dot, vertcat(sym.x, sym.u), Hz, hz, p=sym.w)
+solver, lbg, ubg = formulate_center_problem(sym.symbolic_x_dot, vertcat(sym.x, sym.u), Hz, hz, p=sym.w)
 
 for kwargs in tqdm(args_list[:]):
     # print(sym.solve_initial_problem(kwargs["ext_params"]))

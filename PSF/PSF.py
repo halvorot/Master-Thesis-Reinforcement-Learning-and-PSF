@@ -125,6 +125,7 @@ class PSF:
         P = P[:-1, :-1]
         x_c0 = x_c0[:-1]
         Hxc = Hxc[:, :-1]
+        #plotEllipsoid(P, self.sys["Hx"], self.sys["hx"], x_c0)
         if fake:
             P = max_ellipsoid(Hxc, hxc)
             logging.warning("Creating fake terminal set")

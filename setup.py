@@ -16,5 +16,6 @@ setup(
         'mosek',
         'plotly',
         'kaleido',
+        'tqdm',
     ]  # And any other dependencies it needs
 )

@@ -1,7 +1,6 @@
 import argparse
-from plot_scripts.calculate_avg_performance import calculate_avg_performance
-import plotly.io as pio
-import plotly.graph_objects as go
+from plot_scripts.utils.calculate_avg_performance import calculate_avg_performance
+from plot_scripts.utils.agent_paths import *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
@@ -12,26 +11,7 @@ font_dict=dict(family='Arial',
             color='black'
             )
 
-agent_paths = {
-        'level0_agent': r"..\logs\VariableWindLevel0-v17\1618915245ppo",
-        'level1_agent': r"..\logs\VariableWindLevel1-v17\1618921752ppo",
-        'level2_agent': r"..\logs\VariableWindLevel2-v17\1618928488ppo",
-        'level3_agent': r"..\logs\VariableWindLevel3-v17\1618934307ppo",
-        'level4_agent': r"..\logs\VariableWindLevel4-v17\1618940658ppo",
-        'level5_agent': r"..\logs\VariableWindLevel5-v17\1618946704ppo",
-        # 'levelPSFtest_agent': r"..\logs\VariableWindPSFtest-v17\1619770390ppo"
-    }
-agent_paths_psf = {
-        'level0_agent_psf': r"..\logs\VariableWindLevel0-v17\1619804074ppo",
-        'level1_agent_psf': r"..\logs\VariableWindLevel1-v17\1619817419ppo",
-        'level2_agent_psf': r"..\logs\VariableWindLevel2-v17\1619805498ppo",
-        'level3_agent_psf': r"..\logs\VariableWindLevel3-v17\1619826109ppo",
-        'level4_agent_psf': r"..\logs\VariableWindLevel4-v17\1619817419ppo",
-        'level5_agent_psf': r"..\logs\VariableWindLevel5-v17\1619809322ppo",
-        # 'levelPSFtest_agent_psf': r"..\logs\VariableWindPSFtest-v17\1619696400ppo"
-    }
-
-def get_data(paths_dict):
+def get_data(paths_dict, psf_test_arg):
 
     performance_data = []
     crash_data = []
@@ -42,8 +22,8 @@ def get_data(paths_dict):
         agent_crashes = []
         agent_psf_rewards = []
         for filename in os.listdir(agent_folder):
-            if filename.endswith(".csv") and '6000' in filename: #and 'PSFtest' not in filename:
-                if (args.psf_test and '_PSF_' in filename) or (not args.psf_test and '_PSF_' not in filename):
+            if filename.endswith(".csv") and '6000' in filename and 'PSFtest' not in filename:
+                if (psf_test_arg and '_PSF_' in filename) or (not psf_test_arg and '_PSF_' not in filename):
                     file = os.path.join(agent_folder, filename)
                     perf, crash, psf_reward = calculate_avg_performance(file)
                     agent_performances.append(perf)
@@ -180,17 +160,12 @@ if __name__ == '__main__':
         help='Plot results with PSF on during testing',
         action='store_true'
     )
-    parser.add_argument(
-        '--group_by_test_level',
-        help='Group bars by test level instead of agent level',
-        action='store_true'
-    )
     args = parser.parse_args()
 
     if args.psf_agent:
-        performance_data, crash_data, psf_reward_data = get_data(agent_paths_psf)
+        performance_data, crash_data, psf_reward_data = get_data(agent_paths_psf, args.psf_test)
     else:
-        performance_data, crash_data, psf_reward_data = get_data(agent_paths)
+        performance_data, crash_data, psf_reward_data = get_data(agent_paths, args.psf_test)
     
     performance_data = 100*performance_data/(3*6000)
     psf_reward_data = 100*psf_reward_data/(-1*5*4.2*6000)

@@ -150,6 +150,25 @@ class VariableWindPSFtest(BaseVariableWind):
         self.wind_noise = False
         super().__init__(*args, **kwargs)
 
+class VariableWindPSFtestManual(BaseVariableWind):
+    def __init__(self, *args, **kwargs) -> None:
+        self.max_wind_amplitude = 3
+        self.max_wind_speed = 25
+        self.min_wind_speed = 13
+        self.wind_noise = False
+        super().__init__(*args, **kwargs)
+
+    def generate_environment(self):
+        """
+        Generates environment with a turbine and a random wind speed between min and max wind speed in config
+        """
+        self.wind_amplitude = 3
+        self.wind_phase_shift = 0
+
+        self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean
+        self.prev_wind_speed = self.wind_speed
+        self.turbine = Turbine(self.wind_speed, self.step_size)
+
 class CrazyAgent(VariableWindLevel4):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

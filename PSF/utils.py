@@ -1,4 +1,5 @@
 import itertools
+from functools import lru_cache
 
 import numpy as np
 from casadi import vertcat, SX, nlpsol, inf, MX, rootfinder, Function, horzcat, jacobian
@@ -14,6 +15,23 @@ NLP_OPTS = {
     "ipopt": {"print_level": 2, "sb": "yes"},
     "print_time": False,
 }
+
+
+def outer_box(Hz, hz):
+    z = SX.sym('z', Hz.shape[-1])
+    box = np.zeros((z.shape[0], 2))
+    for i in range(z.shape[0]):
+        box[i] = delta_range(z[i], z, Hz, hz)
+
+    return box
+
+
+def sample_inside_polytope(Hz, hz):
+    box = outer_box(Hz, hz)
+    sample = np.vstack(np.random.default_rng().uniform(box[:, 0], box[:, 1]))
+    while any(Hz @ sample > hz):
+        sample = np.random.default_rng().uniform(box[:, 0], box[:, 1])
+    return sample
 
 
 def polytope_center(Hz, hz):
@@ -124,7 +142,54 @@ def col_un_scale(arr, scale):
     return np.moveaxis(arr, -2, -1)
 
 
-def get_solver(f, v, Hv, hv, p=None):
+def solve(solver, lbg, ubg, v0, p0=None):
+    if p0 is None:
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
+    else:
+        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0, p=p0)
+
+    v_c0 = np.asarray(sol['x'])
+
+    return v_c0
+
+
+def formulate_center_problem(f, v, Hv, hv, p=None):
+    nf = f.shape[0]
+
+    objective = f.T @ f
+
+    g = []
+    lbg = []
+    ubg = []
+
+    g += [f]
+    lbg += [0] * nf
+    ubg += [0] * nf
+
+    g += [Hv @ v]
+    lbg += [-inf] * g[-1].shape[0]
+    ubg += [hv]
+
+    problem = {'f': objective, 'x': v, 'g': vertcat(*g)}
+    if p is None:
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+    else:
+        problem["p"] = p
+        solver = nlpsol("solver", "ipopt", problem, NLP_OPTS)
+    return solver, lbg, ubg
+
+
+def steady_state(f, v, Hv, hv, v0=None, p=None, p0=None):
+    if v0 is None:
+        v0 = polytope_center(Hv, hv)
+
+    solver, lbg, ubg = formulate_center_problem(f, v, Hv, hv, p)
+    v_c0 = solve(solver, lbg, ubg, v0, p0)
+
+    return v_c0
+
+
+def formulate_center_problem(f, v, Hv, hv, p=None):
     nf = f.shape[0]
     v_lwb = np.asarray([min_func(v[i], v, Hv, hv) for i in range(v.shape[0])])
     v_uwb = -np.asarray([min_func(-v[i], v, Hv, hv) for i in range(v.shape[0])])
@@ -155,22 +220,11 @@ def get_solver(f, v, Hv, hv, p=None):
     return solver, lbg, ubg
 
 
-def solve(solver, lbg, ubg, v0, p0=None):
-    if p0 is None:
-        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0)
-    else:
-        sol = solver(lbg=vertcat(*lbg), ubg=vertcat(*ubg), x0=v0, p=p0)
-
-    v_c0 = np.asarray(sol['x'])
-
-    return v_c0
-
-
 def center_optimization(f, v, Hv, hv, v0=None, p=None, p0=None):
     if v0 is None:
         v0 = polytope_center(Hv, hv)
 
-    solver, lbg, ubg = get_solver(f, v, Hv, hv, p)
+    solver, lbg, ubg = formulate_center_problem(f, v, Hv, hv, p)
     v_c0 = solve(solver, lbg, ubg, v0, p0)
 
     return v_c0
@@ -184,7 +238,7 @@ def min_func(f, v, Hv, hv):
 
 def delta_range(delta, v, Hv, hv):
     min_delta = min_func(delta, v, Hv, hv)
-    max_delta = min_func(-delta, v, Hv, hv)
+    max_delta = -min_func(-delta, v, Hv, hv)
     return min_delta, max_delta
 
 
@@ -354,4 +408,5 @@ if __name__ == '__main__':
     if print_flag:
        
     """
+
     pass

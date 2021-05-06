@@ -8,7 +8,7 @@ from tqdm import tqdm
 import gym_rl_mpc.objects.symbolic_model as sym
 import gym_rl_mpc.utils.model_params as params
 from PSF.PSF import PSF
-from PSF.utils import solve, Hh_from_disconnected_constraints, polytope_center, get_solver
+from PSF.utils import solve, Hh_from_disconnected_constraints, polytope_center, formulate_center_problem
 
 HERE = Path(__file__).parent
 init_psf = dict(sys="sym.get_sys()",
@@ -69,7 +69,7 @@ list_calc_kwargs = test_case["list_calc_kwargs"]
 Hz, hz = Hh_from_disconnected_constraints(np.vstack([sym.sys_lub_x, sym.sys_lub_u]))
 
 z0 = polytope_center(Hz, hz)
-solver, lbg, ubg = get_solver(sym.symbolic_x_dot, vertcat(sym.x, sym.u), Hz, hz, p=sym.w)
+solver, lbg, ubg = formulate_center_problem(sym.symbolic_x_dot, vertcat(sym.x, sym.u), Hz, hz, p=sym.w)
 
 psf = PSF(**psf_init_kwargs)
 for kwargs in tqdm(args_list[:]):

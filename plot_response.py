@@ -120,7 +120,7 @@ if __name__ == '__main__':
                 ax1.set_ylim([0,10])
 
                 ax2.plot(time, sim_df['omega'] * RAD2RPM, color=color)
-                ax2.set_ylabel('Angluar Velocity Rotor [RPM]')
+                ax2.set_ylabel('Rotor Velocity $\\Omega$ [RPM]')
                 ax2.set_xlabel('Time [s]')
                 
                 ax2.set_aspect(aspect = args.time/7)
@@ -147,7 +147,10 @@ if __name__ == '__main__':
     fig.tight_layout()
     fig2.tight_layout()
     if args.save:
-        fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms.pdf', bbox_inches='tight')
+        if args.psf:
+            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms_psf.pdf', bbox_inches='tight')
+        else:
+            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms.pdf', bbox_inches='tight')
     plt.show()
 
 

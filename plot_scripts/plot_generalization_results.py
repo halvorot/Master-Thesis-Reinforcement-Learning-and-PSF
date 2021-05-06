@@ -42,7 +42,7 @@ def get_data(paths_dict):
         agent_crashes = []
         agent_psf_rewards = []
         for filename in os.listdir(agent_folder):
-            if filename.endswith(".csv") and '6000' in filename and 'PSFtest' not in filename:
+            if filename.endswith(".csv") and '6000' in filename: #and 'PSFtest' not in filename:
                 if (args.psf_test and '_PSF_' in filename) or (not args.psf_test and '_PSF_' not in filename):
                     file = os.path.join(agent_folder, filename)
                     perf, crash, psf_reward = calculate_avg_performance(file)
@@ -90,159 +90,6 @@ crash_data_6000 = np.array([ [0,0,24,0,0,27],
                         ])
 
 
-def plot_gen_performance(save=False, group_by_test_level=False):
-    global performance_data
-    xlabels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
-    
-    if group_by_test_level:
-        performance_data = performance_data.transpose()
-    
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,0],
-        name='Agent Level 0' if group_by_test_level else 'Test Level 0',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,1],
-        name='Agent Level 1' if group_by_test_level else 'Test Level 1',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,2],
-        name='Agent Level 2' if group_by_test_level else 'Test Level 2',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,3],
-        name='Agent Level 3' if group_by_test_level else 'Test Level 3',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,4],
-        name='Agent Level 4' if group_by_test_level else 'Test Level 4',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=performance_data[:,5],
-        name='Agent Level 5' if group_by_test_level else 'Test Level 5',
-    ))
-
-    fig.update_layout(  barmode='group', 
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        font=font_dict,  # font formatting
-                        plot_bgcolor='white',
-                        template="simple_white")
-    # x and y-axis formatting
-    fig.update_yaxes(title_text='Performance',  # axis label
-                    showline=True,  # add line at x=0
-                    linecolor='black',  # line color
-                    linewidth=2.4, # line size
-                    ticks='outside',  # ticks outside axis
-                    tickfont=font_dict, # tick label font
-                    mirror='allticks',  # add ticks to top/right axes
-                    tickwidth=2.4,  # tick width
-                    tickcolor='black',  # tick color
-                    range=[4000, 6300]
-                    )
-    fig.update_xaxes(title_text='Test Level' if group_by_test_level else 'Agent Train Level',
-                    showline=True,
-                    showticklabels=True,
-                    linecolor='black',
-                    linewidth=2.4,
-                    ticks='outside',
-                    tickson="boundaries",
-                    tickfont=font_dict,
-                    mirror='allticks',
-                    tickwidth=2.4,
-                    tickcolor='black',
-                    )
-    fig.show()
-
-    if save:
-        if group_by_test_level:
-            fig.write_image("plots/generalization_performance_bar_group_by_test_level.pdf")
-        else:
-            fig.write_image("plots/generalization_performance_bar_group_by_agent_level.pdf")
-
-def plot_gen_crash(save=False, group_by_test_level=False):
-    global crash_data
-    xlabels = ['Level 0', 'Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5']
-
-
-    if group_by_test_level:
-        crash_data = crash_data.transpose()
-    
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,0],
-        name='Agent Level 0' if group_by_test_level else 'Test Level 0',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,1],
-        name='Agent Level 1' if group_by_test_level else 'Test Level 1',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,2],
-        name='Agent Level 2' if group_by_test_level else 'Test Level 2',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,3],
-        name='Agent Level 3' if group_by_test_level else 'Test Level 3',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,4],
-        name='Agent Level 4' if group_by_test_level else 'Test Level 4',
-    ))
-    fig.add_trace(go.Bar(
-        x=xlabels,
-        y=crash_data[:,5],
-        name='Agent Level 5' if group_by_test_level else 'Test Level 5',
-    ))
-
-    fig.update_layout(  barmode='group', 
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        font=font_dict,  # font formatting
-                        plot_bgcolor='white',
-                        template="simple_white")
-    # x and y-axis formatting
-    fig.update_yaxes(title_text='Crashes [%]',  # axis label
-                    showline=True,  # add line at x=0
-                    linecolor='black',  # line color
-                    linewidth=2.4, # line size
-                    ticks='outside',  # ticks outside axis
-                    tickfont=font_dict, # tick label font
-                    mirror='allticks',  # add ticks to top/right axes
-                    tickwidth=2.4,  # tick width
-                    tickcolor='black',  # tick color
-                    range=[0, 100],
-                    )
-    fig.update_xaxes(title_text='Test Level' if group_by_test_level else 'Agent Train Level',
-                    showline=True,
-                    showticklabels=True,
-                    linecolor='black',
-                    linewidth=2.4,
-                    ticks='outside',
-                    tickson="boundaries",
-                    tickfont=font_dict,
-                    mirror='allticks',
-                    tickwidth=2.4,
-                    tickcolor='black',
-                    )
-    fig.show()
-
-    if save:
-        if group_by_test_level:
-            fig.write_image("plots/generalization_crash_bar_group_by_test_level.pdf")
-        else:
-            fig.write_image("plots/generalization_crash_bar_group_by_agent_level.pdf")
-
 def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
     textcolors=["white","black"]
 
@@ -256,14 +103,14 @@ def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
 
     data = performance_data
     ylabel = "Performance"
-    filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
+    filename = "plots/generalization_performance_heatmap_6000_noPSFagent_PSFtest.pdf"
     format = "{:.2f}".format
     cmap = 'autumn'
     limits = [54,70]
     
     # data = crash_data
     # ylabel = "Crash rate"
-    # filename = "plots/generalization_crash_heatmap_6000.pdf"
+    # filename = "plots/generalization_crash_heatmap_6000_noPSFagent_PSFtest.pdf"
     # format = mtick.PercentFormatter(decimals=0)
     # cmap = 'autumn_r'
     # textcolors.reverse()
@@ -383,8 +230,5 @@ if __name__ == '__main__':
     performance_data = 100*performance_data/(3*6000)
     psf_reward_data = 100*psf_reward_data/(-1*5*4.2*6000)
 
-
-    # plot_gen_performance(save=args.save,group_by_test_level=args.group_by_test_level)
-    # plot_gen_crash(save=args.save,group_by_test_level=args.group_by_test_level)
     plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=args.save)
     # plot_training_performance(performance_data, crash_data, save=args.save)

@@ -43,11 +43,12 @@ def get_data(paths_dict):
         agent_psf_rewards = []
         for filename in os.listdir(agent_folder):
             if filename.endswith(".csv") and '6000' in filename and 'PSFtest' not in filename:
-                file = os.path.join(agent_folder, filename)
-                perf, crash, psf_reward = calculate_avg_performance(file)
-                agent_performances.append(perf)
-                agent_crashes.append(crash)
-                agent_psf_rewards.append(psf_reward)
+                if (args.psf_test and '_PSF_' in filename) or (not args.psf_test and '_PSF_' not in filename):
+                    file = os.path.join(agent_folder, filename)
+                    perf, crash, psf_reward = calculate_avg_performance(file)
+                    agent_performances.append(perf)
+                    agent_crashes.append(crash)
+                    agent_psf_rewards.append(psf_reward)
         performance_data.append(agent_performances)
         crash_data.append(agent_crashes)
         psf_reward_data.append(agent_psf_rewards)
@@ -245,20 +246,20 @@ def plot_gen_crash(save=False, group_by_test_level=False):
 def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
     textcolors=["white","black"]
 
-    data = psf_reward_data
-    ylabel = "$\\frac{PSF reward}{Min. PSF reward}$"
-    filename = "plots/generalization_psf_reward_heatmap_6000_psf.pdf"
-    format = mtick.PercentFormatter(decimals=2)
-    cmap = 'autumn_r'
-    textcolors.reverse()
-    limits = [0,0.5]
+    # data = psf_reward_data
+    # ylabel = "$\\frac{PSF reward}{Min. PSF reward}$"
+    # filename = "plots/generalization_psf_reward_heatmap_6000_psf.pdf"
+    # format = mtick.PercentFormatter(decimals=2)
+    # cmap = 'autumn_r'
+    # textcolors.reverse()
+    # limits = [0,0.5]
 
-    # data = performance_data
-    # ylabel = "Performance"
-    # filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
-    # format = "{:.2f}".format
-    # cmap = 'autumn'
-    # limits = [54,70]
+    data = performance_data
+    ylabel = "Performance"
+    filename = "plots/generalization_performance_heatmap_6000_psf.pdf"
+    format = "{:.2f}".format
+    cmap = 'autumn'
+    limits = [54,70]
     
     # data = crash_data
     # ylabel = "Crash rate"
@@ -358,8 +359,13 @@ if __name__ == '__main__':
         action='store_true'
     )
     parser.add_argument(
-        '--psf',
-        help='Plot PSF results',
+        '--psf_agent',
+        help='Plot results of agents trained with PSF',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--psf_test',
+        help='Plot results with PSF on during testing',
         action='store_true'
     )
     parser.add_argument(
@@ -369,7 +375,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    if args.psf:
+    if args.psf_agent:
         performance_data, crash_data, psf_reward_data = get_data(agent_paths_psf)
     else:
         performance_data, crash_data, psf_reward_data = get_data(agent_paths)

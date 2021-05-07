@@ -1,5 +1,7 @@
 import itertools
+import logging
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from casadi import vertcat, SX, nlpsol, inf, MX, rootfinder, Function, horzcat, jacobian
@@ -153,7 +155,7 @@ def solve(solver, lbg, ubg, v0, p0=None):
     return v_c0
 
 
-def formulate_center_problem(f, v, Hv, hv, p=None):
+def formulate_steady_state_problem(f, v, Hv, hv, p=None):
     nf = f.shape[0]
 
     objective = f.T @ f
@@ -183,10 +185,52 @@ def steady_state(f, v, Hv, hv, v0=None, p=None, p0=None):
     if v0 is None:
         v0 = polytope_center(Hv, hv)
 
-    solver, lbg, ubg = formulate_center_problem(f, v, Hv, hv, p)
+    solver, lbg, ubg = formulate_steady_state_problem(f, v, Hv, hv, p)
     v_c0 = solve(solver, lbg, ubg, v0, p0)
 
     return v_c0
+
+
+def get_terminal_set(sys, t_sys):
+    nx = sys["Hx"].shape[-1]
+    nu = sys["Hu"].shape[-1]
+
+    v_c0 = center_optimization(sys["xdot"], t_sys["v"], t_sys["Hv"], t_sys["hv"])
+    x_c0, u_c0, _ = np.vsplit(v_c0, [nx, nx + nu])
+
+    A, B = nonlinear_to_linear(sys['xdot'], sys['x'], sys['u'])
+
+    A_set, B_set = create_system_set(A, B, t_sys["v"], t_sys["Hv"], t_sys["hv"])
+    x_c0 = np.vstack([x_c0, 0])
+
+    outer_Hx = lift_constrain(sys['Hx'])
+    outer_Hu = sys['Hu']
+    outer_hx = sys['hx']
+    outer_hu = sys['hu']
+
+    Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
+                                                     B_set,
+                                                     outer_Hx,
+                                                     outer_Hu,
+                                                     outer_hx,
+                                                     outer_hu,
+                                                     x_c0,
+                                                     u_c0
+                                                     )
+
+    Bs_set, B_scale, Husr, husr = row_scale(Bc_set, Huc, huc)
+    Pu, _ = col_scale(np.hstack([Husr, husr]))
+    Husrc, husrc = np.hsplit(Pu, [-1])
+    P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Husrc, hxc, husrc)
+    K = K * B_scale[:, None]
+    # Ground after lifting
+    K = K[:, :-1]
+    P = P[:-1, :-1]
+    x_c0 = x_c0[:-1]
+    Hxc = Hxc[:, :-1]
+    logging.info(f"The volume of P is {ellipsoid_volume(P)}")
+
+    return P, K, x_c0, u_c0
 
 
 def formulate_center_problem(f, v, Hv, hv, p=None):
@@ -279,7 +323,9 @@ def create_system_set(A, B, v, Hv, hv, full=True):
     return np.stack(A_set), np.stack(B_set)
 
 
-def max_ellipsoid(Hx, hx):
+def max_ellipsoid(Hx, hx, x_0=None):
+    if x_0 is not None:
+        Hx, hx = move_constraint(Hx, hx, x_0)
     nx = Hx.shape[-1]
     E = cp.Variable((nx, nx), symmetric=True)
     objective = -cp.log_det(E)
@@ -332,7 +378,7 @@ def nonlinear_to_linear(x_dot, x, u):
     return affine_to_linear(nabla_x, nabla_u, x_dot - nabla_x @ x - nabla_u @ u)
 
 
-def plotEllipsoid(P, Hx, hx, x0=None):
+def plotEllipsoid(P, Hx, hx, x0=None, savedir=Path(""), name="ellipse"):
     if x0 is None:
         x0 = np.vstack([0] * P.shape[0])
     import matlab.engine
@@ -342,8 +388,8 @@ def plotEllipsoid(P, Hx, hx, x0=None):
     x0 = matlab.double(x0.tolist())
 
     eng = matlab.engine.start_matlab()
-
-    a = eng.plotEllipsoid(P, Hx, hx, x0)
+    eng.eval(r"addpath(dir(fullfile('..','..','**','PSF', 'plotEllipsoid.m')).folder)")
+    eng.plotEllipsoid(P, Hx, hx, x0, str(Path(savedir, name)))
     eng.quit()
 
 

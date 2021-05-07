@@ -6,6 +6,7 @@ from gym_rl_mpc.objects.turbine import Turbine
 
 class ConstantWind(BaseTurbineEnv):
     def __init__(self, *args, **kwargs) -> None:
+
         super().__init__(*args, **kwargs)
 
     def generate_environment(self):
@@ -15,6 +16,17 @@ class ConstantWind(BaseTurbineEnv):
         self.wind_speed = (self.max_wind_speed - self.min_wind_speed) * self.rand_num_gen.rand() + self.min_wind_speed
         self.turbine = Turbine(self.wind_speed, self.step_size)
 
+class ConstantWindLevel1(ConstantWind):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.max_wind_speed = 5
+        self.min_wind_speed = 13
+
+class ConstantWindLevel2(ConstantWind):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.max_wind_speed = 13
+        self.min_wind_speed = 17
 
 class BaseVariableWind(BaseTurbineEnv):
     """

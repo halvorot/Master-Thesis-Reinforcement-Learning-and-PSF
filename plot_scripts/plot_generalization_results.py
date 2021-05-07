@@ -276,7 +276,7 @@ def plot_gen_heatmap(performance_data, crash_data, psf_reward_data, save=False):
 
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax, format=format)
-    cbar.ax.set_ylabel(ylabel, rotation=-90, va="bottom")
+    cbar.axt.set_ylabel(ylabel, rotation=-90, va="bottom")
     # We want to show all ticks...
     ax.set_xticks(np.arange(len(labels)))
     ax.set_yticks(np.arange(len(labels)))

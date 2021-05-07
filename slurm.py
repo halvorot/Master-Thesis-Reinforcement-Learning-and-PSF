@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-
+"""
 ENVS = [
     'VariableWindLevel0-v17',
     'VariableWindLevel1-v17',
@@ -13,6 +13,11 @@ ENVS = [
     'VariableWindLevel3-v17',
     'VariableWindLevel4-v17',
     'VariableWindLevel5-v17'
+]
+"""
+ENVS = [
+    'ConstantWindLevel1-v17',
+    'ConstantWindLevel2-v17',
 ]
 
 SBATCH_DIR = Path("sbatch")
@@ -142,5 +147,6 @@ def call_sbatch(batch_loc=SBATCH_DIR):
 
 
 if __name__ == '__main__':
-    bat_to_sbatch()
+    create_train_files()
+    call_sbatch()
 

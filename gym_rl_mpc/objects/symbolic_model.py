@@ -2,7 +2,6 @@ import multiprocessing
 
 import numpy as np
 from casadi import SX, vertcat, cos, sin, Function
-from matplotlib import pyplot as plt
 
 import gym_rl_mpc.utils.model_params as params
 from PSF.utils import center_optimization, Hh_from_disconnected_constraints, steady_state, sample_inside_polytope
@@ -137,10 +136,26 @@ def solve_initial_problem(wind):
     return x0, u0
 
 
+def change_random():
+    wind = np.random.uniform(10 * 2 / 3, 25 * 2 / 3)
+    if np.random.rand() < 0.5:
+        power = np.random.uniform(0, 15e6)
+        arr = change_power(wind, power)
+        arr = np.vstack([arr, power])
+    else:
+        pitch = np.random.uniform(-4 * DEG2RAD, 20 * DEG2RAD)
+        arr = change_power(wind, pitch)
+        arr = np.vstack([arr[:4], pitch, arr[-1]])
+    arr = np.vstack([arr, wind])
+    if any(np.isnan(arr)):
+        arr = np.vstack([np.nan] * arr.shape[0])
+    return arr
+
+
 def change_power(wind, power):
     Hz, hz = Hh_from_disconnected_constraints(np.vstack([sys_lub_x, sys_lub_u[:-1]]))
     v0 = sample_inside_polytope(Hz, hz)
-    print(f"\nWind:\t{wind}")
+    # print(f"\nWind:\t{wind}")
     try:
         return steady_state(symbolic_x_dot,
                             vertcat(x, F_thr, u_p),
@@ -164,47 +179,4 @@ def change_blade_pitch(wind, pitch):
 
 
 if __name__ == '__main__':
-    n = 100
-    winds = np.linspace(10, 24, n)
-    pool = multiprocessing.Pool(7)
-
-    fig = plt.figure()
-    ax = fig.add_subplot()
-
-    for power in np.linspace(0, 15e6, 6):
-        print(power)
-
-        results = pool.starmap(change_power, (zip(winds, [power] * n)))
-
-        z0s = np.hstack(results)
-        p = ax.scatter(z0s[0, :] / DEG2RAD, z0s[2, :] / RPM2RAD, c=winds)
-
-    ax.set_xlabel(r'$\theta$')
-    ax.set_ylabel(r'$\Omega$')
-
-    # ax.plot(z0s[0, :], z0s[2, :], 'r+', zdir='y', zs=0)
-    # ax.plot(z0s[1, :], z0s[2, :], 'g+', zdir='x', zs=0)
-    # ax.plot(z0s[0, :], z0s[1, :], 'k+', zdir='z', zs=0)
-
-    fig.colorbar(p)
-
-    fig2 = plt.figure()
-    ax = fig2.add_subplot()
-
-    for pitch in np.linspace(-4 * DEG2RAD, 20 * DEG2RAD, 6):
-        print(pitch)
-
-        results = pool.starmap(change_blade_pitch, (zip(winds, [pitch] * n)))
-
-        z0s = np.hstack(results)
-        p = ax.scatter(z0s[0, :] / DEG2RAD, z0s[2, :] / RPM2RAD, c=winds)
-
-    ax.set_xlabel(r'$\theta$')
-    ax.set_ylabel(r'$\Omega$')
-
-    # ax.plot(z0s[0, :], z0s[2, :], 'r+', zdir='y', zs=0)
-    # ax.plot(z0s[1, :], z0s[2, :], 'g+', zdir='x', zs=0)
-    # ax.plot(z0s[0, :], z0s[1, :], 'k+', zdir='z', zs=0)
-
-    fig2.colorbar(p)
-    plt.show()
+    pass

@@ -38,6 +38,15 @@ SCENARIOS = {
         'entry_point': 'gym_rl_mpc.envs:ConstantWind',
         'config': DEFAULT_CONFIG
     },
+    'ConstantWindLevel1-v17': {
+        'entry_point': 'gym_rl_mpc.envs:ConstantWindLevel1',
+        'config': DEFAULT_CONFIG
+    },
+    'ConstantWindLevel2-v17': {
+        'entry_point': 'gym_rl_mpc.envs:ConstantWindLevel2',
+        'config': DEFAULT_CONFIG
+    },
+
     'VariableWindLevel0-v17': {
         'entry_point': 'gym_rl_mpc.envs:VariableWindLevel0',
         'config': VARIABLE_WIND_CONFIG

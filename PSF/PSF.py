@@ -9,7 +9,7 @@ from casadi import SX, Function, vertcat, inf, nlpsol
 
 from PSF.utils import nonlinear_to_linear, create_system_set, center_optimization, lift_constrain, \
     move_system, row_scale, col_scale, robust_ellipsoid, polytope_center, max_ellipsoid, NLP_OPTS, plotEllipsoid, \
-    stack_Hh, ellipsoid_volume
+    stack_Hh, ellipsoid_volume, get_terminal_set
 
 ERROR_F_VALUE = 10e4
 WARNING_F_VALUE = 10e2
@@ -44,11 +44,13 @@ class PSF:
                  t_sys,
                  ext_step_size,
                  R=None,
-                 PK_path="",
+                 PK_path=Path(""),
                  param=None,
                  alpha=0.9,
                  slew_rate=None,
+                 terminal_type="fake"
                  ):
+        self.terminal_type = terminal_type
         self.sys = sys
         self.t_sys = t_sys
 
@@ -89,53 +91,8 @@ class PSF:
         self.formulate_problem()
         self.solver = nlpsol("solver", "ipopt", self.problem, NLP_OPTS)
 
-    def _get_terminal_set(self, fake=False):
-        """ Under construction """
-
-        v_c0 = center_optimization(self.sys["xdot"], self.t_sys["v"], self.t_sys["Hv"], self.t_sys["hv"])
-        x_c0, u_c0, _ = np.vsplit(v_c0, [self.nx, self.nx + self.nu])
-
-        A, B = nonlinear_to_linear(self.sys['xdot'], self.sys['x'], self.sys['u'])
-
-        A_set, B_set = create_system_set(A, B, self.t_sys["v"], self.t_sys["Hv"], self.t_sys["hv"])
-        x_c0 = np.vstack([x_c0, 0])
-
-        outer_Hx = lift_constrain(self.sys['Hx'])
-        outer_Hu = self.sys['Hu']
-        outer_hx = self.sys['hx']
-        outer_hu = self.sys['hu']
-
-        Ac_set, Bc_set, Hxc, Huc, hxc, huc = move_system(A_set,
-                                                         B_set,
-                                                         outer_Hx,
-                                                         outer_Hu,
-                                                         outer_hx,
-                                                         outer_hu,
-                                                         x_c0,
-                                                         u_c0
-                                                         )
-
-        Bs_set, B_scale, Husr, husr = row_scale(Bc_set, Huc, huc)
-        Pu, _ = col_scale(np.hstack([Husr, husr]))
-        Husrc, husrc = np.hsplit(Pu, [-1])
-        P, K = robust_ellipsoid(Ac_set, Bs_set, Hxc, Husrc, hxc, husrc)
-        K = K * B_scale[:, None]
-        # Ground after lifting
-        K = K[:, :-1]
-        P = P[:-1, :-1]
-        x_c0 = x_c0[:-1]
-        Hxc = Hxc[:, :-1]
-        #plotEllipsoid(P, self.sys["Hx"], self.sys["hx"], x_c0)
-        if fake:
-            P = max_ellipsoid(Hxc, hxc)
-            logging.warning("Creating fake terminal set")
-        logging.info(f"The volume of P is {ellipsoid_volume(P)}")
-
-        return P, K, x_c0, u_c0
-
     def set_terminal_set(self):
-
-        s = str((self.sys, self.t_sys))
+        s = str((self.sys, self.t_sys, self.terminal_type))
         filename = sha1(s.encode()).hexdigest()[:LEN_FILE_STR]
         path = Path(self.PK_path, filename + ".dat")
         try:
@@ -143,7 +100,13 @@ class PSF:
             terminal_set = pickle.load(open(path, mode="rb"))
         except FileNotFoundError:
             logging.info("Could not find stored files, creating a new one.")
-            terminal_set = self._get_terminal_set(fake=True)
+            P, K, x_c0, u_c0 = get_terminal_set(sys=self.sys, t_sys=self.t_sys)
+
+            if self.terminal_type == "fake":
+                P = max_ellipsoid(self.sys["Hx"], self.sys["hx"], x_c0)
+
+            terminal_set = (P, K, x_c0, u_c0)
+            self.PK_path.mkdir(parents=True, exist_ok=True)
             pickle.dump(terminal_set, open(path, "wb"))
 
         self.P, self.K, self.x_c0, self.u_c0 = terminal_set
@@ -197,9 +160,7 @@ class PSF:
 
         u_prev = SX.sym('u_prev', self.nu, 1)
 
-        eps = SX.sym("eps", self.nx, N)
-
-        objective = self.get_objective(U=U, u_ref=u_ref, eps=eps)
+        objective = self.get_objective(U=U, u_ref=u_ref)
 
         # empty problem
         w = []
@@ -221,7 +182,6 @@ class PSF:
         self.lbg += [0] * self.nx
         self.ubg += [0] * self.nx
 
-
         T = self.dt.cumsum()
 
         for i in range(N):
@@ -236,7 +196,7 @@ class PSF:
             self.ubg += [self.sys["hu"]]
 
             if self.slew_rate is not None:
-                g += [U[:, i]-U[:, i - 1]]
+                g += [U[:, i] - U[:, i - 1]]
                 self.lbg += [-np.array(self.slew_rate) * self.dt[i]]
                 self.ubg += [np.array(self.slew_rate) * self.dt[i]]
 
@@ -248,26 +208,41 @@ class PSF:
             self.lbg += [-inf] * g[-1].shape[0]
             self.ubg += [self.sys["hx"]]
 
-            w += [eps[:, i]]
-            w0 += [0] * w[-1].shape[0]
-            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf'] + eps[:, i]]
+            g += [X[:, i + 1] - self.model_step(xk=X[:, i], u=U[:, i], p=p, dt=self.dt[i])['xf']]
 
             self.lbg += [0] * g[-1].shape[0]
             self.ubg += [0] * g[-1].shape[0]
 
         # Terminal Set constrain
+        P = SX.sym('P', self.nx, self.nx)
+        x_c0 = SX.sym('x_c0', self.nx, 1)
 
-        XN_shifted = X[:, -1] - self.x_c0
-        g += [XN_shifted.T @ self.P @ XN_shifted - [self.alpha]]
-        self.lbg += [-inf]
-        self.ubg += [0]
+        if self.terminal_type == "steady":
+            f = Function('f', [self.sys["x"], self.sys["u"], self.sys["p"]], [self.sys["xdot"]])
+
+            g += [f(X[:, -1], U[:, -1], p)]
+
+            self.lbg += [0] * g[-1].shape[0]
+            self.ubg += [0] * g[-1].shape[0]
+        else:
+
+            XN_shifted = X[:, -1] - x_c0
+            g += [XN_shifted.T @ P @ XN_shifted - [self.alpha]]
+
+            self.lbg += [-inf]
+            self.ubg += [0]
 
         self.eval_w0 = Function("eval_w0", [x0, u_prev, p], [vertcat(*w0)])
 
-        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g), 'p': vertcat(x0, u_ref, u_prev, p)}
+        self.problem = {'f': objective, 'x': vertcat(*w), 'g': vertcat(*g),
+                        'p': vertcat(x0, u_ref, u_prev, p, P[:], x_c0)}
 
     def reset_init_guess(self):
         self._init_guess = np.array([])
+
+    def calculate_new_terminal(self, new_t_sys):
+        self.t_sys = new_t_sys
+        self.set_terminal_set()
 
     def inside_terminal(self, x, u_L, ext_params):
         x0 = np.vstack(x)
@@ -292,7 +267,7 @@ class PSF:
         if self._init_guess.shape[0] == 0:
             self._init_guess = np.asarray(self.eval_w0(x, u_prev, ext_params))
 
-        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params),
+        solution = self.solver(p=vertcat(x, u_L, u_prev, ext_params, self.P.T.flatten(), self.x_c0),
                                lbg=vertcat(*self.lbg),
                                ubg=vertcat(*self.ubg),
                                x0=self._init_guess
@@ -313,10 +288,10 @@ class PSF:
 
         return u
 
-    def get_objective(self, U=None, eps=None, u_ref=None):
+    def get_objective(self, U=None, u_ref=None):
         objective = (u_ref - U[:, 0]).T @ self.R @ (u_ref - U[:, 0])
 
-        objective += objective + 10e6 * eps[:].T @ eps[:]
+        objective += objective
         return objective
 
 

@@ -95,6 +95,10 @@ SCENARIOS = {
         'entry_point': 'gym_rl_mpc.envs:VariableWindPSFtest',
         'config': VARIABLE_WIND_CONFIG
     },
+    'VariableWindPSFtestManual-v17': {
+        'entry_point': 'gym_rl_mpc.envs:VariableWindPSFtestManual',
+        'config': VARIABLE_WIND_CONFIG
+    },
     'CrazyAgent-v17': {
         'entry_point': 'gym_rl_mpc.envs:CrazyAgent',
         'config': CRAZY_ENV_CONFIG

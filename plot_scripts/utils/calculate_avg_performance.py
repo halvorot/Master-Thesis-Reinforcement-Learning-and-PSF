@@ -24,12 +24,12 @@ def calculate_avg_performance(filename):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--filename',
+        '--file',
         type=str,
         required=True,
         help="Filename"
     )
     args = parser.parse_args()
-    avg_performance, avg_crashes, avg_psf_reward = calculate_avg_performance(args.filename)
+    avg_performance, avg_crashes, avg_psf_reward = calculate_avg_performance(args.file)
     print(f'Avg. Performance: {avg_performance}')
     print(f'Crashes: {avg_crashes}%')

@@ -154,7 +154,7 @@ class VariableWindPSFtestManual(BaseVariableWind):
     def __init__(self, *args, **kwargs) -> None:
         self.max_wind_amplitude = 3
         self.max_wind_speed = 25
-        self.min_wind_speed = 13
+        self.min_wind_speed = 5
         self.wind_noise = False
         super().__init__(*args, **kwargs)
 
@@ -162,7 +162,6 @@ class VariableWindPSFtestManual(BaseVariableWind):
         """
         Generates environment with a turbine and a random wind speed between min and max wind speed in config
         """
-        self.wind_amplitude = 3
         self.wind_phase_shift = 0
 
         self.wind_speed = self.wind_amplitude * np.sin(self.wind_phase_shift) + self.wind_mean

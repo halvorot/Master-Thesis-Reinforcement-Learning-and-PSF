@@ -53,6 +53,12 @@ def parse_argument():
         required=True,
         help='Wind mean',
     )
+    parser.add_argument(
+        '--wind_amplitude',
+        type=int,
+        default=3,
+        help='Wind amplitude',
+    )
     args = parser.parse_args()
     args.plot = False
     return args
@@ -63,6 +69,7 @@ def simulate_and_save(args):
         config['use_psf'] = True
         print("Using PSF corrected actions")
     config['wind_mean'] = args.wind_mean
+    config['wind_amplitude'] = args.wind_amplitude
 
     if not hasattr(args, 'save_sim_data'):
         args.save_sim_data = True
@@ -102,6 +109,7 @@ if __name__ == '__main__':
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig2, (ax3, ax4) = plt.subplots(1, 2)
     agent_num = 0
+    max_time = 0
     for agent_name, agent_path in agent_paths_dict.items():
         if '0' in agent_name or '5' in agent_name:
             print(agent_name)
@@ -112,10 +120,12 @@ if __name__ == '__main__':
                 
                 time = np.array(range(0, len(sim_df['theta']))) * env.step_size
 
+                max_time = np.max([time[-1], max_time])
+
                 ax1.plot(time, sim_df['theta'] * RAD2DEG, color=color)
                 ax1.set_ylabel('$\\theta$ [deg]')
                 ax1.set_xlabel('Time [s]')
-                ax1.set_aspect(args.time/10)
+                ax1.set_aspect(max_time/10)
                 ax1.set_yticks(np.arange(0,11,1))
                 ax1.set_ylim([0,10])
 
@@ -123,7 +133,7 @@ if __name__ == '__main__':
                 ax2.set_ylabel('Rotor Velocity $\\Omega$ [RPM]')
                 ax2.set_xlabel('Time [s]')
                 
-                ax2.set_aspect(aspect = args.time/7)
+                ax2.set_aspect(aspect = max_time/7)
                 ax2.set_yticks(np.arange(0,11,1))
                 ax2.set_ylim([3,10])
 
@@ -148,9 +158,9 @@ if __name__ == '__main__':
     fig2.tight_layout()
     if args.save:
         if args.psf:
-            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms_psf.pdf', bbox_inches='tight')
+            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms_'+str(args.wind_amplitude)+'ms_psf.pdf', bbox_inches='tight')
         else:
-            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms.pdf', bbox_inches='tight')
+            fig.savefig(r'plot_scripts\plots\response_'+str(args.wind_mean)+'ms_'+str(args.wind_amplitude)+'ms.pdf', bbox_inches='tight')
     plt.show()
 
 

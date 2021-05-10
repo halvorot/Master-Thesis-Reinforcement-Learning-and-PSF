@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.ticker as mtick
 import scipy.interpolate as interp
+from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM
 
 def smooth(scalars, weight):  # Weight between 0 and 1
     last = scalars[0]  # First value in the plot (first timestep)
@@ -83,6 +84,23 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
     
     plt.show()
 
+def plot_omega_from_file(filepath, save=False):
+    sim_df = pd.read_csv(filepath)
+                
+    time = sim_df['time'][:1000]
+
+    fig, ax = plt.subplots()
+
+    ax.plot(time, sim_df['omega'][:1000] * RAD2RPM)
+    ax.set_ylabel('Rotor Velocity $\\Omega$ [RPM]')
+    ax.set_xlabel('Time [s]')
+    ax.grid(True)
+
+    if save:
+        plt.savefig('plots/omega_non_oscillatory.pdf', bbox_inches='tight')
+
+    plt.show()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -146,4 +164,6 @@ if __name__ == '__main__':
                     ]
         labels = [labels[0], labels[7], labels[6], labels[13]]
     
-    plot_ep_rew_mean(filepaths, labels, save=args.save)
+    # plot_ep_rew_mean(filepaths, labels, save=args.save)
+
+    # plot_omega_from_file(filepath=r"C:\Users\halvorot\OneDrive - NTNU\TTK4900 Masteroppgave\RL MPC\gym-rl-mpc\logs\VariableWindLevel0-v16\1619525017ppo\sim_data\VariableWindLevel0-v17_last_model_10000000_simdata_0.csv", save=args.save)

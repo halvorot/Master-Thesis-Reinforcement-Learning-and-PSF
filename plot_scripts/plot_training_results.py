@@ -61,7 +61,11 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         Y = df['Value']*100
         Y = smooth(Y,0.89)
         if labels:
-            ax.plot(X, Y, label=labels[i], zorder=i if i!=0 else 10)
+            # ax.plot(X, Y, label=labels[i], zorder=i if i!=0 else 10)
+            if "with psf" in labels[i].lower():
+                ax.plot(X, Y, label=labels[i], linestyle='dashed')#, color="C"+str(i-1))
+            else:
+                ax.plot(X, Y, label=labels[i])
         else:
             ax.plot(X, Y, zorder=i)
         max_timesteps = np.maximum(max_timesteps, np.max(X))
@@ -80,7 +84,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         ax.legend()
 
     if save:
-        plt.savefig('plots/ep_crash_mean_psf_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_crash_mean_psf_vs_nopsf.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -122,8 +126,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    if args.label:
-        assert len(args.file)==len(args.label)
+
 
     if args.file:
         filepaths = args.file
@@ -163,7 +166,11 @@ if __name__ == '__main__':
                     "Level HighWinds with PSF"
                     ]
         labels = [labels[0], labels[7], labels[6], labels[13]]
+
+    if args.label:
+        assert len(filepaths)==len(args.label)
     
     # plot_ep_rew_mean(filepaths, labels, save=args.save)
+    plot_ep_crash_mean(filepaths, labels, save=args.save)
 
     # plot_omega_from_file(filepath=r"C:\Users\halvorot\OneDrive - NTNU\TTK4900 Masteroppgave\RL MPC\gym-rl-mpc\logs\VariableWindLevel0-v16\1619525017ppo\sim_data\VariableWindLevel0-v17_last_model_10000000_simdata_0.csv", save=args.save)

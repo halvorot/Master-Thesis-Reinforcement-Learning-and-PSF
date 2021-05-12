@@ -5,7 +5,9 @@ agent_paths = {
         'level3_agent': r"..\logs\VariableWindLevel3-v17\1618934307ppo",
         'level4_agent': r"..\logs\VariableWindLevel4-v17\1618940658ppo",
         'level5_agent': r"..\logs\VariableWindLevel5-v17\1618946704ppo",
-        # 'levelPSFtest_agent': r"..\logs\VariableWindPSFtest-v17\1619770390ppo"
+        # 'levelPSFtest_agent': r"..\logs\VariableWindPSFtest-v17\1619770390ppo",
+        # 'levelConstant1_agent': r"..\logs\ConstantWindLevel1-v17\1620385846ppo",
+        # 'levelConstant2_agent': r"..\logs\ConstantWindLevel2-v17\1620388963ppo"
     }
 agent_paths_psf = {
         'level0_agent_psf': r"..\logs\VariableWindLevel0-v17\1619804074ppo",
@@ -14,5 +16,7 @@ agent_paths_psf = {
         'level3_agent_psf': r"..\logs\VariableWindLevel3-v17\1619826109ppo",
         'level4_agent_psf': r"..\logs\VariableWindLevel4-v17\1619817419ppo",
         'level5_agent_psf': r"..\logs\VariableWindLevel5-v17\1619809322ppo",
-        # 'levelPSFtest_agent_psf': r"..\logs\VariableWindPSFtest-v17\1619696400ppo"
+        # 'levelPSFtest_agent_psf': r"..\logs\VariableWindPSFtest-v17\1619696400ppo",
+        # 'levelConstant1_agent_psf': r"..\logs\ConstantWindLevel1-v17\1620385841ppo",
+        # 'levelConstant2_agent_psf': r"..\logs\ConstantWindLevel2-v17\1620385841ppo"
     }

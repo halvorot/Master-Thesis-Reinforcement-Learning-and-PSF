@@ -4,7 +4,7 @@ from gym_rl_mpc.utils.model_params import RAD2DEG, RAD2RPM, RPM2RAD, DEG2RAD
 
 DEFAULT_CONFIG = {
     "use_psf": False,
-    "step_size": 0.1,
+    "step_size": 0.01,
     "max_episode_time": 300,                    # Max time for episode [seconds]
     "crash_reward": -1000,
     "crash_angle_condition": 10*DEG2RAD,

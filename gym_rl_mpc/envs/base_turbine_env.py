@@ -70,7 +70,7 @@ class BaseTurbineEnv(gym.Env, ABC):
         sys_lub_x[2] = np.asarray([self.psf_lb_omega, self.psf_ub_omega])
 
         T = self.psf_T
-        N = T*2
+        N = int(T/self.step_size)
         sys = sym.get_sys(sys_lub_x)
 
         t_sys = sym.get_terminal_sys()
@@ -84,7 +84,7 @@ class BaseTurbineEnv(gym.Env, ABC):
 
         ## PSF init ##
         self.psf = PSF(sys=sys, N=N, T=T, t_sys=t_sys, R=R, PK_path=Path("PSF", "stored_PK"),#slew_rate=actuation_max_rate,
-                       ext_step_size=self.step_size)
+                       ext_step_size=self.step_size, terminal_type="steady")
 
         ## END PSF init ##
 

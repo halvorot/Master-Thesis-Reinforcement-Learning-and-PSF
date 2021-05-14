@@ -106,8 +106,8 @@ if __name__ == '__main__':
 
     num_episodes_per_agent = 1
     
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig2, (ax3, ax4) = plt.subplots(1, 2)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+    fig2, ax4 = plt.subplots(1, 1)
     agent_num = 0
     max_time = 0
     for agent_name, agent_path in agent_paths_dict.items():
@@ -137,11 +137,12 @@ if __name__ == '__main__':
                 ax2.set_yticks(np.arange(0,11,1))
                 ax2.set_ylim([3,10])
 
-                ax3.plot(time, sim_df['power'], color=color)
-                ax3.set_ylabel('Power generated [W]')
+                ax3.plot(time, sim_df['power']/1e6, color=color)
+                ax3.set_ylabel('Power generated [MW]')
                 ax3.set_xlabel('Time [s]')
-                ax3.set_ylim([-0.1e6,params.max_power_generation*1.05])
-                ax3.set_ylim([0,1.1*15e6])
+                ax3.set_ylim([0,1.1*15])
+                ax3.set_yticks(np.arange(0,16,5))
+                ax3.set_aspect(aspect = max_time/(1.1*15))
 
                 ax4.plot(time, np.array(env.episode_history['wind_speed']), label='Wind speed')
                 ax4.set_ylabel('Wind speed [m/s]')

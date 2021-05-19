@@ -1,5 +1,5 @@
 # gym-turbine
-A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floating off-shore wind turbine using Reinforcement Learning and a PSF
+A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floating off-shore wind turbine using Reinforcement Learning and a PSF.
 
 Written in `Python 3.7`.
 ## Installation
@@ -9,7 +9,7 @@ https://www.mosek.com/license/request/?i=acp
 
 Add the license file to `%USERPROFILE%/mosek/mosek.lic`.
 
-This is only required when generating a new terminal set.
+This is only required when generating a new terminal set, and freeware (e.g. CVXOPT) is supported through CVXPY.
 
 ### Python dependencies and packages
 
@@ -87,8 +87,3 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
-
-
-## Based on
-
-https://arxiv.org/pdf/1812.05506.pdf

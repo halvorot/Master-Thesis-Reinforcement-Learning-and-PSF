@@ -87,8 +87,3 @@ Required arguments:
 Optional arguments:
 - --save_video
 - --time <Max simulation time (seconds)>
-
-
-## Based on
-
-https://arxiv.org/pdf/1812.05506.pdf

@@ -45,7 +45,7 @@ def plot_ep_rew_mean(filepaths, labels=None, save=False):
         ax.legend(loc='lower right')
 
     if save:
-        plt.savefig('plots/ep_rew_mean_noPSF_vs_PSF_10M.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_rew_mean_tight_constraints.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -84,7 +84,7 @@ def plot_ep_crash_mean(filepaths, labels=None, save=False):
         ax.legend()
 
     if save:
-        plt.savefig('plots/ep_crash_mean_psf_vs_nopsf.pdf', bbox_inches='tight')
+        plt.savefig('plots/ep_crash_mean_tight_constraints.pdf', bbox_inches='tight')
     
     plt.show()
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                     "Level HighWinds with PSF"
                     ]
         labels = [labels[0], labels[7], labels[6], labels[13]]
-
+        labels=None
     if args.label:
         assert len(filepaths)==len(args.label)
     

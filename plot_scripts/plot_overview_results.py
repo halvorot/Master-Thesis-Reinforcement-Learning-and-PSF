@@ -13,12 +13,12 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    category_names = ['Not working', 'Working']
+    category_names = ['Not working', 'Working for constant wind only','Working']
 
     results = { #'During training without PSF': [10,25],
-                'After training without PSF': [10,25],
-                'During training with PSF': [13,25],
-                'After training with PSF': [13,25]
+                'After training without PSF': [0,10,20],
+                'During training with PSF': [13,0,25],
+                'After training with PSF': [13,0,25]
             }
     labels = list(results.keys())
     data = np.array(list(results.values()))
@@ -29,11 +29,13 @@ if __name__ == '__main__':
     ax.invert_yaxis()
     ax.xaxis.set_visible(True)
     ax.set_xlim(5, np.max(data))
+    ax.grid(axis='x')
+    ax.set_axisbelow(True)
 
     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
         widths = data[:, i]
         starts = data_cum[:, i] - widths
-        ax.barh(labels, widths-starts, left=starts, height=0.5, label=colname, color=color)
+        ax.barh(labels, widths, left=starts, height=0.5, label=colname, color=color)
         xcenters = starts + widths / 2
 
     ax.legend(ncol=len(category_names), bbox_to_anchor=(0, 1),

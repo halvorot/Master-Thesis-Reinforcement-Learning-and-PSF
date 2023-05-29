@@ -1,9 +1,10 @@
 # Reinforcement Learning and Model Predictive Control for Floating Wind Turbines
 A repository for TTK4900 Master thesis at NTNU. Project is stabilizing a floating off-shore wind turbine using Reinforcement Learning and a PSF.
 
-⚠️**Outdated!** See [TTK4900-RL-PSF/RL-PSF](https://github.com/TTK4900-RL-PSF/RL-PSF) for the final version of the project.
+> ⚠️**Outdated!** See [TTK4900-RL-PSF/RL-PSF](https://github.com/TTK4900-RL-PSF/RL-PSF) for the final version of the project.
 
 Written in `Python 3.7`.
+
 ## Installation
 ### Mosek
 You will need a licence to use Mosek (free academic):\
